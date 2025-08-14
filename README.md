@@ -1,131 +1,132 @@
-# Rental Property Cash Flow Calculator
+# 🏠 Rental Cash Flow Calculator
 
-A comprehensive React TypeScript application for analyzing rental property investments, calculating cash flow returns, and providing investment recommendations.
+A comprehensive React TypeScript application for analyzing rental property investments and calculating cash flow returns.
 
-## Features
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![React](https://img.shields.io/badge/React-18.x-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)
+![Material-UI](https://img.shields.io/badge/Material--UI-7.x-purple)
 
-🏠 **Property Analysis**
-- Property search and data fetching
-- Detailed property information input
-- Market value estimation
+## 🚀 Live Demo
 
-💰 **Financial Calculations**
-- Cash flow analysis with monthly/annual projections
-- Cash-on-cash return calculations
-- Cap rate analysis
-- Debt coverage ratio assessment
+**[View Live Application](https://your-netlify-app.netlify.app)** ← Will be updated after Netlify deployment
 
-📊 **Investment Recommendations**
-- AI-powered scoring system (1-10 scale)
-- Investment recommendations: Strong Buy, Buy, Hold, Avoid
-- Detailed pros and cons analysis
-- Key performance indicators (KPIs)
+## ✨ Features
 
-🎨 **Modern UI**
-- Material-UI components with professional design
-- Responsive layout for mobile and desktop
-- Step-by-step wizard interface
-- Interactive charts and data visualization
+### 🧮 Investment Calculator
+- **Property Analysis**: Comprehensive cash flow calculations
+- **ROI Metrics**: Cash-on-cash return, cap rate, and investment scoring
+- **Market Data**: Real estate API integration for property values
+- **Expense Tracking**: Operating costs, taxes, insurance, and maintenance
 
-## Getting Started
+### 🗺️ Interactive Property Maps
+- **Location Search**: Find properties by city, state, or ZIP code
+- **Map Visualization**: Interactive maps powered by Leaflet
+- **Property Markers**: Visual representation of available properties
+- **Neighborhood Analysis**: Local market insights
+
+### 💬 Investor Community
+- **Discussion Forums**: Connect with fellow investors
+- **Market Updates**: Share insights and market trends
+- **Property Reviews**: Learn from real experiences
+- **Expert Tips**: Professional advice and strategies
+
+### 🔐 Secure Authentication
+- **Google OAuth**: Secure Google Sign-In integration
+- **Apple Sign In**: Apple authentication support
+- **JWT Security**: Secure token-based authentication
+- **CSRF Protection**: Advanced security measures
+
+### 💳 Payment Integration
+- **Stripe Integration**: PCI-compliant payment processing
+- **Subscription Management**: Pro plan features
+- **Secure Transactions**: Encrypted payment handling
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18, TypeScript, Material-UI v7
+- **Build Tool**: Vite for fast development and optimized builds
+- **Maps**: Leaflet for interactive property maps
+- **Icons**: Lucide React for modern iconography
+- **State Management**: React Hooks and Context
+
+## 🚦 Getting Started
+
+### Prerequisites
+- Node.js 18.x or higher
+- npm or yarn package manager
 
 ### Installation
 
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/rental-cash-flow-calculator.git
+   cd rental-cash-flow-calculator
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+## 🔧 Build & Deploy
+
+### Local Build
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
 npm run build
+npm run preview
 ```
 
-### Usage
+### Deploy to Netlify
+```bash
+# Using Netlify CLI
+npm install -g netlify-cli
+netlify deploy --prod --dir=dist
 
-1. **Property Search**: Enter property address or zip code
-2. **Property Details**: Review and update property specifications
-3. **Financing**: Configure loan terms and down payment
-4. **Expenses**: Input operating expenses and maintenance costs
-5. **Results**: View comprehensive investment analysis and recommendations
-
-## Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── PropertyCalculator.tsx    # Main calculator wizard
-│   ├── PropertySearchForm.tsx    # Property search interface
-│   ├── PropertyDetailsForm.tsx   # Property info form
-│   ├── FinancingForm.tsx         # Financing details form
-│   ├── ExpensesForm.tsx          # Operating expenses form
-│   └── ResultsDashboard.tsx      # Analysis results display
-├── types/               # TypeScript type definitions
-│   └── property.ts              # Property and analysis types
-├── utils/               # Utility functions
-│   └── cashFlowCalculator.ts    # Financial calculation engine
-├── services/            # API services
-│   └── realEstateService.ts     # Real estate data service
-└── App.tsx              # Main application component
+# Or drag & drop the dist folder to netlify.com/drop
 ```
 
-## Key Calculations
+## 📊 Key Calculations
 
-### Cash-on-Cash Return
-```
-(Annual Cash Flow / Total Cash Invested) × 100
-```
+### Cash Flow Analysis
+- **Monthly Cash Flow** = Rental Income - Operating Expenses
+- **Cash-on-Cash Return** = (Annual Cash Flow / Total Cash Invested) × 100
+- **Cap Rate** = (Annual Net Operating Income / Property Value) × 100
 
-### Cap Rate
-```
-(Annual Net Operating Income / Property Value) × 100
-```
+### Investment Scoring
+- **Strong Buy**: Cap rate > 8%, Cash-on-Cash > 12%
+- **Buy**: Cap rate > 6%, Cash-on-Cash > 8%
+- **Hold**: Cap rate > 4%, Cash-on-Cash > 4%
+- **Avoid**: Below minimum thresholds
 
-### Monthly Cash Flow
-```
-Monthly Rental Income - Operating Expenses - Mortgage Payment
-```
+## 🔐 Security Features
 
-## Investment Scoring System
+- **OAuth 2.0 Authentication**: Google and Apple Sign-In
+- **PCI Compliance**: Secure payment processing
+- **CSRF Protection**: Cross-site request forgery prevention
+- **Security Headers**: Comprehensive security policies
 
-The application uses a comprehensive scoring system (1-10) based on:
-- Cash-on-cash return performance
-- Cap rate competitiveness
-- Monthly cash flow positivity
-- Debt coverage ratio strength
-
-**Recommendations:**
-- **8-10**: Strong Buy
-- **6-7**: Buy
-- **4-5**: Hold
-- **1-3**: Avoid
-
-## Technology Stack
-
-- **Frontend**: React 18 + TypeScript
-- **UI Framework**: Material-UI v5
-- **Build Tool**: Vite
-- **Icons**: Lucide React
-- **Styling**: Emotion (CSS-in-JS)
-
-## Future Enhancements
-
-- Real estate API integration (Zillow, RentSpotter)
-- Advanced charts and data visualization
-- Property comparison features
-- Market analysis and trends
-- Export to PDF/Excel functionality
-- User authentication and saved analyses
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## License
+---
 
-MIT License - see LICENSE file for details
+⭐ **Star this repo if you find it helpful!**
+
+Built with ❤️ for the real estate investor community
