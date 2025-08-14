@@ -257,18 +257,11 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {renderNavigation()}
-        <Box sx={{ 
-          minHeight: 'calc(100vh - 64px)',
-          height: 'calc(100vh - 64px)',
-          bgcolor: 'background.default'
-        }}>
-          <LoginPage 
-            onLogin={handleLogin}
-            onClose={() => setShowLogin(false)}
-            onSignup={() => { setShowLogin(false); handleShowSignup(); }}
-          />
-        </Box>
+        <LoginPage 
+          onLogin={handleLogin}
+          onClose={() => setShowLogin(false)}
+          onSignup={() => { setShowLogin(false); handleShowSignup(); }}
+        />
       </ThemeProvider>
     );
   }
@@ -277,18 +270,11 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {renderNavigation()}
-        <Box sx={{ 
-          minHeight: 'calc(100vh - 64px)',
-          height: 'calc(100vh - 64px)',
-          bgcolor: 'background.default'
-        }}>
-          <SignupPage 
-            onSignup={handleSignup}
-            onClose={() => setShowSignup(false)}
-            onLogin={() => { setShowSignup(false); handleShowLogin(); }}
-          />
-        </Box>
+        <SignupPage 
+          onSignup={handleSignup}
+          onClose={() => setShowSignup(false)}
+          onLogin={() => { setShowSignup(false); handleShowLogin(); }}
+        />
       </ThemeProvider>
     );
   }

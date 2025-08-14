@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   TextField,
   Button,
-  Container,
   Alert,
   Divider,
   CircularProgress
@@ -76,24 +73,138 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
 
   return (
     <Box sx={{ 
-      height: '100%',
+      minHeight: '100vh',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      py: { xs: 4, md: 8 }
+      flexDirection: 'column',
+      bgcolor: '#f8fafc'
     }}>
-      <Container maxWidth="sm">
-        <Card sx={{ maxWidth: 400, mx: 'auto' }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Join Investimate
+      {/* Header with logo */}
+      <Box sx={{ 
+        p: 3,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            fontWeight: 'bold', 
+            color: 'primary.main',
+            cursor: 'pointer',
+            '&:hover': { color: 'primary.dark' }
+          }}
+          onClick={() => window.location.reload()}
+        >
+          🏡 Investimate
+        </Typography>
+        <Button 
+          variant="outlined" 
+          size="small"
+          onClick={onLogin}
+          sx={{ textTransform: 'none' }}
+        >
+          Sign In
+        </Button>
+      </Box>
+
+      {/* Main Content */}
+      <Box sx={{ 
+        flex: 1,
+        display: 'flex'
+      }}>
+      {/* Left side - Benefits */}
+      <Box sx={{ 
+        flex: 1,
+        bgcolor: 'primary.main',
+        display: { xs: 'none', md: 'flex' },
+        flexDirection: 'column',
+        justifyContent: 'center',
+        p: 6,
+        color: 'white'
+      }}>
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+          Unlock your real estate investing potential
+        </Typography>
+        <Typography variant="h6" sx={{ opacity: 0.9, mb: 4, fontWeight: 400 }}>
+          with a FREE Investimate account
+        </Typography>
+        
+        <Box sx={{ mt: 4 }}>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              🧮 Property Analysis Tools
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
+              Determine a property's cash flow potential in minutes with interactive calculators and tools.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              🎯 Avoid Costly Mistakes
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
+              Tap into the knowledge of thousands of experienced investors and learn from their experiences.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              🤝 Find Your Team
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
+              Find investor-friendly agents, financing options, and other professionals to build your team.
+            </Typography>
+          </Box>
+
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+              📚 Free Resources
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9, lineHeight: 1.6 }}>
+              Get FREE access to articles, guides, webinars, and calculators to accelerate your investing journey.
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ 
+          mt: 4, 
+          p: 3, 
+          bgcolor: 'rgba(255,255,255,0.1)', 
+          borderRadius: 2,
+          textAlign: 'center'
+        }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+            It's free!
           </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Create your account to start analyzing properties
+          <Typography variant="body2" sx={{ opacity: 0.9 }}>
+            Join thousands of investors already using Investimate
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Right side - Sign Up Form */}
+      <Box sx={{ 
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 4
+      }}>
+        <Box sx={{ maxWidth: 400, width: '100%' }}>
+          <Typography variant="h3" align="center" gutterBottom sx={{ 
+            fontWeight: 'bold',
+            color: 'text.primary',
+            mb: 1
+          }}>
+            Create Your Account
+          </Typography>
+          <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>
+            Join Investimate and start analyzing properties like a pro
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
@@ -106,20 +217,36 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               size="large"
               onClick={handleGoogleSignup}
               sx={{ 
-                mb: 1, 
+                mb: 2, 
                 textTransform: 'none',
+                py: 1.5,
+                fontSize: '1rem',
                 bgcolor: 'white',
                 color: 'text.primary',
                 borderColor: 'grey.300',
+                fontWeight: 500,
                 '&:hover': {
                   bgcolor: 'grey.50',
                   borderColor: 'grey.400'
                 }
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ fontSize: '20px' }}>🔵</Box>
-                Sign up with Google
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  width: 20, 
+                  height: 20, 
+                  borderRadius: '50%',
+                  bgcolor: '#4285f4',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  G
+                </Box>
+                Continue with Google
               </Box>
             </Button>
             
@@ -130,25 +257,28 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               onClick={handleAppleSignup}
               sx={{ 
                 textTransform: 'none',
-                bgcolor: 'black',
+                py: 1.5,
+                fontSize: '1rem',
+                bgcolor: '#000',
                 color: 'white',
-                borderColor: 'black',
+                borderColor: '#000',
+                fontWeight: 500,
                 '&:hover': {
-                  bgcolor: 'grey.800',
-                  borderColor: 'grey.800'
+                  bgcolor: '#333',
+                  borderColor: '#333'
                 }
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ fontSize: '20px' }}>🍎</Box>
-                Sign up with Apple
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ fontSize: '18px' }}>🍎</Box>
+                Continue with Apple
               </Box>
             </Button>
           </Box>
 
           <Divider sx={{ mb: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Or sign up with email
+            <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+              Or
             </Typography>
           </Divider>
 
@@ -156,9 +286,15 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
             <TextField
               fullWidth
               label="Full Name"
+              placeholder="Use your real name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1rem'
+                }
+              }}
               required
               disabled={loading}
             />
@@ -168,7 +304,12 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1rem'
+                }
+              }}
               required
               disabled={loading}
             />
@@ -178,7 +319,12 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1rem'
+                }
+              }}
               required
               disabled={loading}
             />
@@ -188,34 +334,67 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              sx={{ mb: 3 }}
+              sx={{ 
+                mb: 3,
+                '& .MuiOutlinedInput-root': {
+                  fontSize: '1rem'
+                }
+              }}
               required
               disabled={loading}
             />
+
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.5 }}>
+              By signing up, you indicate that you agree to the{' '}
+              <Box component="span" sx={{ color: 'primary.main', textDecoration: 'underline', cursor: 'pointer' }}>
+                Investimate Terms & Conditions
+              </Box>
+              .
+            </Typography>
             
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 3,
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                textTransform: 'none'
+              }}
               disabled={loading}
             >
-              {loading ? <CircularProgress size={20} color="inherit" /> : 'Create Account'}
+              {loading ? <CircularProgress size={20} color="inherit" /> : "Let's go!"}
             </Button>
             
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
                 Already have an account?{' '}
-                <Button onClick={onLogin} sx={{ textTransform: 'none', p: 0, minWidth: 0 }}>
+                <Button 
+                  onClick={onLogin} 
+                  sx={{ 
+                    textTransform: 'none', 
+                    p: 0, 
+                    minWidth: 0,
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                      bgcolor: 'transparent'
+                    }
+                  }}
+                >
                   Sign in here
                 </Button>
               </Typography>
             </Box>
           </Box>
-        </CardContent>
-      </Card>
-      </Container>
+        </Box>
+      </Box>
+      </Box>
     </Box>
   );
 }

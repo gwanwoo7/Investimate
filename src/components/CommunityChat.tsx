@@ -157,9 +157,19 @@ export default function CommunityChat() {
   const currentUser = db.getCurrentUser();
 
   return (
-    <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
+    <Box sx={{ 
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      bgcolor: 'background.default'
+    }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ 
+        bgcolor: 'white',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        p: 3
+      }}>
         <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Users size={32} />
           Investment Community
@@ -168,6 +178,16 @@ export default function CommunityChat() {
           Connect with fellow real estate investors, share insights, and learn from the community.
         </Typography>
       </Box>
+
+      {/* Main Content Area */}
+      <Box sx={{ 
+        flex: 1,
+        overflow: 'auto',
+        p: 3,
+        maxWidth: 800,
+        mx: 'auto',
+        width: '100%'
+      }}>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -395,6 +415,7 @@ export default function CommunityChat() {
           </CardContent>
         </Card>
       )}
+      </Box>
     </Box>
   );
 }
