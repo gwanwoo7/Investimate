@@ -8,8 +8,10 @@ import {
   Button,
   Container,
   Alert,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
+import DatabaseService from '../services/databaseService';
 
 interface SignupPageProps {
   onSignup: (email: string) => void;
@@ -19,15 +21,24 @@ interface SignupPageProps {
 
 export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: SignupPageProps) {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const db = DatabaseService.getInstance();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password || !confirmPassword) {
+    if (!email || !name || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
 
@@ -41,53 +52,26 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       return;
     }
 
-    // Simple validation - in real app, this would connect to authentication service
-    if (email.includes('@')) {
+    setLoading(true);
+    setError('');
+
+    try {
+      const user = await db.createUser(email, password, name);
+      db.setCurrentUser(user);
       onSignup(email);
-    } else {
-      setError('Please enter a valid email address');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Account creation failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
-    try {
-      // In production, use Google OAuth 2.0 with secure token handling
-      // Example: Google Identity Services (GIS) with proper CSRF protection
-      // const credential = await google.accounts.oauth2.requestAccessToken({
-      //   client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      //   scope: 'email profile',
-      //   state: generateCSRFToken() // CSRF protection
-      // });
-      
-      // Secure token verification on backend required
-      console.log('🔐 Google OAuth signup initiated (secure API integration required)');
-      onSignup('user@gmail.com');
-    } catch (error) {
-      setError('Google signup failed. Please try again.');
-      console.error('Google signup error:', error);
-    }
+    setError('Google OAuth integration coming soon! Use the form below to create an account.');
   };
 
   const handleAppleSignup = async () => {
-    try {
-      // In production, use Apple Sign In with secure server-side verification
-      // Example: Sign In with Apple with backend JWT verification
-      // const response = await AppleID.auth.signIn({
-      //   clientId: process.env.REACT_APP_APPLE_CLIENT_ID,
-      //   redirectURI: process.env.REACT_APP_APPLE_REDIRECT_URI,
-      //   scope: 'name email',
-      //   responseType: 'code id_token',
-      //   responseMode: 'fragment',
-      //   nonce: generateSecureNonce() // Security nonce
-      // });
-      
-      // Server-side JWT verification required for security
-      console.log('🍎 Apple Sign In signup initiated (secure API integration required)');
-      onSignup('user@icloud.com');
-    } catch (error) {
-      setError('Apple signup failed. Please try again.');
-      console.error('Apple signup error:', error);
-    }
+    setError('Apple Sign In integration coming soon! Use the form below to create an account.');
   };
 
   return (
@@ -171,12 +155,22 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
+              label="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              sx={{ mb: 2 }}
+              required
+              disabled={loading}
+            />
+            <TextField
+              fullWidth
               label="Email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               sx={{ mb: 2 }}
               required
+              disabled={loading}
             />
             <TextField
               fullWidth
@@ -186,6 +180,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               onChange={(e) => setPassword(e.target.value)}
               sx={{ mb: 2 }}
               required
+              disabled={loading}
             />
             <TextField
               fullWidth
@@ -195,6 +190,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               onChange={(e) => setConfirmPassword(e.target.value)}
               sx={{ mb: 3 }}
               required
+              disabled={loading}
             />
             
             <Button
@@ -203,8 +199,9 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               variant="contained"
               size="large"
               sx={{ mb: 2 }}
+              disabled={loading}
             >
-              Create Account
+              {loading ? <CircularProgress size={20} color="inherit" /> : 'Create Account'}
             </Button>
             
             <Box sx={{ textAlign: 'center' }}>

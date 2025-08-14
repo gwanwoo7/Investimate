@@ -8,8 +8,10 @@ import {
   Button,
   Container,
   Alert,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
+import DatabaseService from '../services/databaseService';
 
 interface LoginPageProps {
   onLogin: (email: string) => void;
@@ -21,8 +23,11 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const db = DatabaseService.getInstance();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -30,51 +35,51 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
       return;
     }
 
-    // Simple validation - in real app, this would connect to authentication service
-    if (email.includes('@')) {
-      onLogin(email);
-    } else {
+    if (!email.includes('@')) {
       setError('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const user = await db.authenticateUser(email, password);
+      db.setCurrentUser(user);
+      onLogin(email);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    try {
+      // Create a demo user if it doesn't exist
+      try {
+        await db.createUser('demo@investimate.com', 'demo123', 'Demo User');
+      } catch {
+        // User already exists, that's fine
+      }
+      
+      const user = await db.authenticateUser('demo@investimate.com', 'demo123');
+      db.setCurrentUser(user);
+      onLogin('demo@investimate.com');
+    } catch (err) {
+      setError('Demo login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      // In production, use Google OAuth 2.0 with secure token handling
-      // Example: Google Identity Services (GIS) or Firebase Auth
-      // const credential = await google.accounts.oauth2.requestAccessToken({
-      //   client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID,
-      //   scope: 'email profile'
-      // });
-      
-      // For demo purposes, simulate successful authentication
-      console.log('🔐 Google OAuth authentication initiated (secure API integration required)');
-      onLogin('user@gmail.com');
-    } catch (error) {
-      setError('Google authentication failed. Please try again.');
-      console.error('Google auth error:', error);
-    }
+    setError('Google OAuth integration coming soon! Use demo login below.');
   };
 
   const handleAppleLogin = async () => {
-    try {
-      // In production, use Apple Sign In with secure token verification
-      // Example: Sign In with Apple JS SDK
-      // const response = await AppleID.auth.signIn({
-      //   clientId: process.env.REACT_APP_APPLE_CLIENT_ID,
-      //   redirectURI: process.env.REACT_APP_APPLE_REDIRECT_URI,
-      //   scope: 'name email',
-      //   responseType: 'code id_token',
-      //   responseMode: 'fragment'
-      // });
-      
-      // For demo purposes, simulate successful authentication
-      console.log('🍎 Apple Sign In authentication initiated (secure API integration required)');
-      onLogin('user@icloud.com');
-    } catch (error) {
-      setError('Apple authentication failed. Please try again.');
-      console.error('Apple auth error:', error);
-    }
+    setError('Apple Sign In integration coming soon! Use demo login below.');
   };
 
   return (
@@ -87,115 +92,137 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     }}>
       <Container maxWidth="sm">
         <Card sx={{ maxWidth: 400, mx: 'auto' }}>
-        <CardContent sx={{ p: 4 }}>
-          <Typography variant="h4" align="center" gutterBottom>
-            Welcome Back
-          </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
-            Sign in to your Investimate account
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* Social Login */}
-          <Box sx={{ mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="large"
-              onClick={handleGoogleLogin}
-              sx={{ 
-                mb: 1, 
-                textTransform: 'none',
-                bgcolor: 'white',
-                color: 'text.primary',
-                borderColor: 'grey.300',
-                '&:hover': {
-                  bgcolor: 'grey.50',
-                  borderColor: 'grey.400'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ fontSize: '20px' }}>🔵</Box>
-                Continue with Google
-              </Box>
-            </Button>
-            
-            <Button
-              fullWidth
-              variant="outlined"
-              size="large"
-              onClick={handleAppleLogin}
-              sx={{ 
-                textTransform: 'none',
-                bgcolor: 'black',
-                color: 'white',
-                borderColor: 'black',
-                '&:hover': {
-                  bgcolor: 'grey.800',
-                  borderColor: 'grey.800'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ fontSize: '20px' }}>🍎</Box>
-                Continue with Apple
-              </Box>
-            </Button>
-          </Box>
-
-          <Divider sx={{ mb: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Or sign in with email
+          <CardContent sx={{ p: 4 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+              Welcome Back
             </Typography>
-          </Divider>
+            <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
+              Sign in to your Investimate account
+            </Typography>
 
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-              required
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              sx={{ mb: 3 }}
-              required
-            />
-            
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            {/* Demo Login Button */}
             <Button
-              type="submit"
               fullWidth
               variant="contained"
+              color="success"
               size="large"
-              sx={{ mb: 2 }}
+              onClick={handleDemoLogin}
+              disabled={loading}
+              sx={{ mb: 3, textTransform: 'none' }}
             >
-              Sign In
+              {loading ? <CircularProgress size={20} color="inherit" /> : '🚀 Demo Login'}
             </Button>
-            
-            <Box sx={{ textAlign: 'center' }}>
+
+            <Divider sx={{ mb: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                Don't have an account?{' '}
-                <Button onClick={onSignup} sx={{ textTransform: 'none', p: 0, minWidth: 0 }}>
-                  Sign up here
-                </Button>
+                Or create your own account
               </Typography>
+            </Divider>
+
+            {/* Social Login */}
+            <Box sx={{ mb: 3 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                onClick={handleGoogleLogin}
+                sx={{ 
+                  mb: 1, 
+                  textTransform: 'none',
+                  bgcolor: 'white',
+                  color: 'text.primary',
+                  borderColor: 'grey.300',
+                  '&:hover': {
+                    bgcolor: 'grey.50',
+                    borderColor: 'grey.400'
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ fontSize: '20px' }}>🔵</Box>
+                  Continue with Google
+                </Box>
+              </Button>
+              
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                onClick={handleAppleLogin}
+                sx={{ 
+                  textTransform: 'none',
+                  bgcolor: 'black',
+                  color: 'white',
+                  borderColor: 'black',
+                  '&:hover': {
+                    bgcolor: 'grey.800',
+                    borderColor: 'grey.800'
+                  }
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ fontSize: '20px' }}>🍎</Box>
+                  Continue with Apple
+                </Box>
+              </Button>
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+
+            <Divider sx={{ mb: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                Or sign in with email
+              </Typography>
+            </Divider>
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                sx={{ mb: 2 }}
+                required
+                disabled={loading}
+              />
+              <TextField
+                fullWidth
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                sx={{ mb: 3 }}
+                required
+                disabled={loading}
+              />
+              
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                sx={{ mb: 2 }}
+                disabled={loading}
+              >
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Sign In'}
+              </Button>
+              
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  Don't have an account?{' '}
+                  <Button onClick={onSignup} sx={{ textTransform: 'none', p: 0, minWidth: 0 }}>
+                    Sign up here
+                  </Button>
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       </Container>
     </Box>
   );
