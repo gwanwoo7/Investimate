@@ -159,35 +159,29 @@ export default function CommunityChat() {
   return (
     <Box sx={{ 
       height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
+      overflow: 'auto',
+      p: 3,
+      maxWidth: 800,
+      mx: 'auto',
+      width: '100%',
       bgcolor: 'background.default'
     }}>
-      {/* Header */}
-      <Box sx={{ 
-        bgcolor: 'white',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-        p: 3
-      }}>
-        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {/* Welcome Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h4" gutterBottom sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: 2,
+          fontWeight: 'bold'
+        }}>
           <Users size={32} />
           Investment Community
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
           Connect with fellow real estate investors, share insights, and learn from the community.
         </Typography>
       </Box>
-
-      {/* Main Content Area */}
-      <Box sx={{ 
-        flex: 1,
-        overflow: 'auto',
-        p: 3,
-        maxWidth: 800,
-        mx: 'auto',
-        width: '100%'
-      }}>
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -415,7 +409,6 @@ export default function CommunityChat() {
           </CardContent>
         </Card>
       )}
-      </Box>
     </Box>
   );
 }

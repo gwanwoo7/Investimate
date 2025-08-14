@@ -601,9 +601,7 @@ function App() {
         {currentTab === 2 && (
           <Box sx={{ 
             width: '100%', 
-            minHeight: 'calc(100vh - 64px)',
-            height: 'calc(100vh - 64px)',
-            overflow: 'hidden'
+            minHeight: 'calc(100vh - 64px)'
           }}>
             <CommunityChat />
           </Box>
