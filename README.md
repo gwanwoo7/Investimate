@@ -1,4 +1,4 @@
-# 🏠 Rental Cash Flow Calculator
+# 🏠 Investimate - Rental Cash Flow Calculator
 
 A comprehensive React TypeScript application for analyzing rental property investments and calculating cash flow returns.
 
@@ -9,7 +9,7 @@ A comprehensive React TypeScript application for analyzing rental property inves
 
 ## 🚀 Live Demo
 
-**[View Live Application](https://your-netlify-app.netlify.app)** ← Will be updated after Netlify deployment
+**[View Live Application](https://investimate.netlify.app)** ← Will be updated after deployment
 
 ## ✨ Features
 
@@ -60,8 +60,8 @@ A comprehensive React TypeScript application for analyzing rental property inves
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/rental-cash-flow-calculator.git
-   cd rental-cash-flow-calculator
+   git clone https://github.com/gwanwoo7/Investimate.git
+   cd Investimate
    ```
 
 2. **Install dependencies**
