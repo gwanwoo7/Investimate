@@ -54,8 +54,8 @@ export default function EnvironmentDebug() {
       {!supabaseUrl && (
         <Box sx={{ mt: 2, p: 1, bgcolor: 'info.light', borderRadius: 1 }}>
           <Typography variant="caption" color="info.main">
-            💡 Tip: Set up Supabase for secure email verification and enhanced security. 
-            See SUPABASE_SETUP_GUIDE.md for instructions.
+            💡 <strong>Quick Setup:</strong> Create a free Supabase account at supabase.com, get your Project URL and API key, 
+            then add them to your .env.local file. See SUPABASE_SETUP_COMPLETE.md for step-by-step instructions.
           </Typography>
         </Box>
       )}

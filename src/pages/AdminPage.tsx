@@ -372,7 +372,13 @@ export default function AdminPage({ onBack }: AdminPageProps) {
               
               <Box sx={{ mt: 3 }}>
                 <Alert severity="warning">
-                  Supabase Auth: ⚠️ Not configured. Please set up Supabase credentials for full authentication features.
+                  <Typography variant="body2">
+                    <strong>Supabase Auth: ⚠️ Not configured</strong>
+                    <br />
+                    To enable secure authentication, set up Supabase credentials in your .env.local file.
+                    <br />
+                    📋 See <strong>SUPABASE_SETUP_COMPLETE.md</strong> for step-by-step instructions.
+                  </Typography>
                 </Alert>
               </Box>
             </Paper>
