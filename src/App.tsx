@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Typography, Box, Button, Card, CardContent, Container, AppBar, Toolbar, Tab, Tabs } from '@mui/material';
-import { Calculator, Users, Home, TrendingUp, Settings } from 'lucide-react';
+import { Calculator, Users, Home, TrendingUp, Settings, Info, Phone, CreditCard } from 'lucide-react';
 import PropertyCalculator from './components/PropertyCalculator';
 import CommunityChat from './components/CommunityChat';
 // import PaymentPage from './components/PaymentPage';
@@ -9,6 +9,10 @@ import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
+import AdminPage from './pages/AdminPage';
+import AboutPage from './pages/AboutPage';
+import ContactPage from './pages/ContactPage';
+import SubscriptionPage from './pages/SubscriptionPage';
 import { useState } from 'react';
 
 const theme = createTheme({
@@ -40,11 +44,19 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+  const [showSubscription, setShowSubscription] = useState(false);
 
   const MAX_FREE_SEARCHES = 5;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setCurrentTab(newValue);
+    if (newValue === 3) { // Admin tab
+      handleShowAdmin();
+    } else {
+      setCurrentTab(newValue);
+    }
   };
 
   const handleLogoClick = () => {
@@ -52,6 +64,10 @@ function App() {
     setShowLogin(false);
     setShowSignup(false);
     setShowPayment(false);
+    setShowAdmin(false);
+    setShowAbout(false);
+    setShowContact(false);
+    setShowSubscription(false);
   };
 
   const handleShowLogin = () => {
@@ -70,6 +86,34 @@ function App() {
     setShowPayment(true);
     setShowLogin(false);
     setShowSignup(false);
+  };
+
+  const handleShowAdmin = () => {
+    setShowAdmin(true);
+    setCurrentTab(0);
+  };
+
+  const handleShowAbout = () => {
+    setShowAbout(true);
+    setCurrentTab(0);
+  };
+
+  const handleShowContact = () => {
+    setShowContact(true);
+    setCurrentTab(0);
+  };
+
+  const handleShowSubscription = () => {
+    setShowSubscription(true);
+    setCurrentTab(0);
+  };
+
+  const handleBackToMain = () => {
+    setShowAdmin(false);
+    setShowAbout(false);
+    setShowContact(false);
+    setShowSubscription(false);
+    setCurrentTab(0);
   };
 
   const handleLogin = (email: string) => {
@@ -201,6 +245,33 @@ function App() {
           
           {/* Right section for user controls */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 64 }}>
+            {/* Navigation Links */}
+            <Button 
+              size="small" 
+              onClick={handleShowAbout}
+              startIcon={<Info size={16} />}
+              sx={{ textTransform: 'none' }}
+            >
+              About
+            </Button>
+            <Button 
+              size="small" 
+              onClick={handleShowContact}
+              startIcon={<Phone size={16} />}
+              sx={{ textTransform: 'none' }}
+            >
+              Contact
+            </Button>
+            <Button 
+              size="small" 
+              onClick={handleShowSubscription}
+              startIcon={<CreditCard size={16} />}
+              sx={{ textTransform: 'none' }}
+              color="success"
+            >
+              Pro
+            </Button>
+            
             {user ? (
               <>
                 <Typography variant="body2" color="text.secondary">
@@ -281,6 +352,48 @@ function App() {
           onSignup={handleSignup}
           onClose={() => setShowSignup(false)}
           onLogin={() => { setShowSignup(false); handleShowLogin(); }}
+        />
+      </ThemeProvider>
+    );
+  }
+
+  if (showAdmin) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AdminPage onBack={handleBackToMain} />
+      </ThemeProvider>
+    );
+  }
+
+  if (showAbout) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AboutPage onBack={handleBackToMain} />
+      </ThemeProvider>
+    );
+  }
+
+  if (showContact) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ContactPage onBack={handleBackToMain} />
+      </ThemeProvider>
+    );
+  }
+
+  if (showSubscription) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SubscriptionPage 
+          onBack={handleBackToMain} 
+          onSubscriptionSuccess={() => {
+            setUser(prev => prev ? { ...prev, isSubscribed: true } : null);
+            handleBackToMain();
+          }}
         />
       </ThemeProvider>
     );
@@ -616,16 +729,6 @@ function App() {
             minHeight: 'calc(100vh - 64px)'
           }}>
             <CommunityChat />
-          </Box>
-        )}
-
-        {currentTab === 3 && (
-          <Box sx={{ 
-            width: '100%', 
-            minHeight: 'calc(100vh - 64px)',
-            p: 2
-          }}>
-            <AdminDashboard />
           </Box>
         )}
       </Box>
