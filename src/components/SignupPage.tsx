@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
+import EnvironmentDebug from './EnvironmentDebug';
 
 interface SignupPageProps {
   onSignup: (email: string) => void;
@@ -122,6 +123,9 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       flexDirection: 'column',
       bgcolor: '#f8fafc'
     }}>
+      {/* Environment Debug - Remove after OAuth is working */}
+      <EnvironmentDebug />
+      
       {/* Header with logo */}
       <Box sx={{ 
         p: 3,
