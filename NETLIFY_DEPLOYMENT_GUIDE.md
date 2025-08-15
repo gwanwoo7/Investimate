@@ -37,6 +37,17 @@ Ensure your Netlify build settings are:
 - **Publish directory**: `dist`
 - **Node version**: 18 or higher
 
+### Secrets Scanning Configuration
+
+The `netlify.toml` file includes configuration to prevent build failures from secrets scanning:
+
+```toml
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "VITE_GOOGLE_CLIENT_ID,VITE_RAPID_API_KEY,NETLIFY_DATABASE_URL,NETLIFY_DATABASE_URL_UNPOOLED,NODE_VERSION"
+```
+
+This tells Netlify that these environment variables are expected and should not trigger build failures.
+
 ## Troubleshooting
 
 ### OAuth Not Working
@@ -53,6 +64,12 @@ Ensure your Netlify build settings are:
 - Check Node.js version compatibility
 - Verify all dependencies are in package.json
 - Review build logs for specific errors
+
+### Secrets Scanning Issues
+If you get "Secrets scanning detected secrets in files during build":
+- Verify `SECRETS_SCAN_OMIT_KEYS` is configured in `netlify.toml`
+- Ensure environment variables are properly set in Netlify dashboard
+- Check that no actual secret values are hardcoded in source files
 
 ## Security Notes
 
