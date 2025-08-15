@@ -97,8 +97,8 @@ export class RealEstateAPIService {
     console.log('🔍 Searching Zillow properties only...');
     
     if (!this.RAPID_API_KEY || this.RAPID_API_KEY === 'your-rapid-api-key-here') {
-      console.log('⚠️ No API key configured.');
-      return [];
+      console.log('⚠️ No API key configured. Using mock data for demonstration...');
+      return this.getMockProperties(params);
     }
 
     try {
@@ -632,5 +632,124 @@ export class RealEstateAPIService {
       // Secondary sort by cash-on-cash return (descending)
       return b.estimatedCOCReturn - a.estimatedCOCReturn;
     });
+  }
+
+  // Mock data for demonstration when no API key is configured
+  private static getMockProperties(params: AreaSearchParams): PropertyListing[] {
+    console.log('🎭 Generating mock properties for demonstration...');
+    
+    const mockProperties: PropertyData[] = [
+      {
+        id: 'mock-1',
+        address: '123 Main St',
+        city: params.city || 'Birmingham',
+        state: params.state || 'AL',
+        zipCode: '35203',
+        purchasePrice: 120000,
+        marketValue: 120000,
+        bedrooms: 3,
+        bathrooms: 2,
+        squareFootage: 1400,
+        yearBuilt: 1995,
+        propertyType: 'single-family',
+        monthlyRent: 1200,
+        source: 'Demo Data',
+        latitude: 33.5186,
+        longitude: -86.8104,
+        monthlyHoaFee: 0,
+        annualPropertyTaxes: 1800,
+        monthlyPropertyTaxes: 150,
+        annualInsurance: 720,
+        monthlyInsurance: 60,
+        mortgagePayment: {
+          principal: 350,
+          interest: 400,
+          total: 750,
+          interestRate: 0.065
+        },
+        interestRate: 0.065
+      },
+      {
+        id: 'mock-2',
+        address: '456 Oak Avenue',
+        city: params.city || 'Birmingham',
+        state: params.state || 'AL',
+        zipCode: '35205',
+        purchasePrice: 95000,
+        marketValue: 95000,
+        bedrooms: 2,
+        bathrooms: 1,
+        squareFootage: 1100,
+        yearBuilt: 1985,
+        propertyType: 'single-family',
+        monthlyRent: 950,
+        source: 'Demo Data',
+        latitude: 33.5206,
+        longitude: -86.8124,
+        monthlyHoaFee: 0,
+        annualPropertyTaxes: 1425,
+        monthlyPropertyTaxes: 118,
+        annualInsurance: 570,
+        monthlyInsurance: 47,
+        mortgagePayment: {
+          principal: 275,
+          interest: 315,
+          total: 590,
+          interestRate: 0.065
+        },
+        interestRate: 0.065
+      },
+      {
+        id: 'mock-3',
+        address: '789 Pine Street',
+        city: params.city || 'Birmingham',
+        state: params.state || 'AL',
+        zipCode: '35207',
+        purchasePrice: 150000,
+        marketValue: 150000,
+        bedrooms: 4,
+        bathrooms: 2,
+        squareFootage: 1800,
+        yearBuilt: 2005,
+        propertyType: 'single-family',
+        monthlyRent: 1450,
+        source: 'Demo Data',
+        latitude: 33.5226,
+        longitude: -86.8144,
+        monthlyHoaFee: 0,
+        annualPropertyTaxes: 2250,
+        monthlyPropertyTaxes: 187,
+        annualInsurance: 900,
+        monthlyInsurance: 75,
+        mortgagePayment: {
+          principal: 437,
+          interest: 500,
+          total: 937,
+          interestRate: 0.065
+        },
+        interestRate: 0.065
+      }
+    ];
+
+    // Apply basic filters
+    const filteredProperties = mockProperties.filter(property => {
+      if (params.minPrice && property.purchasePrice < params.minPrice) return false;
+      if (params.maxPrice && property.purchasePrice > params.maxPrice) return false;
+      if (params.minBedrooms && property.bedrooms < params.minBedrooms) return false;
+      return true;
+    });
+
+    // Calculate investment metrics for each property
+    const listings: PropertyListing[] = filteredProperties.map(property => {
+      const rentEstimate = { estimatedRent: property.monthlyRent || 1000, confidence: 'high' as const, source: 'Mock Data' };
+      const investmentMetrics = this.calculateInvestmentMetrics(property, rentEstimate.estimatedRent);
+      
+      return {
+        ...property,
+        ...investmentMetrics
+      } as PropertyListing;
+    });
+
+    return this.sortByInvestmentScore(listings);
   }
 }

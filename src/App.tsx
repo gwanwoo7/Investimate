@@ -305,7 +305,8 @@ function App() {
         {renderNavigation()}
         <Box sx={{ 
           height: 'calc(100vh - 64px)',
-          overflow: 'hidden'
+          width: '100vw',
+          overflow: 'auto'
         }}>
           <PropertyCalculator 
             canSearch={canSearch()}

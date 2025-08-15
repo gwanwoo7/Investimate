@@ -157,27 +157,40 @@ export default function CommunityChat() {
   const currentUser = db.getCurrentUser();
 
   return (
-    <Box sx={{ 
-      height: '100%',
-      overflow: 'auto',
-      p: 3,
-      maxWidth: 800,
-      mx: 'auto',
-      width: '100%',
-      bgcolor: 'background.default'
-    }}>
-      {/* Welcome Section */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h4" gutterBottom sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          gap: 2,
-          fontWeight: 'bold'
+    <Box 
+      sx={{ 
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        bgcolor: 'background.default'
+      }}
+    >
+      <Box sx={{ 
+        flex: 1, 
+        overflow: 'auto',
+        display: 'flex',
+        justifyContent: 'center',
+        py: 3
+      }}>
+        <Box sx={{ 
+          width: '100%',
+          maxWidth: 1200,
+          px: { xs: 2, md: 4 }
         }}>
-          <Users size={32} />
-          Investment Community
-        </Typography>
+          {/* Welcome Section */}
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography variant="h4" gutterBottom sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              gap: 2,
+              fontWeight: 'bold'
+            }}>
+              <Users size={32} />
+              Investment Community
+            </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
           Connect with fellow real estate investors, share insights, and learn from the community.
         </Typography>
@@ -409,6 +422,8 @@ export default function CommunityChat() {
           </CardContent>
         </Card>
       )}
+        </Box>
+      </Box>
     </Box>
   );
 }

@@ -9,6 +9,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import DatabaseService from '../services/databaseService';
+import OAuthService, { type OAuthUser } from '../services/oauthService';
 
 interface SignupPageProps {
   onSignup: (email: string) => void;
@@ -25,6 +26,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const [loading, setLoading] = useState(false);
 
   const db = DatabaseService.getInstance();
+  const oauthService = OAuthService.getInstance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,11 +66,53 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   };
 
   const handleGoogleSignup = async () => {
-    setError('Google OAuth integration coming soon! Use the form below to create an account.');
+    if (!oauthService.isGoogleConfigured()) {
+      setError('Google OAuth is not configured. Please use the form below to create an account.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
+      
+      // Create new user with OAuth info
+      const user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
+      
+      db.setCurrentUser(user);
+      onSignup(user.email);
+    } catch (err) {
+      console.error('Google signup error:', err);
+      setError(err instanceof Error ? err.message : 'Google signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAppleSignup = async () => {
-    setError('Apple Sign In integration coming soon! Use the form below to create an account.');
+    if (!oauthService.isAppleConfigured()) {
+      setError('Apple Sign In is not configured. Please use the form below to create an account.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const oauthUser: OAuthUser = await oauthService.signInWithApple();
+      
+      // Create new user with OAuth info
+      const user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
+      
+      db.setCurrentUser(user);
+      onSignup(user.email);
+    } catch (err) {
+      console.error('Apple signup error:', err);
+      setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

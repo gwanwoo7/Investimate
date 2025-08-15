@@ -31,11 +31,12 @@ A comprehensive React TypeScript application for analyzing rental property inves
 - **Property Reviews**: Learn from real experiences
 - **Expert Tips**: Professional advice and strategies
 
-### 🔐 Secure Authentication
+### 🔐 Authentication & Security
 - **Google OAuth**: Secure Google Sign-In integration
-- **Apple Sign In**: Apple authentication support
-- **JWT Security**: Secure token-based authentication
-- **CSRF Protection**: Advanced security measures
+- **Apple Sign In**: Apple authentication support  
+- **Demo Login**: Quick testing without registration
+- **Local Storage**: Secure session management
+- **OAuth Provider Support**: Extensible authentication system
 
 ### 💳 Payment Integration
 - **Stripe Integration**: PCI-compliant payment processing
@@ -80,7 +81,31 @@ A comprehensive React TypeScript application for analyzing rental property inves
    npm run dev
    ```
 
-## 🔧 Build & Deploy
+## � OAuth Setup (Optional)
+
+To enable Google and Apple authentication:
+
+1. **Copy Environment Variables**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure Google OAuth**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create OAuth 2.0 credentials
+   - Add your Client ID to `.env` as `VITE_GOOGLE_CLIENT_ID`
+
+3. **Configure Apple Sign In**
+   - Set up Apple Developer account
+   - Create Service ID for Sign In with Apple
+   - Add Client ID to `.env` as `VITE_APPLE_CLIENT_ID`
+
+4. **Detailed Setup Guide**
+   - See [OAUTH_SETUP_GUIDE.md](./OAUTH_SETUP_GUIDE.md) for complete instructions
+
+> **Note**: OAuth is optional. The app includes a demo login for testing without OAuth setup.
+
+## �🔧 Build & Deploy
 
 ### Local Build
 ```bash

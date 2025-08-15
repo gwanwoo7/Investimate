@@ -9,6 +9,8 @@ export interface User {
   isSubscribed: boolean;
   joinDate: string;
   hashedPassword?: string;
+  oauthProvider?: 'google' | 'apple';
+  oauthId?: string;
 }
 
 export interface CommunityPost {
@@ -313,6 +315,50 @@ class DatabaseService {
         category: 'First Time Investor'
       }
     ];
+  }
+
+  // OAuth authentication methods
+  async createOAuthUser(email: string, name: string, provider: 'google' | 'apple', oauthId: string, avatar?: string): Promise<User> {
+    const users = this.getUsers();
+    
+    // Check if user already exists with this email or OAuth ID
+    const existingUser = users.find(u => u.email === email || (u.oauthProvider === provider && u.oauthId === oauthId));
+    if (existingUser) {
+      // Update existing user with OAuth info if needed
+      if (!existingUser.oauthProvider) {
+        existingUser.oauthProvider = provider;
+        existingUser.oauthId = oauthId;
+        if (avatar) existingUser.avatar = avatar;
+        localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+      }
+      return existingUser;
+    }
+
+    const newUser: User = {
+      id: this.generateId(),
+      email,
+      name,
+      avatar: avatar || this.generateAvatar(name),
+      isSubscribed: false,
+      joinDate: new Date().toISOString(),
+      oauthProvider: provider,
+      oauthId: oauthId
+    };
+
+    users.push(newUser);
+    localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    return newUser;
+  }
+
+  async authenticateOAuthUser(provider: 'google' | 'apple', oauthId: string, email: string): Promise<User> {
+    const users = this.getUsers();
+    const user = users.find(u => u.oauthProvider === provider && u.oauthId === oauthId);
+    
+    if (!user) {
+      throw new Error('OAuth user not found. Please sign up first.');
+    }
+
+    return user;
   }
 
   // Clear all data (for testing)

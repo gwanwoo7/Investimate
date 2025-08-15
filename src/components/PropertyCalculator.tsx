@@ -117,8 +117,9 @@ export default function PropertyCalculator({
               display: 'flex', 
               gap: 2, 
               flexDirection: { xs: 'column', lg: 'row' },
-              height: '100%',
-              width: '100%'
+              minHeight: '600px',
+              width: '100%',
+              height: '100%'
             }}
           >
             {/* Search Limit Warning */}
@@ -146,14 +147,11 @@ export default function PropertyCalculator({
               flex: '1 1 50%', 
               display: 'flex', 
               flexDirection: 'column',
-              minHeight: 0,
-              height: '100%'
+              minHeight: '600px'
             }}>
               {/* Search Form - Scrollable */}
               <Box sx={{ 
-                height: '100%',
-                minHeight: 0,
-                overflow: 'hidden',
+                minHeight: '600px',
                 display: 'flex',
                 flexDirection: 'column'
               }}>
@@ -169,7 +167,7 @@ export default function PropertyCalculator({
             {/* Right side - Map */}
             <Box sx={{ 
               flex: '1 1 50%',
-              minHeight: { xs: '400px', lg: '100%' },
+              minHeight: { xs: '400px', lg: '600px' },
               height: { xs: '400px', lg: 'auto' }
             }}>
               <InteractiveMap 
@@ -226,22 +224,23 @@ export default function PropertyCalculator({
   return (
     <Box 
       sx={{ 
-        height: '100vh',
-        width: '100vw',
+        height: '100%',
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
         bgcolor: 'background.default'
       }}
     >
       <Box sx={{ 
-        p: { xs: 2, md: 3 }, 
-        borderBottom: 1, 
-        borderColor: 'divider',
+        p: { xs: 1, md: 2 }, 
         bgcolor: 'background.paper',
-        boxShadow: 1
+        flexShrink: 0
       }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ 
+          fontWeight: 'bold', 
+          color: 'primary.main',
+          textAlign: 'center'
+        }}>
           🏠 Find Investment Properties
         </Typography>
         
@@ -251,7 +250,7 @@ export default function PropertyCalculator({
           </Box>
         )}
 
-        <Paper sx={{ p: { xs: 2, md: 3 } }}>
+        <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
           <Stepper activeStep={activeStep} alternativeLabel>
             {steps.map((label) => (
               <Step key={label}>
@@ -259,53 +258,73 @@ export default function PropertyCalculator({
               </Step>
             ))}
           </Stepper>
-        </Paper>
-      </Box>
-
-      <Box sx={{ flex: 1, overflow: 'hidden', p: { xs: 1, md: 2 } }}>
-        <Paper sx={{ 
-          height: '100%', 
-          p: { xs: 2, md: 3 }, 
-          display: 'flex', 
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}>
-          <Box sx={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
-            {renderStepContent(activeStep)}
-          </Box>
-        </Paper>
+        </Box>
       </Box>
 
       <Box sx={{ 
-        p: { xs: 2, md: 3 }, 
-        borderTop: 1, 
-        borderColor: 'divider',
-        bgcolor: 'background.paper',
-        boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
+        flex: 1, 
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden'
       }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            disabled={activeStep === 0}
-            onClick={handleBack}
-          >
-            Back
-          </Button>
-          
+        <Box sx={{ 
+          flex: 1,
+          display: 'flex', 
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden'
+        }}>
+          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+            {renderStepContent(activeStep)}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Action Buttons Section - Fixed at bottom */}
+      <Box sx={{ 
+        p: { xs: 1, md: 2 }, 
+        bgcolor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        flexShrink: 0
+      }}>
+        <Box sx={{ 
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap'
+        }}>
           {activeStep === 0 && properties.length > 0 && (
             <Button
               variant="contained"
               onClick={() => setActiveStep(1)}
-              sx={{ ml: 2 }}
+              sx={{ 
+                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1976D2 30%, #1BA1F2 90%)',
+                },
+                px: 3,
+                py: 1,
+                fontSize: '1rem'
+              }}
             >
-              View Property List ({properties.length} found)
+              📋 View Property List ({properties.length} found)
             </Button>
           )}
           
           <Button
             variant="outlined"
             onClick={handleReset}
+            sx={{ 
+              px: 3, 
+              py: 1,
+              fontSize: '1rem'
+            }}
           >
-            Reset
+            🔄 Reset Search
           </Button>
         </Box>
       </Box>

@@ -9,6 +9,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import DatabaseService from '../services/databaseService';
+import OAuthService, { type OAuthUser } from '../services/oauthService';
 
 interface LoginPageProps {
   onLogin: (email: string) => void;
@@ -23,6 +24,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
   const [loading, setLoading] = useState(false);
 
   const db = DatabaseService.getInstance();
+  const oauthService = OAuthService.getInstance();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,11 +74,65 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
   };
 
   const handleGoogleLogin = async () => {
-    setError('Google OAuth integration coming soon! Use demo login below.');
+    if (!oauthService.isGoogleConfigured()) {
+      setError('Google OAuth is not configured. Please contact support or use the demo login below.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
+      
+      // Try to find existing user or create new one
+      let user;
+      try {
+        user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
+      } catch {
+        // User doesn't exist, create new one
+        user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
+      }
+      
+      db.setCurrentUser(user);
+      onLogin(user.email);
+    } catch (err) {
+      console.error('Google login error:', err);
+      setError(err instanceof Error ? err.message : 'Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAppleLogin = async () => {
-    setError('Apple Sign In integration coming soon! Use demo login below.');
+    if (!oauthService.isAppleConfigured()) {
+      setError('Apple Sign In is not configured. Please contact support or use the demo login below.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const oauthUser: OAuthUser = await oauthService.signInWithApple();
+      
+      // Try to find existing user or create new one
+      let user;
+      try {
+        user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
+      } catch {
+        // User doesn't exist, create new one
+        user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
+      }
+      
+      db.setCurrentUser(user);
+      onLogin(user.email);
+    } catch (err) {
+      console.error('Apple login error:', err);
+      setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
