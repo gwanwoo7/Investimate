@@ -13,6 +13,8 @@ VITE_GOOGLE_CLIENT_ID = 1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.goog
 VITE_RAPID_API_KEY = b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c
 ```
 
+> **Important**: Use the actual values from your `.env.local` file (not committed to Git for security).
+
 ### 2. Update Google OAuth Configuration
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)

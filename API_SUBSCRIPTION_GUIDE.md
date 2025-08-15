@@ -48,13 +48,13 @@ After subscribing, test the APIs:
 curl --request GET \
   --url 'https://redfin-com-data.p.rapidapi.com/properties/search-rent?regionId=6_13410' \
   --header 'x-rapidapi-host: redfin-com-data.p.rapidapi.com' \
-  --header 'x-rapidapi-key: b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c'
+  --header 'x-rapidapi-key: YOUR_RAPID_API_KEY_HERE'
 
 # Test Zillow API  
 curl --request GET \
   --url 'https://zillow-com1.p.rapidapi.com/marketData?resourceId=32810&beds=0&propertyTypes=house' \
   --header 'x-rapidapi-host: zillow-com1.p.rapidapi.com' \
-  --header 'x-rapidapi-key: b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c'
+  --header 'x-rapidapi-key: YOUR_RAPID_API_KEY_HERE'
 ```
 
 ### **Step 4: Restart Your App**
