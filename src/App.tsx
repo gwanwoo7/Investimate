@@ -1,12 +1,14 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Typography, Box, Button, Card, CardContent, Container, AppBar, Toolbar, Tab, Tabs } from '@mui/material';
-import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
+import { Calculator, Users, Home, TrendingUp, Settings } from 'lucide-react';
 import PropertyCalculator from './components/PropertyCalculator';
 import CommunityChat from './components/CommunityChat';
-import LoginPage from './components/LoginPage';
-import SignupPage from './components/SignupPage';
-import PaymentPage from './components/PaymentPage';
+// import PaymentPage from './components/PaymentPage';
+import AdminDashboard from './components/AdminDashboard';
+import EnhancedLoginPage from './components/EnhancedLoginPage';
+import EnhancedSignupPage from './components/EnhancedSignupPage';
+import AuthCallback from './components/AuthCallback';
 import { useState } from 'react';
 
 const theme = createTheme({
@@ -188,6 +190,11 @@ function App() {
                   label="Community" 
                   sx={{ minHeight: 48, height: 48, py: 1 }}
                 />
+                <Tab 
+                  icon={<Settings size={20} />} 
+                  label="Admin" 
+                  sx={{ minHeight: 48, height: 48, py: 1 }}
+                />
               </Tabs>
             )}
           </Box>
@@ -257,7 +264,7 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <LoginPage 
+        <EnhancedLoginPage 
           onLogin={handleLogin}
           onClose={() => setShowLogin(false)}
           onSignup={() => { setShowLogin(false); handleShowSignup(); }}
@@ -270,7 +277,7 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <SignupPage 
+        <EnhancedSignupPage 
           onSignup={handleSignup}
           onClose={() => setShowSignup(false)}
           onLogin={() => { setShowSignup(false); handleShowLogin(); }}
@@ -279,12 +286,15 @@ function App() {
     );
   }
 
+  // Temporarily disable payment page
+  /*
   if (showPayment) {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {renderNavigation()}
         <Box sx={{ 
+          width: '100%', 
           minHeight: 'calc(100vh - 64px)',
           height: 'calc(100vh - 64px)',
           bgcolor: 'background.default'
@@ -297,6 +307,7 @@ function App() {
       </ThemeProvider>
     );
   }
+  */
 
   if (currentTab === 1) {
     return (
@@ -605,6 +616,16 @@ function App() {
             minHeight: 'calc(100vh - 64px)'
           }}>
             <CommunityChat />
+          </Box>
+        )}
+
+        {currentTab === 3 && (
+          <Box sx={{ 
+            width: '100%', 
+            minHeight: 'calc(100vh - 64px)',
+            p: 2
+          }}>
+            <AdminDashboard />
           </Box>
         )}
       </Box>

@@ -99,6 +99,19 @@ class DatabaseService {
     return userWithoutPassword;
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    const users = this.getUsers();
+    const user = users.find(u => u.email === email);
+    
+    if (!user) {
+      return null;
+    }
+
+    // Don't return password hash
+    const { hashedPassword: _, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
   getCurrentUser(): User | null {
     const userStr = localStorage.getItem(this.CURRENT_USER_KEY);
     return userStr ? JSON.parse(userStr) : null;
@@ -114,8 +127,22 @@ class DatabaseService {
   }
 
   getUsers(): User[] {
-    const usersStr = localStorage.getItem(this.USERS_KEY);
-    return usersStr ? JSON.parse(usersStr) : [];
+    try {
+      const users = localStorage.getItem(this.USERS_KEY);
+      return users ? JSON.parse(users) : [];
+    } catch (error) {
+      console.error('Error loading users:', error);
+      return [];
+    }
+  }
+
+  // Get all users (admin method)
+  getAllUsers(): User[] {
+    return this.getUsers().map(user => {
+      // Don't return password hash
+      const { hashedPassword: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    });
   }
 
   updateUserSubscription(userId: string, isSubscribed: boolean): User | null {

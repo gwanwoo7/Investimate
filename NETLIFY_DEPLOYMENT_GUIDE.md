@@ -8,12 +8,21 @@ After deploying to Netlify, you need to configure environment variables for OAut
 
 Go to your Netlify dashboard → Site Settings → Environment Variables and add:
 
+**Required:**
 ```
 VITE_GOOGLE_CLIENT_ID = 1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.googleusercontent.com
 VITE_RAPID_API_KEY = b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c
 ```
 
+**Recommended (Supabase Authentication):**
+```
+VITE_SUPABASE_URL = https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY = your-supabase-anon-key
+```
+
 > **Important**: Use the actual values from your `.env.local` file (not committed to Git for security).
+
+> **Supabase Setup**: See `SUPABASE_SETUP_GUIDE.md` for complete Supabase configuration instructions.
 
 ### 2. Update Google OAuth Configuration
 

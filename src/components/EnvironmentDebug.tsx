@@ -9,6 +9,8 @@ import { Box, Typography, Paper, Alert } from '@mui/material';
 export default function EnvironmentDebug() {
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const rapidApiKey = import.meta.env.VITE_RAPID_API_KEY;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   
   return (
     <Paper sx={{ p: 2, m: 2, bgcolor: 'background.paper' }}>
@@ -16,9 +18,20 @@ export default function EnvironmentDebug() {
         🔧 Environment Debug (Remove in Production)
       </Typography>
       
-      <Alert severity={googleClientId ? "success" : "error"} sx={{ mb: 1 }}>
+      <Alert severity={supabaseUrl && supabaseAnonKey ? "success" : "warning"} sx={{ mb: 1 }}>
         <Typography variant="body2">
-          <strong>Google OAuth:</strong> {googleClientId ? "✅ Configured" : "❌ Not configured"}
+          <strong>Supabase Auth:</strong> {supabaseUrl && supabaseAnonKey ? "✅ Configured (Recommended)" : "⚠️ Not configured"}
+          {supabaseUrl && (
+            <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
+              (URL: {supabaseUrl.substring(0, 30)}...)
+            </Box>
+          )}
+        </Typography>
+      </Alert>
+      
+      <Alert severity={googleClientId ? "success" : "warning"} sx={{ mb: 1 }}>
+        <Typography variant="body2">
+          <strong>Google OAuth (Legacy):</strong> {googleClientId ? "✅ Configured" : "⚠️ Not configured"}
           {googleClientId && (
             <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
               (ID: {googleClientId.substring(0, 20)}...)
@@ -37,6 +50,15 @@ export default function EnvironmentDebug() {
         Environment: {import.meta.env.MODE} | 
         URL: {window.location.origin}
       </Typography>
+      
+      {!supabaseUrl && (
+        <Box sx={{ mt: 2, p: 1, bgcolor: 'info.light', borderRadius: 1 }}>
+          <Typography variant="caption" color="info.main">
+            💡 Tip: Set up Supabase for secure email verification and enhanced security. 
+            See SUPABASE_SETUP_GUIDE.md for instructions.
+          </Typography>
+        </Box>
+      )}
     </Paper>
   );
 }
