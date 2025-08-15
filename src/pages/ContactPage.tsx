@@ -8,17 +8,18 @@ import {
   Button,
   Alert,
   Snackbar,
-  Grid,
   Card,
-  CardContent
+  CardContent,
+  AppBar,
+  Toolbar,
+  IconButton
 } from '@mui/material';
 import {
   Email,
-  Phone,
-  LocationOn,
   Send,
   Person,
-  Subject
+  Subject,
+  ArrowBack
 } from '@mui/icons-material';
 
 interface ContactPageProps {
@@ -52,27 +53,36 @@ export default function ContactPage({ onBack }: ContactPageProps) {
     setLoading(true);
 
     try {
-      // Here you would integrate with your email service
-      // For now, we'll simulate sending an email
-      await simulateEmailSend();
+      // Create a mailto link to send email
+      const subject = encodeURIComponent(formData.subject);
+      const body = encodeURIComponent(
+        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+      );
+      const mailtoLink = `mailto:admin@investimate.com?subject=${subject}&body=${body}`;
+      
+      // Open the user's default email client
+      window.location.href = mailtoLink;
       
       setSnackbar({
         open: true,
-        message: 'Your message has been sent successfully! We\'ll get back to you soon.',
+        message: 'Your email client has been opened. Please send the message from there.',
         severity: 'success'
       });
       
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
+      // Reset form after a delay
+      setTimeout(() => {
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      }, 2000);
+      
     } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Failed to send message. Please try again.',
+        message: 'Failed to open email client. Please copy and send the message manually to admin@investimate.com',
         severity: 'error'
       });
     } finally {
@@ -80,16 +90,27 @@ export default function ContactPage({ onBack }: ContactPageProps) {
     }
   };
 
-  const simulateEmailSend = () => {
-    return new Promise((resolve) => {
-      setTimeout(resolve, 1000); // Simulate API call delay
-    });
-  };
-
   const isFormValid = formData.name && formData.email && formData.subject && formData.message;
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Header */}
+      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={onBack}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Contact Us
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}
         <Paper sx={{ p: 4, mb: 4, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
@@ -192,35 +213,6 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         admin@investimate.com
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                <Card variant="outlined">
-                  <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Phone color="primary" />
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Phone
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        +1 (555) 123-4567
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                <Card variant="outlined">
-                  <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <LocationOn color="primary" />
-                    <Box>
-                      <Typography variant="subtitle2" fontWeight="bold">
-                        Address
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        123 Investment Street<br />
-                        Real Estate City, RC 12345
                       </Typography>
                     </Box>
                   </CardContent>

@@ -76,20 +76,33 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setSuccess('');
 
     try {
+      // Check for duplicate email first (both Supabase and local)
+      const existingUser = await db.getUserByEmail(email);
+      if (existingUser) {
+        setError('An account with this email already exists. Please use a different email or sign in.');
+        setLoading(false);
+        return;
+      }
+
       // Try Supabase Auth first (if configured)
       if (supabaseAuth.isConfigured()) {
         const signUpData: SignUpData = { email, password, name };
         const { user, error: authError } = await supabaseAuth.signUp(signUpData);
         
         if (authError) {
-          setError(authError);
+          // Handle specific Supabase duplicate email errors
+          if (authError.includes('already registered') || authError.includes('already exists')) {
+            setError('An account with this email already exists. Please use a different email or sign in.');
+          } else {
+            setError(authError);
+          }
           setLoading(false);
           return;
         }
 
         if (user) {
           if (!user.emailVerified) {
-            setSuccess('Account created! Please check your email to verify your account before signing in.');
+            setSuccess('Account created successfully! Please check your email and click the verification link to activate your account.');
           } else {
             onSignup(user.email);
           }
@@ -99,21 +112,20 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       }
 
       // Fallback to legacy authentication
-      const existingUser = await db.getUserByEmail(email);
-      if (existingUser) {
-        setError('An account with this email already exists');
-        setLoading(false);
-        return;
-      }
-
       const user = await db.createUser(email, name, password);
       if (user) {
         db.setCurrentUser(user);
-        onSignup(email);
+        setSuccess('Account created successfully! You can now sign in.');
+        // Don't auto-login for better security - require email verification
+        setTimeout(() => onLogin(), 2000);
       }
     } catch (err) {
       console.error('Signup error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+      if (err instanceof Error && err.message.includes('already exists')) {
+        setError('An account with this email already exists. Please use a different email or sign in.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -128,7 +140,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       if (supabaseAuth.isConfigured()) {
         const { error: authError } = await supabaseAuth.signInWithGoogle();
         if (authError) {
-          setError(authError);
+          setError(`Google Sign-up failed: ${authError}`);
           setLoading(false);
           return;
         }
@@ -145,6 +157,14 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
 
       const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
       
+      // Check for existing user first
+      const existingUser = await db.getUserByEmail(oauthUser.email);
+      if (existingUser) {
+        setError('An account with this email already exists. Please sign in instead.');
+        setLoading(false);
+        return;
+      }
+      
       // Create new user with OAuth info
       const user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
       
@@ -153,44 +173,6 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     } catch (err) {
       console.error('Google signup error:', err);
       setError(err instanceof Error ? err.message : 'Google signup failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAppleSignup = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      // Try Supabase OAuth first
-      if (supabaseAuth.isConfigured()) {
-        const { error: authError } = await supabaseAuth.signInWithApple();
-        if (authError) {
-          setError(authError);
-          setLoading(false);
-          return;
-        }
-        return;
-      }
-
-      // Fallback to legacy OAuth
-      if (!oauthService.isAppleConfigured()) {
-        setError('Apple Sign In is not configured. Please use the form below to create an account.');
-        setLoading(false);
-        return;
-      }
-
-      const oauthUser: OAuthUser = await oauthService.signInWithApple();
-      
-      // Create new user with OAuth info
-      const user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
-      
-      db.setCurrentUser(user);
-      onSignup(user.email);
-    } catch (err) {
-      console.error('Apple signup error:', err);
-      setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -438,26 +420,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 }
               }}
             >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleAppleSignup}
-              disabled={loading}
-              sx={{ 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                color: '#000',
-                borderColor: '#000',
-                '&:hover': {
-                  borderColor: '#333',
-                  bgcolor: 'rgba(0, 0, 0, 0.04)'
-                }
-              }}
-            >
-              Apple
+              Continue with Google
             </Button>
           </Box>
 

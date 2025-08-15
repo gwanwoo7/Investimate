@@ -710,15 +710,36 @@ function App() {
                       Membership
                     </Button>
                   </Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      opacity: 0.8,
-                      textAlign: { xs: 'center', md: 'right' }
-                    }}
-                  >
-                    © 2025 Investimate. All rights reserved.
-                  </Typography>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 2,
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    textAlign: { xs: 'center', sm: 'right' }
+                  }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ opacity: 0.8 }}
+                    >
+                      © 2025 Investimate. All rights reserved.
+                    </Typography>
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={handleShowAdmin}
+                      sx={{ 
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        opacity: 0.7,
+                        '&:hover': { 
+                          color: 'primary.light',
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      Admin
+                    </Button>
+                  </Box>
                 </Box>
               </Container>
             </Box>

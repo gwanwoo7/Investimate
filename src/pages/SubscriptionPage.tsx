@@ -12,14 +12,16 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
-  Divider,
   Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   TextField,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  AppBar,
+  Toolbar,
+  IconButton
 } from '@mui/material';
 import {
   Check,
@@ -29,7 +31,8 @@ import {
   Analytics,
   Support,
   CreditCard,
-  Lock
+  Lock,
+  ArrowBack
 } from '@mui/icons-material';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -161,7 +164,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
             Processing...
           </Box>
         ) : (
-          'Subscribe Now - $4.99/month'
+          'Subscribe Now - $0.01/month (Testing)'
         )}
       </Button>
 
@@ -214,6 +217,23 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Header */}
+      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={onBack}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            Subscription Plans
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}
         <Paper sx={{ p: 4, mb: 4, textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
@@ -292,10 +312,10 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
                 Pro <Star color="primary" />
               </Typography>
               <Typography variant="h2" color="primary" gutterBottom>
-                $4.99
+                $0.01
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                per month, billed monthly
+                per month (Testing Mode)
               </Typography>
 
               <List>
@@ -378,7 +398,7 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
           </DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              You'll be charged $4.99 monthly. Cancel anytime from your account settings.
+              You'll be charged $0.01 monthly for testing purposes. This is a test subscription.
             </Typography>
             
             {paymentError && (
