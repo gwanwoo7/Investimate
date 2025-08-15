@@ -678,6 +678,7 @@ function App() {
                   }}>
                     <Button 
                       color="inherit" 
+                      onClick={handleShowAbout}
                       sx={{ 
                         textTransform: 'none',
                         fontSize: '1rem',
@@ -688,6 +689,7 @@ function App() {
                     </Button>
                     <Button 
                       color="inherit" 
+                      onClick={handleShowContact}
                       sx={{ 
                         textTransform: 'none',
                         fontSize: '1rem',
@@ -703,7 +705,7 @@ function App() {
                         fontSize: '1rem',
                         '&:hover': { color: 'primary.light' }
                       }}
-                      onClick={handleShowPayment}
+                      onClick={handleShowSubscription}
                     >
                       Membership
                     </Button>

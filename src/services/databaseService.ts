@@ -167,6 +167,42 @@ class DatabaseService {
     return null;
   }
 
+  // Delete user (admin method)
+  deleteUser(userId: string): boolean {
+    const users = this.getUsers();
+    const initialLength = users.length;
+    const filteredUsers = users.filter(u => u.id !== userId);
+    
+    if (filteredUsers.length < initialLength) {
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(filteredUsers));
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Update user (admin method)
+  updateUser(userId: string, updates: Partial<User>): User | null {
+    const users = this.getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    
+    if (userIndex !== -1) {
+      users[userIndex] = { ...users[userIndex], ...updates };
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+      
+      // Update current user if it's the same user
+      const currentUser = this.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        const updatedUser = { ...currentUser, ...updates };
+        this.setCurrentUser(updatedUser);
+      }
+      
+      return users[userIndex];
+    }
+    
+    return null;
+  }
+
   // Community Posts Management
   createPost(
     title: string, 
