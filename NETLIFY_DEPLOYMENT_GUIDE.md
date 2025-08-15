@@ -14,7 +14,7 @@ VITE_GOOGLE_CLIENT_ID = 1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.goog
 VITE_RAPID_API_KEY = b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c
 ```
 
-**Recommended (Supabase Authentication):**
+**Recommended (Supabase Authentication - Production Ready):**
 ```
 VITE_SUPABASE_URL = https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY = your-supabase-anon-key
@@ -22,7 +22,8 @@ VITE_SUPABASE_ANON_KEY = your-supabase-anon-key
 
 > **Important**: Use the actual values from your `.env.local` file (not committed to Git for security).
 
-> **Supabase Setup**: See `SUPABASE_SETUP_GUIDE.md` for complete Supabase configuration instructions.
+> **Supabase Setup**: See `SUPABASE_SETUP_COMPLETE.md` for complete Supabase configuration instructions.
+> **Netlify + Supabase**: See `NETLIFY_SUPABASE_SETUP.md` for production deployment specifics.
 
 ### 2. Update Google OAuth Configuration
 
@@ -52,7 +53,7 @@ The `netlify.toml` file includes configuration to prevent build failures from se
 
 ```toml
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "VITE_GOOGLE_CLIENT_ID,VITE_RAPID_API_KEY,NETLIFY_DATABASE_URL,NETLIFY_DATABASE_URL_UNPOOLED,NODE_VERSION"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_GOOGLE_CLIENT_ID,VITE_RAPID_API_KEY,VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,NETLIFY_DATABASE_URL,NETLIFY_DATABASE_URL_UNPOOLED,NODE_VERSION"
 ```
 
 This tells Netlify that these environment variables are expected and should not trigger build failures.
