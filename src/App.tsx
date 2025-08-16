@@ -149,6 +149,9 @@ function App() {
   const renderNavigation = () => (
     <NavigationBar
       onLogoClick={handleLogoClick}
+      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription}
+      currentTab={currentTab}
+      onTabChange={handleTabChange}
       onAboutClick={handleShowAbout}
       onContactClick={handleShowContact}
       onSubscriptionClick={handleShowSubscription}
@@ -260,57 +263,8 @@ function App() {
         <CssBaseline />
         {renderNavigation()}
         
-        {/* Main Tabs for Calculator Page */}
         <Box sx={{ 
-          borderBottom: 1, 
-          borderColor: 'divider',
-          bgcolor: 'white',
-          position: 'sticky',
-          top: 64,
-          zIndex: 100
-        }}>
-          <Container maxWidth={false} disableGutters>
-            <Tabs 
-              value={currentTab} 
-              onChange={handleTabChange} 
-              sx={{ 
-                minHeight: 48,
-                height: 48,
-                pl: 3,
-                '& .MuiTab-root': {
-                  minHeight: 48,
-                  height: 48,
-                  paddingTop: '6px',
-                  paddingBottom: '6px',
-                  minWidth: 120,
-                  fontSize: '0.875rem'
-                },
-                '& .MuiTabs-flexContainer': {
-                  gap: 2
-                }
-              }}
-            >
-              <Tab 
-                icon={<Home size={20} />} 
-                label="Home" 
-                sx={{ minHeight: 48, height: 48, py: 1 }}
-              />
-              <Tab 
-                icon={<Calculator size={20} />} 
-                label="Calculator" 
-                sx={{ minHeight: 48, height: 48, py: 1 }}
-              />
-              <Tab 
-                icon={<Users size={20} />} 
-                label="Community" 
-                sx={{ minHeight: 48, height: 48, py: 1 }}
-              />
-            </Tabs>
-          </Container>
-        </Box>
-        
-        <Box sx={{ 
-          height: 'calc(100vh - 112px)', // 64px nav + 48px tabs
+          height: 'calc(100vh - 64px)', // Just nav bar height
           width: '100vw',
           overflow: 'auto'
         }}>
@@ -333,58 +287,9 @@ function App() {
       {/* Navigation */}
       {renderNavigation()}
 
-      {/* Main Tabs */}
-      <Box sx={{ 
-        borderBottom: 1, 
-        borderColor: 'divider',
-        bgcolor: 'white',
-        position: 'sticky',
-        top: 64,
-        zIndex: 100
-      }}>
-        <Container maxWidth={false} disableGutters>
-          <Tabs 
-            value={currentTab} 
-            onChange={handleTabChange} 
-            sx={{ 
-              minHeight: 48,
-              height: 48,
-              pl: 3,
-              '& .MuiTab-root': {
-                minHeight: 48,
-                height: 48,
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                minWidth: 120,
-                fontSize: '0.875rem'
-              },
-              '& .MuiTabs-flexContainer': {
-                gap: 2
-              }
-            }}
-          >
-            <Tab 
-              icon={<Home size={20} />} 
-              label="Home" 
-              sx={{ minHeight: 48, height: 48, py: 1 }}
-            />
-            <Tab 
-              icon={<Calculator size={20} />} 
-              label="Calculator" 
-              sx={{ minHeight: 48, height: 48, py: 1 }}
-            />
-            <Tab 
-              icon={<Users size={20} />} 
-              label="Community" 
-              sx={{ minHeight: 48, height: 48, py: 1 }}
-            />
-          </Tabs>
-        </Container>
-      </Box>
-
       {/* Main Content */}
       <Box sx={{ 
-        minHeight: 'calc(100vh - 112px)', // 64px nav + 48px tabs
+        minHeight: 'calc(100vh - 64px)', // Just nav bar height
         bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column'
@@ -680,7 +585,7 @@ function App() {
         {currentTab === 2 && (
           <Box sx={{ 
             width: '100%', 
-            minHeight: 'calc(100vh - 112px)' // 64px nav + 48px tabs
+            minHeight: 'calc(100vh - 64px)' // Just nav bar height
           }}>
             <CommunityChat />
           </Box>

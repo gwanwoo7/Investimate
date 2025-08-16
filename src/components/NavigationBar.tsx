@@ -6,7 +6,9 @@ import {
   Button,
   Box,
   Container,
-  IconButton
+  IconButton,
+  Tab,
+  Tabs
 } from '@mui/material';
 import {
   ArrowBack
@@ -14,7 +16,10 @@ import {
 import {
   Info,
   Phone,
-  CreditCard
+  CreditCard,
+  Home,
+  Calculator,
+  Users
 } from 'lucide-react';
 
 interface NavigationBarProps {
@@ -23,6 +28,9 @@ interface NavigationBarProps {
   onBackClick?: () => void;
   title?: string;
   showNavButtons?: boolean;
+  showMainTabs?: boolean;
+  currentTab?: number;
+  onTabChange?: (event: React.SyntheticEvent, newValue: number) => void;
   onAboutClick?: () => void;
   onContactClick?: () => void;
   onSubscriptionClick?: () => void;
@@ -41,6 +49,9 @@ export default function NavigationBar({
   onBackClick,
   title,
   showNavButtons = true,
+  showMainTabs = false,
+  currentTab = 0,
+  onTabChange,
   onAboutClick,
   onContactClick,
   onSubscriptionClick,
@@ -127,6 +138,58 @@ export default function NavigationBar({
               </Typography>
             )}
           </Box>
+          
+          {/* Center section - Main Tabs */}
+          {showMainTabs && onTabChange && (
+            <Box sx={{ 
+              flexGrow: 1, 
+              display: 'flex', 
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: 64 
+            }}>
+              <Tabs 
+                value={currentTab} 
+                onChange={onTabChange} 
+                sx={{ 
+                  minHeight: 48,
+                  height: 48,
+                  '& .MuiTab-root': {
+                    minHeight: 48,
+                    height: 48,
+                    paddingTop: '6px',
+                    paddingBottom: '6px',
+                    minWidth: 120,
+                    fontSize: '0.875rem'
+                  },
+                  '& .MuiTabs-flexContainer': {
+                    gap: 2
+                  }
+                }}
+              >
+                <Tab 
+                  icon={<Home size={20} />} 
+                  label="Home" 
+                  sx={{ minHeight: 48, height: 48, py: 1 }}
+                />
+                <Tab 
+                  icon={<Calculator size={20} />} 
+                  label="Calculator" 
+                  sx={{ minHeight: 48, height: 48, py: 1 }}
+                />
+                <Tab 
+                  icon={<Users size={20} />} 
+                  label="Community" 
+                  sx={{ minHeight: 48, height: 48, py: 1 }}
+                />
+              </Tabs>
+            </Box>
+          )}
+          
+          {/* Spacer for pages without main tabs */}
+          {!showMainTabs && (
+            <Box sx={{ flexGrow: 1 }} />
+          )}
           
           {/* Right section */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 64 }}>
