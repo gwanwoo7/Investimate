@@ -131,7 +131,7 @@ console.log('Supabase Key:', import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0
 Ensure you have:
 ```bash
 # Stripe
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51Ru3iJFDHpK9BJBPUk1NJueBwWLmzQYuMI8eNNHui1eZM9HdOp51Os4PAEOIZXOwuR2INwUPwMV5tWFLnpgYHagh00iYfwERhc
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
 
 # Supabase
 VITE_SUPABASE_URL=https://jrfnerjluqcrzfbhtvza.supabase.co

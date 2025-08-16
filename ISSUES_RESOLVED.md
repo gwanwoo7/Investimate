@@ -6,7 +6,7 @@
 **Status**: ✅ FIXED
 **Solution**: Added missing Stripe publishable key to `.env` file
 ```env
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51QbCkpIUG9VwVqMWB0LCbQC3KKK0KP2eFzCJTiQHGTGOhWPLj5aRDAYvkQpVQf6aPCPn8OAn1WpN6ZiMGm4UpE7E00BNRnZh0x
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
 ```
 
 ### 2. Admin Page Link Removed from Top Menu

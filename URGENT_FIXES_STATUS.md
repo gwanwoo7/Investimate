@@ -69,7 +69,7 @@
 ## 🔍 **ENVIRONMENT STATUS**
 
 ```env
-✅ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51QbCkpIUG9VwVqMWB0LCbQC3KKK0KP2eFzCJTiQHGTGOhWPLj5aRDAYvkQpVQf6aPCPn8OAn1WpN6ZiMGm4UpE7E00BNRnZh0x
+✅ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
 ✅ VITE_SUPABASE_URL=https://jrfnerjluqcrzfbhtvza.supabase.co
 ✅ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ✅ VITE_GOOGLE_CLIENT_ID=1062932170879-k3r44h3g5n8m7aj7vh8vfohq9ckbk4lk.apps.googleusercontent.com
