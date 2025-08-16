@@ -18,7 +18,8 @@ The error occurs because:
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. **Select your project** or create a new one
 3. **Navigate to**: APIs & Services → Credentials
-4. **Find your OAuth 2.0 Client ID**: `1062932170879-k3r44h3g5n8m7aj7vh8vfohq9ckbk4lk.apps.googleusercontent.com`
+4. **Find your OAuth 2.0 Client ID**: `1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.googleusercontent.com`
+
 
 ### **Step 2: Update Authorized JavaScript Origins**
 
@@ -50,7 +51,7 @@ https://your-netlify-site-name.netlify.app/auth/callback
 2. **Select your project**: `jrfnerjluqcrzfbhtvza`
 3. **Navigate to**: Authentication → Providers → Google
 4. **Enable Google provider** and add:
-   - **Client ID**: `1062932170879-k3r44h3g5n8m7aj7vh8vfohq9ckbk4lk.apps.googleusercontent.com`
+   - **Client ID**: `1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.googleusercontent.com`
    - **Client Secret**: [Get from Google Cloud Console → Credentials]
 
 ### **Step 5: Update Site URL in Supabase**
