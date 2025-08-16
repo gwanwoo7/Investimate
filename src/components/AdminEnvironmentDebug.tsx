@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Grid,
   Alert,
   Accordion,
   AccordionSummary,
@@ -161,9 +160,9 @@ export default function AdminEnvironmentDebug() {
             Make sure all critical services are properly configured.
           </Alert>
 
-          <Grid container spacing={2}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
             {configs.map((config, index) => (
-              <Grid item xs={12} md={6} key={index}>
+              <Box key={index}>
                 <Card variant="outlined">
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
@@ -188,9 +187,9 @@ export default function AdminEnvironmentDebug() {
                     )}
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
 
           <Box sx={{ mt: 3 }}>
             <Typography variant="h6" gutterBottom>
