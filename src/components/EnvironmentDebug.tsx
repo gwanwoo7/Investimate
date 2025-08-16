@@ -11,6 +11,7 @@ export default function EnvironmentDebug() {
   const rapidApiKey = import.meta.env.VITE_RAPID_API_KEY;
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
   
   return (
     <Paper sx={{ p: 2, m: 2, bgcolor: 'background.paper' }}>
@@ -43,6 +44,17 @@ export default function EnvironmentDebug() {
       <Alert severity={rapidApiKey ? "success" : "warning"} sx={{ mb: 1 }}>
         <Typography variant="body2">
           <strong>Rapid API Key:</strong> {rapidApiKey ? "✅ Configured" : "⚠️ Not configured (will use mock data)"}
+        </Typography>
+      </Alert>
+      
+      <Alert severity={stripeKey ? "success" : "warning"} sx={{ mb: 1 }}>
+        <Typography variant="body2">
+          <strong>Stripe Payment:</strong> {stripeKey ? "✅ Configured" : "⚠️ Not configured"}
+          {stripeKey && (
+            <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
+              ({stripeKey.substring(0, 12)}...)
+            </Box>
+          )}
         </Typography>
       </Alert>
       

@@ -31,6 +31,7 @@ import {
   Lock
 } from '@mui/icons-material';
 import AdminDashboard from '../components/AdminDashboard';
+import AdminEnvironmentDebug from '../components/AdminEnvironmentDebug';
 import SupabaseAuthService from '../services/supabaseAuthService';
 import DatabaseService, { type User as BaseUser } from '../services/databaseService';
 
@@ -357,7 +358,7 @@ export default function AdminPage({ onBack }: AdminPageProps) {
 
         <TabPanel value={currentTab} index={2}>
           {/* Settings Tab */}
-          <Container maxWidth="md">
+          <Container maxWidth="lg">
             <Typography variant="h5" component="h1" gutterBottom>
               Admin Settings
             </Typography>
@@ -366,18 +367,19 @@ export default function AdminPage({ onBack }: AdminPageProps) {
               <Typography variant="h6" gutterBottom>
                 System Configuration
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Admin settings and system configuration options will be implemented here.
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Monitor and manage system configuration, API keys, and environment settings.
               </Typography>
               
+              {/* Environment Configuration Status */}
+              <AdminEnvironmentDebug />
+              
               <Box sx={{ mt: 3 }}>
-                <Alert severity="warning">
+                <Alert severity="info">
                   <Typography variant="body2">
-                    <strong>Supabase Auth: ⚠️ Not configured</strong>
+                    <strong>System Status:</strong> All critical services should show as "SUCCESS" for full functionality.
                     <br />
-                    To enable secure authentication, set up Supabase credentials in your .env.local file.
-                    <br />
-                    📋 See <strong>SUPABASE_SETUP_COMPLETE.md</strong> for step-by-step instructions.
+                    📋 See documentation files for detailed setup instructions if any services show errors.
                   </Typography>
                 </Alert>
               </Box>

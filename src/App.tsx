@@ -52,11 +52,7 @@ function App() {
   const MAX_FREE_SEARCHES = 5;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    if (newValue === 3) { // Admin tab
-      handleShowAdmin();
-    } else {
-      setCurrentTab(newValue);
-    }
+    setCurrentTab(newValue);
   };
 
   const handleLogoClick = () => {
@@ -232,11 +228,6 @@ function App() {
                 <Tab 
                   icon={<Users size={20} />} 
                   label="Community" 
-                  sx={{ minHeight: 48, height: 48, py: 1 }}
-                />
-                <Tab 
-                  icon={<Settings size={20} />} 
-                  label="Admin" 
                   sx={{ minHeight: 48, height: 48, py: 1 }}
                 />
               </Tabs>

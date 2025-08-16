@@ -16,7 +16,6 @@ import {
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignInData } from '../services/supabaseAuthService';
-import EnvironmentDebug from './EnvironmentDebug';
 
 interface LoginPageProps {
   onLogin: (email: string) => void;
@@ -222,8 +221,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
       flexDirection: 'column',
       bgcolor: '#f8fafc'
     }}>
-      {/* Environment Debug - Remove after OAuth is working */}
-      <EnvironmentDebug />
       
       {/* Navigation Bar */}
       <AppBar 

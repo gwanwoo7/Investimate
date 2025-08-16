@@ -42,8 +42,8 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 
-// Initialize Stripe (you'll need to add your publishable key)
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
+// Initialize Stripe with Vite environment variable
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface SubscriptionPageProps {
   onBack: () => void;

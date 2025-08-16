@@ -18,7 +18,6 @@ import {
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignUpData } from '../services/supabaseAuthService';
-import EnvironmentDebug from './EnvironmentDebug';
 
 interface SignupPageProps {
   onSignup: (email: string) => void;
@@ -203,8 +202,6 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       flexDirection: 'column',
       bgcolor: '#f8fafc'
     }}>
-      {/* Environment Debug - Remove after OAuth is working */}
-      <EnvironmentDebug />
       
       {/* Navigation Bar */}
       <AppBar 
