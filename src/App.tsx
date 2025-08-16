@@ -1,7 +1,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Typography, Box, Button, Card, CardContent, Container, AppBar, Toolbar, Tab, Tabs } from '@mui/material';
-import { Calculator, Users, Home, TrendingUp, Settings, Info, Phone, CreditCard } from 'lucide-react';
+import { Typography, Box, Button, Card, CardContent, Container, Tab, Tabs } from '@mui/material';
+import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
 import PropertyCalculator from './components/PropertyCalculator';
 import CommunityChat from './components/CommunityChat';
 // import PaymentPage from './components/PaymentPage';
@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import NavigationBar from './components/NavigationBar';
 import { useState } from 'react';
 
 const theme = createTheme({
@@ -146,179 +147,19 @@ function App() {
   };
 
   const renderNavigation = () => (
-    <AppBar 
-      position="static" 
-      elevation={1} 
-      sx={{ 
-        bgcolor: 'white', 
-        color: 'text.primary', 
-        height: 64,
-        minHeight: 64,
-        maxHeight: 64
-      }}
-    >
-      <Container maxWidth={false} disableGutters>
-        <Toolbar 
-          sx={{ 
-            justifyContent: 'space-between', 
-            height: 64, 
-            minHeight: '64px !important',
-            maxHeight: '64px !important',
-            paddingLeft: '24px !important',
-            paddingRight: '24px !important',
-            width: '100%'
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Typography 
-              variant="h5" 
-              component="div" 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: 'primary.main',
-                cursor: 'pointer',
-                '&:hover': { color: 'primary.dark' },
-                lineHeight: 1,
-                height: 'auto'
-              }}
-              onClick={handleLogoClick}
-            >
-              🏡 Investimate
-            </Typography>
-          </Box>
-          
-          {/* Center section for tabs - only show on main pages */}
-          <Box sx={{ 
-            flexGrow: 1, 
-            display: 'flex', 
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: 64 
-          }}>
-            {!showLogin && !showSignup && !showPayment && (
-              <Tabs 
-                value={currentTab} 
-                onChange={handleTabChange} 
-                sx={{ 
-                  minHeight: 48,
-                  height: 48,
-                  '& .MuiTab-root': {
-                    minHeight: 48,
-                    height: 48,
-                    paddingTop: '6px',
-                    paddingBottom: '6px',
-                    minWidth: 120,
-                    fontSize: '0.875rem'
-                  },
-                  '& .MuiTabs-flexContainer': {
-                    gap: 2
-                  }
-                }}
-              >
-                <Tab 
-                  icon={<Home size={20} />} 
-                  label="Home" 
-                  sx={{ minHeight: 48, height: 48, py: 1 }}
-                />
-                <Tab 
-                  icon={<Calculator size={20} />} 
-                  label="Calculator" 
-                  sx={{ minHeight: 48, height: 48, py: 1 }}
-                />
-                <Tab 
-                  icon={<Users size={20} />} 
-                  label="Community" 
-                  sx={{ minHeight: 48, height: 48, py: 1 }}
-                />
-              </Tabs>
-            )}
-          </Box>
-          
-          {/* Right section for user controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 64 }}>
-            {/* Navigation Links */}
-            <Button 
-              size="small" 
-              onClick={handleShowAbout}
-              startIcon={<Info size={16} />}
-              sx={{ textTransform: 'none' }}
-            >
-              About
-            </Button>
-            <Button 
-              size="small" 
-              onClick={handleShowContact}
-              startIcon={<Phone size={16} />}
-              sx={{ textTransform: 'none' }}
-            >
-              Contact
-            </Button>
-            <Button 
-              size="small" 
-              onClick={handleShowSubscription}
-              startIcon={<CreditCard size={16} />}
-              sx={{ textTransform: 'none' }}
-              color="success"
-            >
-              Pro
-            </Button>
-            
-            {user ? (
-              <>
-                <Typography variant="body2" color="text.secondary">
-                  {user.email}
-                </Typography>
-                {!user.isSubscribed && (
-                  <>
-                    <Typography variant="caption" color="warning.main">
-                      ({MAX_FREE_SEARCHES - searchCount} searches left)
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      size="small"
-                      color="warning"
-                      onClick={handleShowPayment}
-                      sx={{ ml: 1 }}
-                    >
-                      {searchCount >= MAX_FREE_SEARCHES ? 'Upgrade Now' : 'Go Pro'}
-                    </Button>
-                  </>
-                )}
-                {user.isSubscribed && (
-                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 'bold' }}>
-                    Pro Member
-                  </Typography>
-                )}
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button 
-                  variant="outlined" 
-                  size="small"
-                  onClick={handleShowLogin}
-                >
-                  Login
-                </Button>
-                <Button 
-                  variant="contained" 
-                  size="small"
-                  onClick={handleShowSignup}
-                >
-                  Sign Up
-                </Button>
-              </>
-            )}
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+    <NavigationBar
+      onLogoClick={handleLogoClick}
+      onAboutClick={handleShowAbout}
+      onContactClick={handleShowContact}
+      onSubscriptionClick={handleShowSubscription}
+      onLoginClick={handleShowLogin}
+      onSignupClick={handleShowSignup}
+      user={user}
+      onLogout={handleLogout}
+      searchCount={searchCount}
+      maxSearches={MAX_FREE_SEARCHES}
+      onUpgradeClick={handleShowPayment}
+    />
   );
 
   // Handle special pages
@@ -418,8 +259,58 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {renderNavigation()}
+        
+        {/* Main Tabs for Calculator Page */}
         <Box sx={{ 
-          height: 'calc(100vh - 64px)',
+          borderBottom: 1, 
+          borderColor: 'divider',
+          bgcolor: 'white',
+          position: 'sticky',
+          top: 64,
+          zIndex: 100
+        }}>
+          <Container maxWidth={false} disableGutters>
+            <Tabs 
+              value={currentTab} 
+              onChange={handleTabChange} 
+              sx={{ 
+                minHeight: 48,
+                height: 48,
+                pl: 3,
+                '& .MuiTab-root': {
+                  minHeight: 48,
+                  height: 48,
+                  paddingTop: '6px',
+                  paddingBottom: '6px',
+                  minWidth: 120,
+                  fontSize: '0.875rem'
+                },
+                '& .MuiTabs-flexContainer': {
+                  gap: 2
+                }
+              }}
+            >
+              <Tab 
+                icon={<Home size={20} />} 
+                label="Home" 
+                sx={{ minHeight: 48, height: 48, py: 1 }}
+              />
+              <Tab 
+                icon={<Calculator size={20} />} 
+                label="Calculator" 
+                sx={{ minHeight: 48, height: 48, py: 1 }}
+              />
+              <Tab 
+                icon={<Users size={20} />} 
+                label="Community" 
+                sx={{ minHeight: 48, height: 48, py: 1 }}
+              />
+            </Tabs>
+          </Container>
+        </Box>
+        
+        <Box sx={{ 
+          height: 'calc(100vh - 112px)', // 64px nav + 48px tabs
           width: '100vw',
           overflow: 'auto'
         }}>
@@ -442,9 +333,58 @@ function App() {
       {/* Navigation */}
       {renderNavigation()}
 
+      {/* Main Tabs */}
+      <Box sx={{ 
+        borderBottom: 1, 
+        borderColor: 'divider',
+        bgcolor: 'white',
+        position: 'sticky',
+        top: 64,
+        zIndex: 100
+      }}>
+        <Container maxWidth={false} disableGutters>
+          <Tabs 
+            value={currentTab} 
+            onChange={handleTabChange} 
+            sx={{ 
+              minHeight: 48,
+              height: 48,
+              pl: 3,
+              '& .MuiTab-root': {
+                minHeight: 48,
+                height: 48,
+                paddingTop: '6px',
+                paddingBottom: '6px',
+                minWidth: 120,
+                fontSize: '0.875rem'
+              },
+              '& .MuiTabs-flexContainer': {
+                gap: 2
+              }
+            }}
+          >
+            <Tab 
+              icon={<Home size={20} />} 
+              label="Home" 
+              sx={{ minHeight: 48, height: 48, py: 1 }}
+            />
+            <Tab 
+              icon={<Calculator size={20} />} 
+              label="Calculator" 
+              sx={{ minHeight: 48, height: 48, py: 1 }}
+            />
+            <Tab 
+              icon={<Users size={20} />} 
+              label="Community" 
+              sx={{ minHeight: 48, height: 48, py: 1 }}
+            />
+          </Tabs>
+        </Container>
+      </Box>
+
       {/* Main Content */}
       <Box sx={{ 
-        minHeight: 'calc(100vh - 64px)', 
+        minHeight: 'calc(100vh - 112px)', // 64px nav + 48px tabs
         bgcolor: 'background.default',
         display: 'flex',
         flexDirection: 'column'
@@ -740,7 +680,7 @@ function App() {
         {currentTab === 2 && (
           <Box sx={{ 
             width: '100%', 
-            minHeight: 'calc(100vh - 64px)'
+            minHeight: 'calc(100vh - 112px)' // 64px nav + 48px tabs
           }}>
             <CommunityChat />
           </Box>

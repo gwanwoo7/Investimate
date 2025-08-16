@@ -9,18 +9,15 @@ import {
   Alert,
   Snackbar,
   Card,
-  CardContent,
-  AppBar,
-  Toolbar,
-  IconButton
+  CardContent
 } from '@mui/material';
 import {
   Email,
   Send,
   Person,
-  Subject,
-  ArrowBack
+  Subject
 } from '@mui/icons-material';
+import NavigationBar from '../components/NavigationBar';
 
 interface ContactPageProps {
   onBack: () => void;
@@ -95,21 +92,12 @@ export default function ContactPage({ onBack }: ContactPageProps) {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={onBack}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Contact Us
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationBar
+        showBackButton={true}
+        onBackClick={onBack}
+        title="Contact Us"
+        showNavButtons={false}
+      />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}

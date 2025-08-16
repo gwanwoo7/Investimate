@@ -10,11 +10,9 @@ import {
   Link,
   Paper,
   FormControlLabel,
-  Checkbox,
-  AppBar,
-  Toolbar,
-  Container
+  Checkbox
 } from '@mui/material';
+import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignUpData } from '../services/supabaseAuthService';
@@ -204,59 +202,10 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     }}>
       
       {/* Navigation Bar */}
-      <AppBar 
-        position="static" 
-        elevation={1} 
-        sx={{ 
-          bgcolor: 'white', 
-          color: 'text.primary', 
-          height: 64,
-          minHeight: 64,
-          maxHeight: 64
-        }}
-      >
-        <Container maxWidth={false} disableGutters>
-          <Toolbar 
-            sx={{ 
-              justifyContent: 'space-between', 
-              height: 64, 
-              minHeight: '64px !important',
-              maxHeight: '64px !important',
-              paddingLeft: '24px !important',
-              paddingRight: '24px !important',
-              width: '100%'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography 
-                variant="h5" 
-                component="div" 
-                sx={{ 
-                  fontWeight: 'bold', 
-                  color: 'primary.main',
-                  cursor: 'pointer',
-                  '&:hover': { color: 'primary.dark' },
-                  lineHeight: 1,
-                  height: 'auto'
-                }}
-                onClick={() => window.location.reload()}
-              >
-                🏡 Investimate
-              </Typography>
-            </Box>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 64 }}>
-              <Button 
-                variant="outlined" 
-                onClick={onLogin}
-                sx={{ borderRadius: 2 }}
-              >
-                Sign In
-              </Button>
-            </Box>
-          </Toolbar>
-        </Container>
-      </AppBar>
+      <NavigationBar
+        onLoginClick={onLogin}
+        showNavButtons={false}
+      />
 
       {/* Main content */}
       <Box sx={{ 

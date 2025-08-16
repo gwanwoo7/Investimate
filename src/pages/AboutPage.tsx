@@ -3,12 +3,9 @@ import {
   Box,
   Container,
   Typography,
-  Paper,
-  AppBar,
-  Toolbar,
-  IconButton
+  Paper
 } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import NavigationBar from '../components/NavigationBar';
 
 interface AboutPageProps {
   onBack: () => void;
@@ -18,21 +15,12 @@ export default function AboutPage({ onBack }: AboutPageProps) {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={onBack}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            About Us
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationBar
+        showBackButton={true}
+        onBackClick={onBack}
+        title="About Us"
+        showNavButtons={false}
+      />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Main Story */}

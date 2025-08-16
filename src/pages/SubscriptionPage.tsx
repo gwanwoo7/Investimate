@@ -18,10 +18,7 @@ import {
   DialogContent,
   TextField,
   DialogActions,
-  CircularProgress,
-  AppBar,
-  Toolbar,
-  IconButton
+  CircularProgress
 } from '@mui/material';
 import {
   Check,
@@ -31,8 +28,7 @@ import {
   Analytics,
   Support,
   CreditCard,
-  Lock,
-  ArrowBack
+  Lock
 } from '@mui/icons-material';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -41,6 +37,7 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
+import NavigationBar from '../components/NavigationBar';
 
 // Initialize Stripe with Vite environment variable
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
@@ -218,21 +215,12 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Header */}
-      <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={onBack}
-            sx={{ mr: 2 }}
-          >
-            <ArrowBack />
-          </IconButton>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Subscription Plans
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      <NavigationBar
+        showBackButton={true}
+        onBackClick={onBack}
+        title="Subscription Plans"
+        showNavButtons={false}
+      />
 
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Header */}
