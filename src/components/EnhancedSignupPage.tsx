@@ -8,10 +8,29 @@ import {
   Divider,
   CircularProgress,
   Link,
-  Paper,
+  Container,
+  InputAdornment,
+  IconButton,
+  Card,
+  CardContent,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  useTheme,
+  alpha,
+  LinearProgress,
+  Chip
 } from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Email,
+  Lock,
+  Person,
+  Google,
+  PersonAddOutlined,
+  CheckCircle,
+  Cancel
+} from '@mui/icons-material';
 import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
@@ -32,10 +51,41 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const db = DatabaseService.getInstance();
   const oauthService = OAuthService.getInstance();
   const supabaseAuth = SupabaseAuthService.getInstance();
+  const theme = useTheme();
+
+  const checkPasswordStrength = (password: string): number => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    return strength;
+  };
+
+  const handlePasswordChange = (newPassword: string) => {
+    setPassword(newPassword);
+    setPasswordStrength(checkPasswordStrength(newPassword));
+  };
+
+  const getPasswordStrengthColor = (strength: number) => {
+    if (strength <= 2) return 'error';
+    if (strength <= 3) return 'warning';
+    return 'success';
+  };
+
+  const getPasswordStrengthText = (strength: number) => {
+    if (strength <= 2) return 'Weak';
+    if (strength <= 3) return 'Medium';
+    return 'Strong';
+  };
 
   const validateForm = () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -48,8 +98,13 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       return false;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return false;
+    }
+
+    if (passwordStrength < 3) {
+      setError('Please choose a stronger password with uppercase, lowercase, numbers and special characters');
       return false;
     }
 
@@ -73,7 +128,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setSuccess('');
 
     try {
-      // Check for duplicate email first (both Supabase and local)
+      // Check if user already exists
       const existingUser = await db.getUserByEmail(email);
       if (existingUser) {
         setError('An account with this email already exists. Please use a different email or sign in.');
@@ -87,8 +142,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
         const { user, error: authError } = await supabaseAuth.signUp(signUpData);
         
         if (authError) {
-          // Handle specific Supabase duplicate email errors
-          if (authError.includes('already registered') || authError.includes('already exists')) {
+          if (authError.includes('already registered')) {
             setError('An account with this email already exists. Please use a different email or sign in.');
           } else {
             setError(authError);
@@ -96,25 +150,20 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           setLoading(false);
           return;
         }
-
+        
         if (user) {
-          if (!user.emailVerified) {
-            setSuccess('Account created successfully! Please check your email and click the verification link to activate your account.');
-          } else {
-            onSignup(user.email);
-          }
+          setSuccess('Account created successfully! Please check your email and click the verification link to activate your account.');
           setLoading(false);
           return;
         }
       }
 
-      // Fallback to legacy authentication
+      // Fallback to legacy database
       const user = await db.createUser(email, name, password);
       if (user) {
         db.setCurrentUser(user);
         setSuccess('Account created successfully! You can now sign in.');
-        // Don't auto-login for better security - require email verification
-        setTimeout(() => onLogin(), 2000);
+        onSignup(user.email);
       }
     } catch (err) {
       console.error('Signup error:', err);
@@ -137,7 +186,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       if (supabaseAuth.isConfigured()) {
         const { error: authError } = await supabaseAuth.signInWithGoogle();
         if (authError) {
-          setError(`Google Sign-up failed: ${authError}`);
+          setError(authError);
           setLoading(false);
           return;
         }
@@ -147,48 +196,28 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
 
       // Fallback to legacy OAuth
       if (!oauthService.isGoogleConfigured()) {
-        setError('Google OAuth is not configured. Please use the form below to create an account.');
+        setError('Google OAuth is not configured. Please contact support or sign up with email below.');
         setLoading(false);
         return;
       }
 
       const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
       
-      // Check for existing user first
-      const existingUser = await db.getUserByEmail(oauthUser.email);
-      if (existingUser) {
-        setError('An account with this email already exists. Please sign in instead.');
-        setLoading(false);
-        return;
+      // Try to find existing user or create new one
+      let user;
+      try {
+        user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
+      } catch {
+        // User doesn't exist, create new one
+        user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
       }
-      
-      // Create new user with OAuth info
-      const user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
       
       db.setCurrentUser(user);
       onSignup(user.email);
     } catch (err) {
       console.error('Google signup error:', err);
-      setError(err instanceof Error ? err.message : 'Google signup failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Google sign up failed. Please try again.');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResendVerification = async () => {
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
-
-    if (supabaseAuth.isConfigured()) {
-      setLoading(true);
-      const { error } = await supabaseAuth.resendVerification(email);
-      if (error) {
-        setError(error);
-      } else {
-        setSuccess('Verification email sent! Check your inbox.');
-      }
       setLoading(false);
     }
   };
@@ -198,7 +227,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: '#f8fafc'
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
     }}>
       
       {/* Navigation Bar */}
@@ -208,188 +237,311 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       />
 
       {/* Main content */}
-      <Box sx={{ 
+      <Container maxWidth="sm" sx={{ 
         flex: 1, 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        p: 2
+        py: 4
       }}>
-        <Paper sx={{ 
-          p: 4, 
-          maxWidth: 400, 
+        <Card sx={{ 
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+          maxWidth: 500,
+          borderRadius: 4,
+          boxShadow: theme.shadows[24],
+          overflow: 'hidden'
         }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ 
-            textAlign: 'center', 
-            fontWeight: 'bold',
-            color: 'text.primary',
-            mb: 3
+          {/* Header Section */}
+          <Box sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            color: 'white',
+            p: 4,
+            textAlign: 'center'
           }}>
-            Create Account
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {success && (
-            <Alert 
-              severity="success" 
-              sx={{ mb: 2 }}
-              action={
-                supabaseAuth.isConfigured() ? (
-                  <Button 
-                    color="inherit" 
-                    size="small"
-                    onClick={handleResendVerification}
-                    disabled={loading}
-                  >
-                    Resend
-                  </Button>
-                ) : undefined
-              }
-            >
-              {success}
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="name"
-              disabled={loading}
-            />
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="email"
-              disabled={loading}
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="new-password"
-              disabled={loading}
-              helperText="Must be at least 6 characters"
-            />
-            <TextField
-              fullWidth
-              label="Confirm Password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="new-password"
-              disabled={loading}
-            />
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={agreeToTerms}
-                  onChange={(e) => setAgreeToTerms(e.target.checked)}
-                  disabled={loading}
-                />
-              }
-              label={
-                <Typography variant="body2" color="text.secondary">
-                  I agree to the{' '}
-                  <Link href="#" color="primary">Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link href="#" color="primary">Privacy Policy</Link>
-                </Typography>
-              }
-              sx={{ mt: 2, mb: 2 }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{ 
-                mb: 2,
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1rem'
-              }}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Create Account'}
-            </Button>
-          </form>
-
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Or sign up with
+            <PersonAddOutlined sx={{ fontSize: 48, mb: 2, opacity: 0.9 }} />
+            <Typography variant="h4" component="h1" sx={{ 
+              fontWeight: 'bold',
+              mb: 1
+            }}>
+              Join Investimate
             </Typography>
-          </Divider>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              Start analyzing rental properties today
+            </Typography>
+          </Box>
 
-          {/* OAuth Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <CardContent sx={{ p: 4 }}>
+            {error && (
+              <Alert 
+                severity="error" 
+                sx={{ mb: 3, borderRadius: 2 }}
+                icon={<Cancel />}
+              >
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert 
+                severity="success" 
+                sx={{ mb: 3, borderRadius: 2 }}
+                icon={<CheckCircle />}
+              >
+                {success}
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Full Name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="name"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="email"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+              
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => handlePasswordChange(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="new-password"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 1,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+
+              {/* Password Strength Indicator */}
+              {password && (
+                <Box sx={{ mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Password strength:
+                    </Typography>
+                    <Chip 
+                      size="small" 
+                      label={getPasswordStrengthText(passwordStrength)}
+                      color={getPasswordStrengthColor(passwordStrength)}
+                    />
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(passwordStrength / 5) * 100}
+                    color={getPasswordStrengthColor(passwordStrength)}
+                    sx={{ height: 6, borderRadius: 3 }}
+                  />
+                </Box>
+              )}
+
+              <TextField
+                fullWidth
+                label="Confirm Password"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="new-password"
+                disabled={loading}
+                error={confirmPassword !== '' && password !== confirmPassword}
+                helperText={
+                  confirmPassword !== '' && password !== confirmPassword 
+                    ? 'Passwords do not match' 
+                    : ''
+                }
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={agreeToTerms}
+                    onChange={(e) => setAgreeToTerms(e.target.checked)}
+                    color="primary"
+                    disabled={loading}
+                  />
+                }
+                label={
+                  <Typography variant="body2" color="text.secondary">
+                    I agree to the{' '}
+                    <Link href="/terms" target="_blank" color="primary">
+                      Terms of Service
+                    </Link>
+                    {' '}and{' '}
+                    <Link href="/privacy" target="_blank" color="primary">
+                      Privacy Policy
+                    </Link>
+                  </Typography>
+                }
+                sx={{ mb: 3 }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading || !agreeToTerms}
+                sx={{ 
+                  mb: 3,
+                  py: 1.8,
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  boxShadow: theme.shadows[8],
+                  '&:hover': {
+                    boxShadow: theme.shadows[12],
+                  }
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Create Account'}
+              </Button>
+            </form>
+
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+                Or sign up with
+              </Typography>
+            </Divider>
+
+            {/* OAuth Buttons */}
             <Button
               fullWidth
               variant="outlined"
               onClick={handleGoogleSignup}
               disabled={loading}
+              startIcon={<Google />}
               sx={{ 
+                mb: 3,
                 py: 1.5,
-                borderRadius: 2,
+                borderRadius: 3,
                 textTransform: 'none',
+                fontSize: '1rem',
+                fontWeight: 'medium',
                 color: '#db4437',
                 borderColor: '#db4437',
                 '&:hover': {
                   borderColor: '#c23321',
-                  bgcolor: 'rgba(219, 68, 55, 0.04)'
+                  bgcolor: alpha('#db4437', 0.04)
                 }
               }}
             >
               Continue with Google
             </Button>
-          </Box>
 
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Already have an account?{' '}
-              <Link
-                component="button"
-                type="button"
-                variant="body2"
-                onClick={onLogin}
-                sx={{ 
-                  color: 'primary.main',
-                  textDecoration: 'none',
-                  fontWeight: 'medium'
-                }}
-              >
-                Sign in
-              </Link>
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Already have an account?{' '}
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={onLogin}
+                  sx={{ 
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  Sign in here
+                </Link>
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
     </Box>
   );
 }

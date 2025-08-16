@@ -8,8 +8,23 @@ import {
   Divider,
   CircularProgress,
   Link,
-  Paper
+  Paper,
+  Container,
+  InputAdornment,
+  IconButton,
+  Card,
+  CardContent,
+  useTheme,
+  alpha
 } from '@mui/material';
+import {
+  Visibility,
+  VisibilityOff,
+  Email,
+  Lock,
+  Google,
+  LoginOutlined
+} from '@mui/icons-material';
 import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
@@ -27,10 +42,12 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const db = DatabaseService.getInstance();
   const oauthService = OAuthService.getInstance();
   const supabaseAuth = SupabaseAuthService.getInstance();
+  const theme = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,7 +234,8 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: '#f8fafc'
+      bgcolor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
     }}>
       
       {/* Navigation Bar */}
@@ -227,185 +245,259 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
       />
 
       {/* Main content */}
-      <Box sx={{ 
+      <Container maxWidth="sm" sx={{ 
         flex: 1, 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        p: 2
+        py: 4
       }}>
-        <Paper sx={{ 
-          p: 4, 
-          maxWidth: 400, 
+        <Card sx={{ 
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+          maxWidth: 450,
+          borderRadius: 4,
+          boxShadow: theme.shadows[24],
+          overflow: 'hidden'
         }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ 
-            textAlign: 'center', 
-            fontWeight: 'bold',
-            color: 'text.primary',
-            mb: 3
+          {/* Header Section */}
+          <Box sx={{
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            color: 'white',
+            p: 4,
+            textAlign: 'center'
           }}>
-            Welcome Back
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {showForgotPassword && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              Password reset email sent! Check your inbox.
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="email"
-              disabled={loading}
-            />
-            <TextField
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              margin="normal"
-              required
-              autoComplete="current-password"
-              disabled={loading}
-            />
-
-            <Box sx={{ textAlign: 'right', mt: 1, mb: 2 }}>
-              <Link
-                component="button"
-                type="button"
-                variant="body2"
-                onClick={handleForgotPassword}
-                disabled={loading}
-                sx={{ textDecoration: 'none' }}
-              >
-                Forgot password?
-              </Link>
-            </Box>
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{ 
-                mb: 2,
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontSize: '1rem'
-              }}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Sign In'}
-            </Button>
-          </form>
-
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Or continue with
+            <LoginOutlined sx={{ fontSize: 48, mb: 2, opacity: 0.9 }} />
+            <Typography variant="h4" component="h1" sx={{ 
+              fontWeight: 'bold',
+              mb: 1
+            }}>
+              Welcome Back
             </Typography>
-          </Divider>
-
-          {/* OAuth Buttons */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              sx={{ 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                color: '#db4437',
-                borderColor: '#db4437',
-                '&:hover': {
-                  borderColor: '#c23321',
-                  bgcolor: 'rgba(219, 68, 55, 0.04)'
-                }
-              }}
-            >
-              Google
-            </Button>
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleAppleLogin}
-              disabled={loading}
-              sx={{ 
-                py: 1.5,
-                borderRadius: 2,
-                textTransform: 'none',
-                color: '#000',
-                borderColor: '#000',
-                '&:hover': {
-                  borderColor: '#333',
-                  bgcolor: 'rgba(0, 0, 0, 0.04)'
-                }
-              }}
-            >
-              Apple
-            </Button>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              Sign in to your Investimate account
+            </Typography>
           </Box>
 
-          <Divider sx={{ my: 3 }} />
+          <CardContent sx={{ p: 4 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-          {/* Demo Login */}
-          <Button
-            fullWidth
-            variant="text"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            sx={{ 
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: 'none',
-              color: 'text.secondary',
-              '&:hover': {
-                bgcolor: 'action.hover'
-              }
-            }}
-          >
-            🎭 Try Demo Account
-          </Button>
+            {showForgotPassword && (
+              <Alert severity="success" sx={{ mb: 3, borderRadius: 2 }}>
+                Password reset email sent! Check your inbox.
+              </Alert>
+            )}
 
-          <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
-              <Link
-                component="button"
-                type="button"
-                variant="body2"
-                onClick={onSignup}
+            <form onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="email"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email color="action" />
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{ 
-                  color: 'primary.main',
-                  textDecoration: 'none',
-                  fontWeight: 'medium'
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+              
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                margin="normal"
+                required
+                autoComplete="current-password"
+                disabled={loading}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock color="action" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  }
+                }}
+              />
+
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                mb: 3 
+              }}>
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  sx={{ 
+                    textDecoration: 'none',
+                    color: 'primary.main',
+                    fontWeight: 'medium',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  Forgot password?
+                </Link>
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ 
+                  mb: 3,
+                  py: 1.8,
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold',
+                  boxShadow: theme.shadows[8],
+                  '&:hover': {
+                    boxShadow: theme.shadows[12],
+                  }
                 }}
               >
-                Sign up
-              </Link>
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              </Button>
+            </form>
+
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+                Or continue with
+              </Typography>
+            </Divider>
+
+            {/* OAuth Buttons */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                startIcon={<Google />}
+                sx={{ 
+                  py: 1.5,
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 'medium',
+                  color: '#db4437',
+                  borderColor: '#db4437',
+                  '&:hover': {
+                    borderColor: '#c23321',
+                    bgcolor: alpha('#db4437', 0.04)
+                  }
+                }}
+              >
+                Continue with Google
+              </Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                onClick={handleAppleLogin}
+                disabled={loading}
+                sx={{ 
+                  py: 1.5,
+                  borderRadius: 3,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 'medium',
+                  color: '#000',
+                  borderColor: '#000',
+                  '&:hover': {
+                    borderColor: '#333',
+                    bgcolor: alpha('#000', 0.04)
+                  }
+                }}
+              >
+                🍎 Continue with Apple
+              </Button>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            {/* Demo Login */}
+            <Button
+              fullWidth
+              variant="text"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              sx={{ 
+                py: 1.5,
+                borderRadius: 3,
+                textTransform: 'none',
+                fontSize: '1rem',
+                color: 'text.secondary',
+                border: '2px dashed',
+                borderColor: 'divider',
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  borderColor: 'primary.main'
+                }
+              }}
+            >
+              🎭 Try Demo Account
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                Don't have an account?{' '}
+                <Link
+                  component="button"
+                  type="button"
+                  variant="body2"
+                  onClick={onSignup}
+                  sx={{ 
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    '&:hover': { textDecoration: 'underline' }
+                  }}
+                >
+                  Sign up here
+                </Link>
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
     </Box>
   );
 }
