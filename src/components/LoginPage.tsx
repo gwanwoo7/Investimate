@@ -53,29 +53,9 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    try {
-      // Create a demo user if it doesn't exist
-      try {
-        await db.createUser('demo@investimate.com', 'demo123', 'Demo User');
-      } catch {
-        // User already exists, that's fine
-      }
-      
-      const user = await db.authenticateUser('demo@investimate.com', 'demo123');
-      db.setCurrentUser(user);
-      onLogin('demo@investimate.com');
-    } catch (err) {
-      setError('Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     if (!oauthService.isGoogleConfigured()) {
-      setError('Google OAuth is not configured. Please contact support or use the demo login below.');
+      setError('Google OAuth is not configured. Please contact support.');
       return;
     }
 
@@ -99,37 +79,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     } catch (err) {
       console.error('Google login error:', err);
       setError(err instanceof Error ? err.message : 'Google login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    if (!oauthService.isAppleConfigured()) {
-      setError('Apple Sign In is not configured. Please contact support or use the demo login below.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const oauthUser: OAuthUser = await oauthService.signInWithApple();
-      
-      // Try to find existing user or create new one
-      let user;
-      try {
-        user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
-      } catch {
-        // User doesn't exist, create new one
-        user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
-      }
-      
-      db.setCurrentUser(user);
-      onLogin(user.email);
-    } catch (err) {
-      console.error('Apple login error:', err);
-      setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -202,25 +151,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
             </Alert>
           )}
 
-          {/* Demo Login Button */}
-          <Button
-            fullWidth
-            variant="contained"
-            color="success"
-            size="large"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            sx={{ 
-              mb: 3, 
-              textTransform: 'none',
-              py: 1.5,
-              fontSize: '1rem',
-              fontWeight: 600
-            }}
-          >
-            {loading ? <CircularProgress size={20} color="inherit" /> : '🚀 Try Demo Login'}
-          </Button>
-
           {/* Social Login */}
           <Box sx={{ mb: 3 }}>
             <Button
@@ -259,31 +189,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
                   G
                 </Box>
                 Continue with Google
-              </Box>
-            </Button>
-            
-            <Button
-              fullWidth
-              variant="outlined"
-              size="large"
-              onClick={handleAppleLogin}
-              sx={{ 
-                textTransform: 'none',
-                py: 1.5,
-                fontSize: '1rem',
-                bgcolor: '#000',
-                color: 'white',
-                borderColor: '#000',
-                fontWeight: 500,
-                '&:hover': {
-                  bgcolor: '#333',
-                  borderColor: '#333'
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ fontSize: '18px' }}>🍎</Box>
-                Continue with Apple
               </Box>
             </Button>
           </Box>

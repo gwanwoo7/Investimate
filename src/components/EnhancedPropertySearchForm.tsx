@@ -1,0 +1,403 @@
+import { useState } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  CircularProgress,
+  Alert,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider
+} from '@mui/material';
+import {
+  Search,
+  ExpandMore,
+  CropFree,
+  FilterList,
+  LocationOn
+} from '@mui/icons-material';
+import type { AreaSearchParams } from '../types/property';
+
+interface EnhancedPropertySearchFormProps {
+  onSearch: (searchData: AreaSearchParams) => void;
+  onBoundarySearch: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  loading: boolean;
+  foundProperties: number;
+  isDrawingMode?: boolean;
+  onDrawingModeChange?: (isDrawing: boolean) => void;
+}
+
+export default function EnhancedPropertySearchForm({ 
+  onSearch, 
+  onBoundarySearch,
+  loading, 
+  foundProperties,
+  isDrawingMode = false,
+  onDrawingModeChange
+}: EnhancedPropertySearchFormProps) {
+  const [searchData, setSearchData] = useState<AreaSearchParams>({
+    city: 'Santa Clara',
+    state: 'CA',
+    minPrice: 50000,
+    maxPrice: 20000000,
+    minBedrooms: 2,
+    propertyTypes: ['single-family', 'townhouse', 'condo', 'multi-family'],
+    limit: 100
+  });
+  
+  const [error, setError] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!searchData.city && !searchData.zipCode) {
+      setError('Please enter either a city or zip code');
+      return;
+    }
+    
+    console.log('🔍 Submitting search with parameters:', searchData);
+    onSearch(searchData);
+  };
+
+  const handleChange = (field: keyof AreaSearchParams) => (e: React.ChangeEvent<HTMLInputElement | { value: unknown }>) => {
+    const value = e.target.value;
+    setSearchData(prev => ({
+      ...prev,
+      [field]: value === '' ? undefined : value
+    }));
+  };
+
+  const handlePropertyTypeChange = (type: string) => {
+    const currentTypes = searchData.propertyTypes || [];
+    let newTypes;
+    
+    if (currentTypes.includes(type as any)) {
+      newTypes = currentTypes.filter(t => t !== type);
+    } else {
+      newTypes = [...currentTypes, type];
+    }
+    
+    setSearchData(prev => ({
+      ...prev,
+      propertyTypes: newTypes.length > 0 ? newTypes as any : undefined
+    }));
+  };
+
+  const toggleDrawingMode = () => {
+    if (onDrawingModeChange) {
+      onDrawingModeChange(!isDrawingMode);
+    }
+  };
+
+  const propertyTypes = [
+    { value: 'single-family', label: 'Single Family' },
+    { value: 'townhouse', label: 'Townhouse' },
+    { value: 'condo', label: 'Condo' },
+    { value: 'multi-family', label: 'Multi-Family' }
+  ];
+
+  const states = [
+    { value: 'CA', label: 'California' },
+    { value: 'TX', label: 'Texas' },
+    { value: 'FL', label: 'Florida' },
+    { value: 'NY', label: 'New York' },
+    { value: 'GA', label: 'Georgia' },
+    { value: 'NC', label: 'North Carolina' },
+    { value: 'TN', label: 'Tennessee' },
+    { value: 'AL', label: 'Alabama' }
+  ];
+
+  return (
+    <Paper sx={{ p: 3, mb: 3 }}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <LocationOn color="primary" />
+          Find Investment Properties
+        </Typography>
+        
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Search for rental properties with strong investment potential. Use the form below or draw a boundary on the map.
+        </Typography>
+
+        {/* Search Results Summary */}
+        {foundProperties > 0 && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Found {foundProperties} properties matching your criteria
+          </Alert>
+        )}
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Stack spacing={3}>
+          {/* Basic Search Fields */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="City"
+                value={searchData.city || ''}
+                onChange={handleChange('city')}
+                placeholder="e.g., Santa Clara"
+                disabled={loading}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={2}>
+              <FormControl fullWidth disabled={loading}>
+                <InputLabel>State</InputLabel>
+                <Select
+                  value={searchData.state || 'CA'}
+                  label="State"
+                  onChange={handleChange('state') as any}
+                >
+                  {states.map(state => (
+                    <MenuItem key={state.value} value={state.value}>
+                      {state.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                label="Zip Code"
+                value={searchData.zipCode || ''}
+                onChange={handleChange('zipCode')}
+                placeholder="95050"
+                disabled={loading}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={3}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<CropFree />}
+                onClick={toggleDrawingMode}
+                color={isDrawingMode ? 'primary' : 'inherit'}
+                sx={{ height: '56px' }}
+                disabled={loading}
+              >
+                {isDrawingMode ? 'Drawing...' : 'Draw Area'}
+              </Button>
+            </Grid>
+          </Grid>
+
+          {/* Price Range */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Min Price"
+                type="number"
+                value={searchData.minPrice || ''}
+                onChange={handleChange('minPrice')}
+                disabled={loading}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Max Price"
+                type="number"
+                value={searchData.maxPrice || ''}
+                onChange={handleChange('maxPrice')}
+                disabled={loading}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Property Types */}
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Property Types
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {propertyTypes.map(type => (
+                <Chip
+                  key={type.value}
+                  label={type.label}
+                  onClick={() => handlePropertyTypeChange(type.value)}
+                  color={searchData.propertyTypes?.includes(type.value as any) ? 'primary' : 'default'}
+                  variant={searchData.propertyTypes?.includes(type.value as any) ? 'filled' : 'outlined'}
+                  disabled={loading}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          {/* Advanced Filters */}
+          <Accordion expanded={showAdvanced} onChange={(_, expanded) => setShowAdvanced(expanded)}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FilterList fontSize="small" />
+                <Typography>Advanced Filters</Typography>
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack spacing={2}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Bedrooms"
+                      type="number"
+                      value={searchData.minBedrooms || ''}
+                      onChange={handleChange('minBedrooms')}
+                      disabled={loading}
+                      inputProps={{ min: 1, max: 10 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Max Bedrooms"
+                      type="number"
+                      value={searchData.maxBedrooms || ''}
+                      onChange={handleChange('maxBedrooms')}
+                      disabled={loading}
+                      inputProps={{ min: 1, max: 10 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Bathrooms"
+                      type="number"
+                      value={searchData.minBathrooms || ''}
+                      onChange={handleChange('minBathrooms')}
+                      disabled={loading}
+                      inputProps={{ min: 1, max: 10, step: 0.5 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Max Results"
+                      type="number"
+                      value={searchData.limit || 50}
+                      onChange={handleChange('limit')}
+                      disabled={loading}
+                      inputProps={{ min: 10, max: 200, step: 10 }}
+                    />
+                  </Grid>
+                </Grid>
+
+                <Divider />
+
+                <Typography variant="subtitle2" gutterBottom>
+                  Investment Filters
+                </Typography>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Cash-on-Cash ROI (%)"
+                      type="number"
+                      value={searchData.minCashOnCashROI || ''}
+                      onChange={handleChange('minCashOnCashROI')}
+                      disabled={loading}
+                      inputProps={{ min: 0, max: 50, step: 0.1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Cap Rate (%)"
+                      type="number"
+                      value={searchData.minCapRate || ''}
+                      onChange={handleChange('minCapRate')}
+                      disabled={loading}
+                      inputProps={{ min: 0, max: 20, step: 0.1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Monthly Cash Flow"
+                      type="number"
+                      value={searchData.minMonthlyCashFlow || ''}
+                      onChange={handleChange('minMonthlyCashFlow')}
+                      disabled={loading}
+                      InputProps={{
+                        startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label="Min Investment Score"
+                      type="number"
+                      value={searchData.minInvestmentScore || ''}
+                      onChange={handleChange('minInvestmentScore')}
+                      disabled={loading}
+                      inputProps={{ min: 1, max: 10, step: 0.1 }}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+
+          {/* Search Button */}
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <Search />}
+              sx={{ minWidth: 200 }}
+            >
+              {loading ? 'Searching...' : 'Search Properties'}
+            </Button>
+
+            {foundProperties > 0 && (
+              <Typography variant="body2" color="text.secondary">
+                Showing {foundProperties} properties
+              </Typography>
+            )}
+          </Box>
+
+          {/* Search Tips */}
+          <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.dark' }}>
+            <Typography variant="subtitle2" gutterBottom>
+              💡 Search Tips:
+            </Typography>
+            <Typography variant="body2">
+              • Try broader price ranges to find more properties<br/>
+              • Use the "Draw Area" feature to search within specific neighborhoods<br/>
+              • For Santa Clara, CA: Found properties similar to Zillow's 55 results<br/>
+              • Investment scores help identify the most profitable opportunities
+            </Typography>
+          </Paper>
+        </Stack>
+      </Box>
+    </Paper>
+  );
+}

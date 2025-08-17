@@ -52,6 +52,11 @@ export interface PropertyData {
   hasGarage?: boolean;
   yearRenovated?: number;
   
+  // Additional property metrics
+  pricePerSqft?: number;
+  neighborhoodName?: string;
+  schoolDistrict?: string;
+  
   // Zestimate data
   zestimate?: number;
   rentZestimate?: number;
@@ -82,6 +87,17 @@ export interface AreaSearchParams {
   maxBathrooms?: number;
   maxResults?: number;
   limit?: number; // Number of properties to return (10, 50, 100, 200)
+  
+  // Boundary search parameters
+  bounds?: {
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  };
+  latitude?: number;
+  longitude?: number;
+  
   // Investment metric filters
   minCashOnCashROI?: number;
   maxCashOnCashROI?: number;
