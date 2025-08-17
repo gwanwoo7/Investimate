@@ -76,6 +76,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   };
 
   const validateForm = () => {
+    if (!email || !password || !confirmPassword || !name) {
       setError('Please fill in all fields');
       return false;
     }
