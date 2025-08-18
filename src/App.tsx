@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Typography, Box, Button, Card, CardContent, Container, Tab, Tabs } from '@mui/material';
 import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
-import PropertyCalculator from './components/PropertyCalculator';
+import PropertyCalculatorWithMap from './components/PropertyCalculatorWithMap';
 import CommunityChat from './components/CommunityChat';
 // import PaymentPage from './components/PaymentPage';
 import AdminDashboard from './components/AdminDashboard';
@@ -13,7 +13,6 @@ import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
-import FindInvestmentPropertiesPage from './pages/FindInvestmentPropertiesPage';
 import NavigationBar from './components/NavigationBar';
 import { useState } from 'react';
 
@@ -50,7 +49,6 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
-  const [showFindProperties, setShowFindProperties] = useState(false);
 
   const MAX_FREE_SEARCHES = 5;
 
@@ -67,7 +65,6 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
-    setShowFindProperties(false);
   };
 
   const handleShowLogin = () => {
@@ -103,11 +100,6 @@ function App() {
     setCurrentTab(0);
   };
 
-  const handleShowFindProperties = () => {
-    setShowFindProperties(true);
-    setCurrentTab(0);
-  };
-
   const handleShowSubscription = () => {
     setShowSubscription(true);
     setCurrentTab(0);
@@ -118,7 +110,6 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
-    setShowFindProperties(false);
     setCurrentTab(0);
   };
 
@@ -158,13 +149,12 @@ function App() {
   const renderNavigation = () => (
     <NavigationBar
       onLogoClick={handleLogoClick}
-      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription && !showFindProperties}
+      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription}
       currentTab={currentTab}
       onTabChange={handleTabChange}
       onAboutClick={handleShowAbout}
       onContactClick={handleShowContact}
       onSubscriptionClick={handleShowSubscription}
-      onFindPropertiesClick={handleShowFindProperties}
       onLoginClick={handleShowLogin}
       onSignupClick={handleShowSignup}
       user={user}
@@ -229,15 +219,6 @@ function App() {
     );
   }
 
-  if (showFindProperties) {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <FindInvestmentPropertiesPage />
-      </ThemeProvider>
-    );
-  }
-
   if (showSubscription) {
     return (
       <ThemeProvider theme={theme}>
@@ -287,7 +268,7 @@ function App() {
           width: '100vw',
           overflow: 'auto'
         }}>
-          <PropertyCalculator 
+          <PropertyCalculatorWithMap 
             canSearch={canSearch()}
             onSearch={handleSearch}
             onUpgrade={handleShowPayment}

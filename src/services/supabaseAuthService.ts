@@ -151,15 +151,21 @@ class SupabaseAuthService {
     }
 
     try {
+      // Get the current URL to determine the correct redirect
+      const currentUrl = window.location.origin
+      const redirectUrl = currentUrl.includes('localhost') 
+        ? 'http://localhost:5173/auth/callback'
+        : `${currentUrl}/auth/callback`
+
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: redirectUrl
         }
       })
 
       if (error) {
-        return { user: null, error: error.message }
+        return { user: null, error: `Google OAuth error: ${error.message}. Please ensure Google OAuth is properly configured in your Supabase project settings.` }
       }
 
       // Note: OAuth signin redirects, so user data will be available after redirect

@@ -151,8 +151,16 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           return;
         }
         
+        // Skip email verification - directly sign in the user
         if (user) {
-          setSuccess('Account created successfully! Please check your email and click the verification link to activate your account.');
+          // Auto-sign in after successful signup
+          const { user: signedInUser, error: signInError } = await supabaseAuth.signIn({ email, password });
+          if (signInError) {
+            setSuccess('Account created successfully! Please sign in to continue.');
+          } else if (signedInUser) {
+            setSuccess('Account created and signed in successfully!');
+            onSignup(email);
+          }
           setLoading(false);
           return;
         }
