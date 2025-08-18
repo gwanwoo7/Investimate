@@ -136,11 +136,8 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
         }
 
         if (user) {
-          if (!user.emailVerified) {
-            setSuccess('Account created successfully! Please check your email and click the verification link to activate your account.');
-          } else {
-            onSignup(user.email);
-          }
+          // Skip email verification for now - directly sign up the user
+          onSignup(user.email);
           setLoading(false);
           return;
         }

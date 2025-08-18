@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import FindInvestmentPropertiesPage from './pages/FindInvestmentPropertiesPage';
 import NavigationBar from './components/NavigationBar';
 import { useState } from 'react';
 
@@ -49,6 +50,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [showFindProperties, setShowFindProperties] = useState(false);
 
   const MAX_FREE_SEARCHES = 5;
 
@@ -65,6 +67,7 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
+    setShowFindProperties(false);
   };
 
   const handleShowLogin = () => {
@@ -100,6 +103,11 @@ function App() {
     setCurrentTab(0);
   };
 
+  const handleShowFindProperties = () => {
+    setShowFindProperties(true);
+    setCurrentTab(0);
+  };
+
   const handleShowSubscription = () => {
     setShowSubscription(true);
     setCurrentTab(0);
@@ -110,6 +118,7 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
+    setShowFindProperties(false);
     setCurrentTab(0);
   };
 
@@ -149,12 +158,13 @@ function App() {
   const renderNavigation = () => (
     <NavigationBar
       onLogoClick={handleLogoClick}
-      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription}
+      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription && !showFindProperties}
       currentTab={currentTab}
       onTabChange={handleTabChange}
       onAboutClick={handleShowAbout}
       onContactClick={handleShowContact}
       onSubscriptionClick={handleShowSubscription}
+      onFindPropertiesClick={handleShowFindProperties}
       onLoginClick={handleShowLogin}
       onSignupClick={handleShowSignup}
       user={user}
@@ -215,6 +225,15 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ContactPage onBack={handleBackToMain} />
+      </ThemeProvider>
+    );
+  }
+
+  if (showFindProperties) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <FindInvestmentPropertiesPage />
       </ThemeProvider>
     );
   }

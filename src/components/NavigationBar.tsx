@@ -34,6 +34,7 @@ interface NavigationBarProps {
   onAboutClick?: () => void;
   onContactClick?: () => void;
   onSubscriptionClick?: () => void;
+  onFindPropertiesClick?: () => void;
   onLoginClick?: () => void;
   onSignupClick?: () => void;
   user?: { email: string; isSubscribed: boolean } | null;
@@ -55,6 +56,7 @@ export default function NavigationBar({
   onAboutClick,
   onContactClick,
   onSubscriptionClick,
+  onFindPropertiesClick,
   onLoginClick,
   onSignupClick,
   user,
@@ -214,6 +216,17 @@ export default function NavigationBar({
                     sx={{ textTransform: 'none' }}
                   >
                     Contact
+                  </Button>
+                )}
+                {onFindPropertiesClick && (
+                  <Button 
+                    size="small" 
+                    onClick={onFindPropertiesClick}
+                    startIcon={<Home size={16} />}
+                    sx={{ textTransform: 'none' }}
+                    variant="outlined"
+                  >
+                    Find Properties
                   </Button>
                 )}
                 {onSubscriptionClick && (
