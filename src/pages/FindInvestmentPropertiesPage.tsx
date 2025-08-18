@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Box, Container, Typography, Alert, Fab } from '@mui/material';
 import { Map as MapIcon } from '@mui/icons-material';
 import InteractiveMapWithBoundary from '../components/InteractiveMapWithBoundary';
-import EnhancedPropertySearchForm from '../components/EnhancedPropertySearchForm_v2';
+import EnhancedPropertySearchForm from '../components/EnhancedPropertySearchForm';
 import PropertyListView from '../components/PropertyListView';
 import { searchPropertiesWithBoundary } from '../services/enhancedRealEstateAPIService';
 import type { PropertyListing, AreaSearchParams } from '../types/property';

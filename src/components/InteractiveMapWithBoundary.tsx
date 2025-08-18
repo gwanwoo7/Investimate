@@ -166,7 +166,7 @@ export default function InteractiveMapWithBoundary({
         edit: {
           featureGroup: drawnItemsRef.current,
           remove: true,
-          edit: true
+          edit: false
         }
       });
 

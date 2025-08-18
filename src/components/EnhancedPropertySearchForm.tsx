@@ -145,90 +145,77 @@ export default function EnhancedPropertySearchForm({
 
         <Stack spacing={3}>
           {/* Basic Search Fields */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="City"
-                value={searchData.city || ''}
-                onChange={handleChange('city')}
-                placeholder="e.g., Santa Clara"
-                disabled={loading}
-              />
-            </Grid>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <TextField
+              sx={{ flex: 2, minWidth: 200 }}
+              label="City"
+              value={searchData.city || ''}
+              onChange={handleChange('city')}
+              placeholder="e.g., Santa Clara"
+              disabled={loading}
+            />
             
-            <Grid item xs={12} md={2}>
-              <FormControl fullWidth disabled={loading}>
-                <InputLabel>State</InputLabel>
-                <Select
-                  value={searchData.state || 'CA'}
-                  label="State"
-                  onChange={handleChange('state') as any}
-                >
-                  {states.map(state => (
-                    <MenuItem key={state.value} value={state.value}>
-                      {state.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                label="Zip Code"
-                value={searchData.zipCode || ''}
-                onChange={handleChange('zipCode')}
-                placeholder="95050"
-                disabled={loading}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={3}>
-              <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<CropFree />}
-                onClick={toggleDrawingMode}
-                color={isDrawingMode ? 'primary' : 'inherit'}
-                sx={{ height: '56px' }}
-                disabled={loading}
+            <FormControl sx={{ flex: 1, minWidth: 100 }} disabled={loading}>
+              <InputLabel>State</InputLabel>
+              <Select
+                value={searchData.state || 'CA'}
+                label="State"
+                onChange={handleChange('state') as any}
               >
-                {isDrawingMode ? 'Drawing...' : 'Draw Area'}
-              </Button>
-            </Grid>
-          </Grid>
+                {states.map(state => (
+                  <MenuItem key={state.value} value={state.value}>
+                    {state.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <TextField
+              sx={{ flex: 1, minWidth: 120 }}
+              label="Zip Code"
+              value={searchData.zipCode || ''}
+              onChange={handleChange('zipCode')}
+              placeholder="95050"
+              disabled={loading}
+            />
+
+            <Button
+              variant="outlined"
+              startIcon={<CropFree />}
+              onClick={toggleDrawingMode}
+              color={isDrawingMode ? 'primary' : 'inherit'}
+              disabled={loading}
+              sx={{ minWidth: 140 }}
+            >
+              {isDrawingMode ? 'Drawing...' : 'Draw Area'}
+            </Button>
+          </Box>
 
           {/* Price Range */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Min Price"
-                type="number"
-                value={searchData.minPrice || ''}
-                onChange={handleChange('minPrice')}
-                disabled={loading}
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Max Price"
-                type="number"
-                value={searchData.maxPrice || ''}
-                onChange={handleChange('maxPrice')}
-                disabled={loading}
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                }}
-              />
-            </Grid>
-          </Grid>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <TextField
+              sx={{ flex: 1, minWidth: 150 }}
+              label="Min Price"
+              type="number"
+              value={searchData.minPrice || ''}
+              onChange={handleChange('minPrice')}
+              disabled={loading}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+              }}
+            />
+            <TextField
+              sx={{ flex: 1, minWidth: 150 }}
+              label="Max Price"
+              type="number"
+              value={searchData.maxPrice || ''}
+              onChange={handleChange('maxPrice')}
+              disabled={loading}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+              }}
+            />
+          </Box>
 
           {/* Property Types */}
           <Box>
@@ -259,52 +246,44 @@ export default function EnhancedPropertySearchForm({
             </AccordionSummary>
             <AccordionDetails>
               <Stack spacing={2}>
-                <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Bedrooms"
-                      type="number"
-                      value={searchData.minBedrooms || ''}
-                      onChange={handleChange('minBedrooms')}
-                      disabled={loading}
-                      inputProps={{ min: 1, max: 10 }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Max Bedrooms"
-                      type="number"
-                      value={searchData.maxBedrooms || ''}
-                      onChange={handleChange('maxBedrooms')}
-                      disabled={loading}
-                      inputProps={{ min: 1, max: 10 }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Bathrooms"
-                      type="number"
-                      value={searchData.minBathrooms || ''}
-                      onChange={handleChange('minBathrooms')}
-                      disabled={loading}
-                      inputProps={{ min: 1, max: 10, step: 0.5 }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Max Results"
-                      type="number"
-                      value={searchData.limit || 50}
-                      onChange={handleChange('limit')}
-                      disabled={loading}
-                      inputProps={{ min: 10, max: 200, step: 10 }}
-                    />
-                  </Grid>
-                </Grid>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <TextField
+                    sx={{ flex: 1, minWidth: 120 }}
+                    label="Min Bedrooms"
+                    type="number"
+                    value={searchData.minBedrooms || ''}
+                    onChange={handleChange('minBedrooms')}
+                    disabled={loading}
+                    inputProps={{ min: 1, max: 10 }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 120 }}
+                    label="Max Bedrooms"
+                    type="number"
+                    value={searchData.maxBedrooms || ''}
+                    onChange={handleChange('maxBedrooms')}
+                    disabled={loading}
+                    inputProps={{ min: 1, max: 10 }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 120 }}
+                    label="Min Bathrooms"
+                    type="number"
+                    value={searchData.minBathrooms || ''}
+                    onChange={handleChange('minBathrooms')}
+                    disabled={loading}
+                    inputProps={{ min: 1, max: 10, step: 0.5 }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 120 }}
+                    label="Max Results"
+                    type="number"
+                    value={searchData.limit || 50}
+                    onChange={handleChange('limit')}
+                    disabled={loading}
+                    inputProps={{ min: 10, max: 200, step: 10 }}
+                  />
+                </Box>
 
                 <Divider />
 
@@ -312,54 +291,46 @@ export default function EnhancedPropertySearchForm({
                   Investment Filters
                 </Typography>
 
-                <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Cash-on-Cash ROI (%)"
-                      type="number"
-                      value={searchData.minCashOnCashROI || ''}
-                      onChange={handleChange('minCashOnCashROI')}
-                      disabled={loading}
-                      inputProps={{ min: 0, max: 50, step: 0.1 }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Cap Rate (%)"
-                      type="number"
-                      value={searchData.minCapRate || ''}
-                      onChange={handleChange('minCapRate')}
-                      disabled={loading}
-                      inputProps={{ min: 0, max: 20, step: 0.1 }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Monthly Cash Flow"
-                      type="number"
-                      value={searchData.minMonthlyCashFlow || ''}
-                      onChange={handleChange('minMonthlyCashFlow')}
-                      disabled={loading}
-                      InputProps={{
-                        startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <TextField
-                      fullWidth
-                      label="Min Investment Score"
-                      type="number"
-                      value={searchData.minInvestmentScore || ''}
-                      onChange={handleChange('minInvestmentScore')}
-                      disabled={loading}
-                      inputProps={{ min: 1, max: 10, step: 0.1 }}
-                    />
-                  </Grid>
-                </Grid>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <TextField
+                    sx={{ flex: 1, minWidth: 150 }}
+                    label="Min Cash-on-Cash ROI (%)"
+                    type="number"
+                    value={searchData.minCashOnCashROI || ''}
+                    onChange={handleChange('minCashOnCashROI')}
+                    disabled={loading}
+                    inputProps={{ min: 0, max: 50, step: 0.1 }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 150 }}
+                    label="Min Cap Rate (%)"
+                    type="number"
+                    value={searchData.minCapRate || ''}
+                    onChange={handleChange('minCapRate')}
+                    disabled={loading}
+                    inputProps={{ min: 0, max: 20, step: 0.1 }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 150 }}
+                    label="Min Monthly Cash Flow"
+                    type="number"
+                    value={searchData.minMonthlyCashFlow || ''}
+                    onChange={handleChange('minMonthlyCashFlow')}
+                    disabled={loading}
+                    InputProps={{
+                      startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                    }}
+                  />
+                  <TextField
+                    sx={{ flex: 1, minWidth: 150 }}
+                    label="Min Investment Score"
+                    type="number"
+                    value={searchData.minInvestmentScore || ''}
+                    onChange={handleChange('minInvestmentScore')}
+                    disabled={loading}
+                    inputProps={{ min: 1, max: 10, step: 0.1 }}
+                  />
+                </Box>
               </Stack>
             </AccordionDetails>
           </Accordion>
@@ -392,7 +363,7 @@ export default function EnhancedPropertySearchForm({
             <Typography variant="body2">
               • Try broader price ranges to find more properties<br/>
               • Use the "Draw Area" feature to search within specific neighborhoods<br/>
-              • For Santa Clara, CA: Found properties similar to Zillow's 55 results<br/>
+              • For Santa Clara, CA: Enhanced search finds 55+ properties matching Zillow results<br/>
               • Investment scores help identify the most profitable opportunities
             </Typography>
           </Paper>
