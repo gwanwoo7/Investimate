@@ -274,19 +274,22 @@ export default function PropertyCalculatorWithMap({
           <Box sx={{ 
             flex: { xs: '0 0 auto', lg: '0 0 400px' },
             minHeight: { xs: 'auto', lg: 0 },
-            maxHeight: { xs: '50vh', lg: 'none' },
-            overflow: 'auto'
+            maxHeight: { xs: '60vh', lg: '100%' },
+            overflowY: 'auto',
+            overflowX: 'hidden'
           }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, pb: 1 }}>
                   <Search />
                   Search Criteria
                 </Typography>
-                <AreaSearchForm 
-                  onSearch={handleAreaSearch}
-                  loading={loading}
-                />
+                <Box sx={{ overflowY: 'auto', pr: 1 }}>
+                  <AreaSearchForm 
+                    onSearch={handleAreaSearch}
+                    loading={loading}
+                  />
+                </Box>
               </CardContent>
             </Card>
           </Box>
@@ -331,16 +334,17 @@ export default function PropertyCalculatorWithMap({
           <Box sx={{ 
             flex: { xs: '0 0 auto', lg: '0 0 400px' },
             minHeight: { xs: 'auto', lg: 0 },
-            maxHeight: { xs: '50vh', lg: 'none' },
-            overflow: 'auto'
+            maxHeight: { xs: '60vh', lg: '100%' },
+            overflowY: 'auto',
+            overflowX: 'hidden'
           }}>
-            <Card sx={{ height: '100%' }}>
-              <CardContent sx={{ p: 1 }}>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, px: 1 }}>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <CardContent sx={{ p: 1, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, px: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1 }}>
                   <ListIcon />
                   Properties ({properties.length})
                 </Typography>
-                <Box sx={{ height: 'calc(100% - 48px)', overflow: 'auto' }}>
+                <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', pr: 1 }}>
                   <PropertyListView 
                     properties={properties}
                     onPropertySelect={setSelectedProperty}

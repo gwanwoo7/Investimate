@@ -93,34 +93,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      // Create or get demo user
-      const demoEmail = 'demo@investimate.com';
-      let user;
-      
-      try {
-        user = await db.authenticateUser(demoEmail, 'demo123');
-      } catch {
-        // User doesn't exist, create demo user
-        user = await db.createUser(demoEmail, 'Demo User', 'demo123');
-      }
-      
-      if (user) {
-        db.setCurrentUser(user);
-        onLogin(demoEmail);
-      }
-    } catch (err) {
-      console.error('Demo login error:', err);
-      setError('Demo login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
@@ -161,48 +133,6 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     } catch (err) {
       console.error('Google login error:', err);
       setError(err instanceof Error ? err.message : 'Google login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAppleLogin = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      // Try Supabase OAuth first
-      if (supabaseAuth.isConfigured()) {
-        const { error: authError } = await supabaseAuth.signInWithApple();
-        if (authError) {
-          setError(authError);
-          setLoading(false);
-          return;
-        }
-        return;
-      }
-
-      // Fallback to legacy OAuth
-      if (!oauthService.isAppleConfigured()) {
-        setError('Apple Sign In is not configured. Please contact support or use the demo login below.');
-        setLoading(false);
-        return;
-      }
-
-      const oauthUser: OAuthUser = await oauthService.signInWithApple();
-      
-      let user;
-      try {
-        user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
-      } catch {
-        user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
-      }
-      
-      db.setCurrentUser(user);
-      onLogin(user.email);
-    } catch (err) {
-      console.error('Apple login error:', err);
-      setError(err instanceof Error ? err.message : 'Apple Sign In failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -405,75 +335,28 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
             </Divider>
 
             {/* OAuth Buttons */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={handleGoogleLogin}
-                disabled={loading}
-                startIcon={<Google />}
-                sx={{ 
-                  py: 1.5,
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 'medium',
-                  color: '#db4437',
-                  borderColor: '#db4437',
-                  '&:hover': {
-                    borderColor: '#c23321',
-                    bgcolor: alpha('#db4437', 0.04)
-                  }
-                }}
-              >
-                Continue with Google
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                onClick={handleAppleLogin}
-                disabled={loading}
-                sx={{ 
-                  py: 1.5,
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  fontWeight: 'medium',
-                  color: '#000',
-                  borderColor: '#000',
-                  '&:hover': {
-                    borderColor: '#333',
-                    bgcolor: alpha('#000', 0.04)
-                  }
-                }}
-              >
-                🍎 Continue with Apple
-              </Button>
-            </Box>
-
-            <Divider sx={{ my: 3 }} />
-
-            {/* Demo Login */}
             <Button
               fullWidth
-              variant="text"
-              onClick={handleDemoLogin}
+              variant="outlined"
+              onClick={handleGoogleLogin}
               disabled={loading}
+              startIcon={<Google />}
               sx={{ 
+                mb: 3,
                 py: 1.5,
                 borderRadius: 3,
                 textTransform: 'none',
                 fontSize: '1rem',
-                color: 'text.secondary',
-                border: '2px dashed',
-                borderColor: 'divider',
+                fontWeight: 'medium',
+                color: '#db4437',
+                borderColor: '#db4437',
                 '&:hover': {
-                  bgcolor: alpha(theme.palette.primary.main, 0.04),
-                  borderColor: 'primary.main'
+                  borderColor: '#c23321',
+                  bgcolor: alpha('#db4437', 0.04)
                 }
               }}
             >
-              🎭 Try Demo Account
+              Continue with Google
             </Button>
 
             <Box sx={{ textAlign: 'center', mt: 4 }}>
