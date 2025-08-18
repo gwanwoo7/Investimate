@@ -60,59 +60,30 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     setError('');
 
     try {
-      // Try Supabase Auth first (if configured)
-      if (supabaseAuth.isConfigured()) {
-        const { user, error: authError } = await supabaseAuth.signIn({ email, password });
-        
-        if (authError) {
-          setError(authError);
-          setLoading(false);
-          return;
-        }
-
-        if (user) {
-          onLogin(user.email);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fallback to legacy authentication
+      // Simplified login - directly authenticate with database
       const user = await db.authenticateUser(email, password);
       if (user) {
         db.setCurrentUser(user);
-        onLogin(email);
+        onLogin(user.email);
       } else {
         setError('Invalid email or password');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setError('Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+    const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
 
     try {
-      // Try Supabase OAuth first
-      if (supabaseAuth.isConfigured()) {
-        const { error: authError } = await supabaseAuth.signInWithGoogle();
-        if (authError) {
-          setError(authError);
-          setLoading(false);
-          return;
-        }
-        // OAuth will redirect, no need to continue
-        return;
-      }
-
-      // Fallback to legacy OAuth
+      // Simplified Google OAuth
       if (!oauthService.isGoogleConfigured()) {
-        setError('Google OAuth is not configured. Please contact support or use the demo login below.');
+        setError('Google OAuth is not configured. Please use email login instead.');
         setLoading(false);
         return;
       }
@@ -128,11 +99,13 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
         user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
       }
       
-      db.setCurrentUser(user);
-      onLogin(user.email);
+      if (user) {
+        db.setCurrentUser(user);
+        onLogin(user.email);
+      }
     } catch (err) {
       console.error('Google login error:', err);
-      setError(err instanceof Error ? err.message : 'Google login failed. Please try again.');
+      setError('Google login failed. Please use email login instead.');
     } finally {
       setLoading(false);
     }

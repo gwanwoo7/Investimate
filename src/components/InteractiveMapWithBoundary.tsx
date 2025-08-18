@@ -171,6 +171,9 @@ export default function InteractiveMapWithBoundary({
       });
 
       drawControlRef.current = drawControl;
+      
+      // Add draw control to map
+      mapRef.current.addControl(drawControl);
 
       // Handle draw events
       mapRef.current.on(L.Draw.Event.CREATED, (event: any) => {

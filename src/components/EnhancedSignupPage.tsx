@@ -128,72 +128,24 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setSuccess('');
 
     try {
-      // Check if user already exists
-      const existingUser = await db.getUserByEmail(email);
-      if (existingUser) {
-        setError('An account with this email already exists. Please use a different email or sign in.');
-        setLoading(false);
-        return;
-      }
-
-      // Try Supabase Auth first (if configured)
-      if (supabaseAuth.isConfigured()) {
-        const signUpData: SignUpData = { email, password, name };
-        const { user, error: authError } = await supabaseAuth.signUp(signUpData);
-        
-        if (authError) {
-          if (authError.includes('already registered')) {
-            setError('An account with this email already exists. Please use a different email or sign in.');
-          } else {
-            setError(`Signup failed: ${authError}`);
-          }
-          setLoading(false);
-          return;
-        }
-        
-        // Skip email verification - directly sign in the user
-        if (user) {
-          try {
-            // Auto-sign in after successful signup
-            const { user: signedInUser, error: signInError } = await supabaseAuth.signIn({ email, password });
-            if (!signInError && signedInUser) {
-              setSuccess('Account created and signed in successfully!');
-              // Small delay to show success message
-              setTimeout(() => {
-                onSignup(signedInUser.email);
-              }, 1000);
-            } else {
-              setSuccess('Account created successfully! Please sign in to continue.');
-              // Auto-redirect to login after 2 seconds
-              setTimeout(() => {
-                onLogin();
-              }, 2000);
-            }
-          } catch (signInErr) {
-            console.warn('Auto sign-in failed, but account was created:', signInErr);
-            setSuccess('Account created successfully! Please sign in to continue.');
-            setTimeout(() => {
-              onLogin();
-            }, 2000);
-          }
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Fallback to legacy database
-      const user = await db.createUser(email, name, password);
+      // Simplified signup flow - directly create user without complex checks
+      const user = await db.createUser(email, password, name);
       if (user) {
         db.setCurrentUser(user);
-        setSuccess('Account created successfully! You can now sign in.');
-        onSignup(user.email);
+        setSuccess('Account created successfully! You are now signed in.');
+        // Auto-login after successful signup
+        setTimeout(() => {
+          onSignup(user.email);
+        }, 1000);
+      } else {
+        setError('Failed to create account. Please try again.');
       }
     } catch (err) {
       console.error('Signup error:', err);
       if (err instanceof Error && err.message.includes('already exists')) {
         setError('An account with this email already exists. Please use a different email or sign in.');
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to create account. Please try again.');
+        setError('Failed to create account. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -205,28 +157,16 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setError('');
 
     try {
-      // Try Supabase OAuth first
-      if (supabaseAuth.isConfigured()) {
-        const { error: authError } = await supabaseAuth.signInWithGoogle();
-        if (authError) {
-          setError(`Google OAuth error: ${authError}. Please try email signup below or contact support.`);
-          setLoading(false);
-          return;
-        }
-        // OAuth will redirect, no need to continue
-        return;
-      }
-
-      // Fallback to legacy OAuth
+      // Simplified Google OAuth
       if (!oauthService.isGoogleConfigured()) {
-        setError('Google OAuth is not configured. Please use email signup below or contact support.');
+        setError('Google OAuth is not configured. Please sign up with email instead.');
         setLoading(false);
         return;
       }
 
       const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
       
-      // Try to find existing user or create new one
+      // Create or get user
       let user;
       try {
         user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
@@ -237,14 +177,11 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       
       if (user) {
         db.setCurrentUser(user);
-        setSuccess('Successfully signed up with Google!');
-        setTimeout(() => {
-          onSignup(user.email);
-        }, 1000);
+        onSignup(user.email);
       }
     } catch (err) {
       console.error('Google signup error:', err);
-      setError(`Google signup failed: ${err instanceof Error ? err.message : 'Unknown error'}. Please try email signup below.`);
+      setError('Google sign up failed. Please try signing up with email instead.');
     } finally {
       setLoading(false);
     }
