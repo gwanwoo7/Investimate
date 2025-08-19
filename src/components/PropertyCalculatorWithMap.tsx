@@ -7,22 +7,19 @@ import {
   Paper,
   Card,
   CardContent,
-  IconButton,
   Divider,
-  Stack,
   Chip
 } from '@mui/material';
 import {
   Search,
   Map as MapIcon,
   List as ListIcon,
-  FilterAlt,
-  Refresh,
   PinDrop
 } from '@mui/icons-material';
 import AreaSearchForm from './AreaSearchForm';
 import PropertyListView from './PropertyListView';
-import InteractiveMapWithBoundary from './InteractiveMapWithBoundary';
+import PropertyResultsPage from './PropertyResultsPage';
+import SimpleMapWithBoundary from './SimpleMapWithBoundary';
 import type { PropertyListing, AreaSearchParams } from '../types/property';
 import { EnhancedRealEstateAPIService } from '../services/enhancedRealEstateAPIService';
 
@@ -47,9 +44,8 @@ export default function PropertyCalculatorWithMap({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [currentSearchLocation, setCurrentSearchLocation] = useState<string>('');
-  const [showMap, setShowMap] = useState(true);
-  const [showSearchForm, setShowSearchForm] = useState(true);
   const [lastSearchParams, setLastSearchParams] = useState<AreaSearchParams | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
   const handleAreaSearch = async (searchData: AreaSearchParams) => {
     // Check search limits before proceeding
@@ -82,6 +78,8 @@ export default function PropertyCalculatorWithMap({
         setError('No properties found matching your criteria. Try adjusting your search parameters or drawing a different area on the map.');
       } else {
         setSuccess(`Found ${foundProperties.length} investment properties matching your criteria!`);
+        // Show results page after successful search
+        setShowResults(true);
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -129,6 +127,7 @@ export default function PropertyCalculatorWithMap({
         setError('No properties found in the selected area. Try expanding your search area or adjusting your criteria.');
       } else {
         setSuccess(`Found ${foundProperties.length} investment properties in the selected area!`);
+        setShowResults(true);
       }
     } catch (err) {
       console.error('Boundary search error:', err);
@@ -144,14 +143,21 @@ export default function PropertyCalculatorWithMap({
     console.log('Selected property:', property);
   };
 
-  const handleReset = () => {
-    setProperties([]);
-    setSelectedProperty(null);
-    setCurrentSearchLocation('');
-    setError(null);
-    setSuccess(null);
-    setLastSearchParams(null);
+  const handleBackToSearch = () => {
+    setShowResults(false);
   };
+
+  // Show results page if we have searched properties
+  if (showResults && properties.length > 0) {
+    return (
+      <PropertyResultsPage
+        properties={properties}
+        searchLocation={currentSearchLocation}
+        onBack={handleBackToSearch}
+        onPropertySelect={handlePropertySelect}
+      />
+    );
+  }
 
   return (
     <Box 
@@ -177,36 +183,6 @@ export default function PropertyCalculatorWithMap({
         <Typography variant="body1" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}>
           Search by criteria or draw areas on the map to find profitable investment properties
         </Typography>
-
-        {/* Action Buttons */}
-        <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" sx={{ mb: 2 }}>
-          <Button
-            variant={showSearchForm ? "contained" : "outlined"}
-            startIcon={<FilterAlt />}
-            onClick={() => setShowSearchForm(!showSearchForm)}
-            size="small"
-          >
-            {showSearchForm ? 'Hide' : 'Show'} Search Form
-          </Button>
-          
-          <Button
-            variant={showMap ? "contained" : "outlined"}
-            startIcon={<MapIcon />}
-            onClick={() => setShowMap(!showMap)}
-            size="small"
-          >
-            {showMap ? 'Hide' : 'Show'} Map
-          </Button>
-          
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={handleReset}
-            size="small"
-          >
-            Reset
-          </Button>
-        </Stack>
 
         {/* Search limit warning */}
         {!canSearch && (
@@ -267,67 +243,64 @@ export default function PropertyCalculatorWithMap({
         flexDirection: { xs: 'column', lg: 'row' },
         gap: 2,
         minHeight: 0,
-        overflow: 'hidden'
+        overflow: 'hidden',
+        pb: 4 // Add padding bottom for better view
       }}>
         {/* Left Panel - Search Form */}
-        {showSearchForm && (
-          <Box sx={{ 
-            flex: { xs: '0 0 auto', lg: '0 0 400px' },
-            minHeight: { xs: 'auto', lg: 0 },
-            maxHeight: { xs: '60vh', lg: '100%' },
-            overflowY: 'auto',
-            overflowX: 'hidden'
-          }}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, pb: 1 }}>
-                  <Search />
-                  Search Criteria
-                </Typography>
-                <Box sx={{ overflowY: 'auto', pr: 1 }}>
-                  <AreaSearchForm 
-                    onSearch={handleAreaSearch}
-                    loading={loading}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+        <Box sx={{ 
+          flex: { xs: '0 0 auto', lg: '0 0 400px' },
+          minHeight: { xs: 'auto', lg: 0 },
+          maxHeight: { xs: '60vh', lg: '100%' },
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, pb: 1 }}>
+                <Search />
+                Search Criteria
+              </Typography>
+              <Box sx={{ overflowY: 'auto', pr: 1 }}>
+                <AreaSearchForm 
+                  onSearch={handleAreaSearch}
+                  loading={loading}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Center Panel - Map */}
-        {showMap && (
-          <Box sx={{ 
-            flex: 1,
-            minHeight: { xs: '400px', lg: '600px' },
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
-            <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MapIcon />
-                    Interactive Map
-                  </Typography>
-                  <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
-                    💡 Draw rectangles to search specific areas
-                  </Typography>
-                </Box>
-                <Divider sx={{ mb: 1 }} />
-                <Box sx={{ flex: 1, minHeight: 0 }}>
-                  <InteractiveMapWithBoundary 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
+        <Box sx={{ 
+          flex: 1,
+          minHeight: { xs: '400px', lg: '600px' },
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MapIcon />
+                  Interactive Map
+                </Typography>
+                <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
+                  💡 Draw rectangles to search specific areas
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 1 }} />
+              <Box sx={{ flex: 1, minHeight: 0 }}>
+                <SimpleMapWithBoundary 
+                  properties={properties}
+                  selectedProperty={selectedProperty}
+                  onPropertySelect={handlePropertySelect}
+                  searchLocation={currentSearchLocation}
+                  onBoundarySearch={handleBoundarySearch}
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Right Panel - Property List */}
         {properties.length > 0 && (
