@@ -227,12 +227,12 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
           minHeight: '100%',
           pb: 5 // Extra padding at bottom for better scroll experience
         }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <MapPin size={36} style={{ color: '#1976d2', marginBottom: '12px' }} />
-            <Typography variant="h5" gutterBottom>
+          <Box sx={{ textAlign: 'center', mb: 2 }}>
+            <MapPin size={24} style={{ color: '#1976d2', marginBottom: '8px' }} />
+            <Typography variant="h6" gutterBottom>
               Property Search
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="caption" color="text.secondary">
               Find properties by location and criteria
             </Typography>
           </Box>
@@ -246,9 +246,9 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
       <Stack spacing={3}>
         {/* Location Section */}
         <Box>
-          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <MapPin size={20} />
-            Search Location
+                    <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MapPin size={16} />
+            Location
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
             <TextField

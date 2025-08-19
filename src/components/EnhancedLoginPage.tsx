@@ -51,6 +51,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
@@ -60,17 +61,32 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     setError('');
 
     try {
-      // Simplified login - directly authenticate with database
+      console.log('🔐 Attempting to login user:', email);
+      
+      // Direct authentication
       const user = await db.authenticateUser(email, password);
-      if (user) {
-        db.setCurrentUser(user);
-        onLogin(user.email);
-      } else {
-        setError('Invalid email or password');
-      }
+      console.log('✅ User authenticated:', user);
+      
+      // Set current user
+      db.setCurrentUser(user);
+      console.log('✅ Current user set');
+      
+      // Redirect to main app
+      onLogin(user.email);
+      
     } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid email or password. Please try again.');
+      console.error('❌ Login error:', err);
+      if (err instanceof Error) {
+        if (err.message.includes('not found')) {
+          setError('No account found with this email. Please sign up first.');
+        } else if (err.message.includes('Invalid password')) {
+          setError('Incorrect password. Please try again.');
+        } else {
+          setError(`Login failed: ${err.message}`);
+        }
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

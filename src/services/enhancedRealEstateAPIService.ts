@@ -329,14 +329,30 @@ export class EnhancedRealEstateAPIService {
     properties: PropertyData[], 
     bounds: { north: number; south: number; east: number; west: number }
   ): PropertyData[] {
-    return properties.filter(property => {
-      if (!property.latitude || !property.longitude) return true; // Keep properties without coordinates
+    console.log('🔍 Filtering properties by bounds:', bounds);
+    console.log('📍 Total properties before filtering:', properties.length);
+    
+    const filtered = properties.filter(property => {
+      if (!property.latitude || !property.longitude) return false; // Exclude properties without coordinates
       
-      return property.latitude <= bounds.north &&
+      const withinBounds = property.latitude <= bounds.north &&
              property.latitude >= bounds.south &&
-             property.longitude <= bounds.east &&
-             property.longitude >= bounds.west;
+             property.longitude >= bounds.west &&  // Fixed: west should be minimum
+             property.longitude <= bounds.east;    // Fixed: east should be maximum
+             
+      if (withinBounds) {
+        console.log(`✅ Property ${property.address} is within bounds:`, {
+          lat: property.latitude, 
+          lng: property.longitude,
+          bounds
+        });
+      }
+      
+      return withinBounds;
     });
+    
+    console.log('📍 Properties after boundary filtering:', filtered.length);
+    return filtered;
   }
 
   // Remove duplicate properties based on address and price

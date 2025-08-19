@@ -119,7 +119,19 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm()) {
+    // Basic validation
+    if (!email || !password || !name) {
+      setError('Please fill in all required fields');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -128,24 +140,33 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setSuccess('');
 
     try {
-      // Simplified signup flow - directly create user without complex checks
+      console.log('📝 Attempting to create user:', { email, name });
+      
+      // Create user directly
       const user = await db.createUser(email, password, name);
-      if (user) {
-        db.setCurrentUser(user);
-        setSuccess('Account created successfully! You are now signed in.');
-        // Auto-login after successful signup
-        setTimeout(() => {
-          onSignup(user.email);
-        }, 1000);
-      } else {
-        setError('Failed to create account. Please try again.');
-      }
+      console.log('✅ User created:', user);
+      
+      // Set current user
+      db.setCurrentUser(user);
+      console.log('✅ Current user set');
+      
+      setSuccess('Account created successfully! Redirecting...');
+      
+      // Redirect after success
+      setTimeout(() => {
+        onSignup(user.email);
+      }, 1500);
+      
     } catch (err) {
-      console.error('Signup error:', err);
-      if (err instanceof Error && err.message.includes('already exists')) {
-        setError('An account with this email already exists. Please use a different email or sign in.');
+      console.error('❌ Signup error:', err);
+      if (err instanceof Error) {
+        if (err.message.includes('already exists')) {
+          setError('An account with this email already exists. Please use a different email or try logging in.');
+        } else {
+          setError(`Signup failed: ${err.message}`);
+        }
       } else {
-        setError('Failed to create account. Please try again.');
+        setError('Signup failed. Please try again.');
       }
     } finally {
       setLoading(false);
