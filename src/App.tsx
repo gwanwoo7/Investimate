@@ -9,6 +9,7 @@ import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
+import OAuthDebug from './components/OAuthDebug';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -450,6 +451,24 @@ function App() {
                       'Start Analyzing Properties'
                     )}
                   </Button>
+                  
+                  {/* Temporary Debug Button */}
+                  <Button 
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setCurrentTab(5)}
+                    sx={{ 
+                      mt: 2,
+                      color: 'white',
+                      borderColor: 'white',
+                      '&:hover': { 
+                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                        borderColor: 'white'
+                      }
+                    }}
+                  >
+                    Debug OAuth
+                  </Button>
                 </Box>
               </Container>
             </Box>
@@ -653,6 +672,15 @@ function App() {
             minHeight: 'calc(100vh - 64px)' // Just nav bar height
           }}>
             <CommunityChat />
+          </Box>
+        )}
+
+        {currentTab === 5 && (
+          <Box sx={{ 
+            width: '100%', 
+            minHeight: 'calc(100vh - 64px)' // Just nav bar height
+          }}>
+            <OAuthDebug />
           </Box>
         )}
       </Box>

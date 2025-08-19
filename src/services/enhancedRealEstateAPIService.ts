@@ -330,6 +330,69 @@ export class EnhancedRealEstateAPIService {
     return cityCoords[`${city}, ${state}`] || null;
   }
 
+  // Get nearby cities for diverse property listings
+  private static getNearbyCities(city: string, state: string): Array<{ city: string; state: string; lat: number; lng: number }> {
+    // Base location
+    const baseCoords = this.getCityCoordinates(city, state);
+    const baseLat = baseCoords?.lat || 37.3541;
+    const baseLng = baseCoords?.lng || -121.9552;
+
+    // State-specific nearby cities
+    const nearbyCitiesByState: { [key: string]: Array<{ city: string; state: string; lat: number; lng: number }> } = {
+      'CA': [
+        { city: city, state: state, lat: baseLat, lng: baseLng },
+        { city: 'San Jose', state: 'CA', lat: 37.3382, lng: -121.8863 },
+        { city: 'Sunnyvale', state: 'CA', lat: 37.3688, lng: -122.0363 },
+        { city: 'Cupertino', state: 'CA', lat: 37.3230, lng: -122.0322 },
+        { city: 'Mountain View', state: 'CA', lat: 37.3861, lng: -122.0839 },
+        { city: 'Milpitas', state: 'CA', lat: 37.4323, lng: -121.8995 }
+      ],
+      'TX': [
+        { city: city, state: state, lat: baseLat, lng: baseLng },
+        { city: 'Houston', state: 'TX', lat: 29.7604, lng: -95.3698 },
+        { city: 'Dallas', state: 'TX', lat: 32.7767, lng: -96.7970 },
+        { city: 'Austin', state: 'TX', lat: 30.2672, lng: -97.7431 },
+        { city: 'San Antonio', state: 'TX', lat: 29.4241, lng: -98.4936 }
+      ],
+      'FL': [
+        { city: city, state: state, lat: baseLat, lng: baseLng },
+        { city: 'Orlando', state: 'FL', lat: 28.5383, lng: -81.3792 },
+        { city: 'Miami', state: 'FL', lat: 25.7617, lng: -80.1918 },
+        { city: 'Tampa', state: 'FL', lat: 27.9506, lng: -82.4572 },
+        { city: 'Jacksonville', state: 'FL', lat: 30.3322, lng: -81.6557 }
+      ],
+      'GA': [
+        { city: city, state: state, lat: baseLat, lng: baseLng },
+        { city: 'Atlanta', state: 'GA', lat: 33.7490, lng: -84.3880 },
+        { city: 'Columbus', state: 'GA', lat: 32.4609, lng: -84.9877 },
+        { city: 'Augusta', state: 'GA', lat: 33.4735, lng: -82.0105 },
+        { city: 'Savannah', state: 'GA', lat: 32.0835, lng: -81.0998 }
+      ]
+    };
+
+    return nearbyCitiesByState[state] || [
+      { city: city, state: state, lat: baseLat, lng: baseLng },
+      { city: city, state: state, lat: baseLat + 0.1, lng: baseLng + 0.1 },
+      { city: city, state: state, lat: baseLat - 0.1, lng: baseLng - 0.1 }
+    ];
+  }
+
+  // Get regional pricing based on state
+  private static getRegionalPricing(state: string): number {
+    const regionalPricing: { [key: string]: { min: number; max: number } } = {
+      'CA': { min: 600000, max: 2000000 },
+      'TX': { min: 200000, max: 800000 },
+      'FL': { min: 250000, max: 900000 },
+      'GA': { min: 180000, max: 600000 },
+      'AL': { min: 120000, max: 400000 },
+      'NY': { min: 400000, max: 1500000 },
+      'WA': { min: 350000, max: 1200000 }
+    };
+
+    const pricing = regionalPricing[state] || { min: 200000, max: 800000 };
+    return pricing.min + Math.random() * (pricing.max - pricing.min);
+  }
+
   // Filter properties by boundary bounds
   private static filterPropertiesByBounds(
     properties: PropertyData[], 
@@ -550,32 +613,34 @@ export class EnhancedRealEstateAPIService {
     });
   }
 
-  // Enhanced mock data with 55+ properties matching Santa Clara search
+  // Enhanced mock data with 55+ properties matching search location
   private static getEnhancedMockProperties(params: AreaSearchParams): PropertyListing[] {
-    console.log('🎭 Generating enhanced mock properties matching Zillow results...');
+    console.log(`🎭 Generating enhanced mock properties for ${params.city || 'Unknown'}, ${params.state || 'Unknown'}...`);
     
     // Generate properties across different price ranges and types
     const mockProperties: PropertyData[] = [];
     
-    // Santa Clara area cities for diverse listings
-    const santaClaraCities = [
-      { city: 'Santa Clara', state: 'CA', lat: 37.3541, lng: -121.9552 },
-      { city: 'San Jose', state: 'CA', lat: 37.3382, lng: -121.8863 },
-      { city: 'Sunnyvale', state: 'CA', lat: 37.3688, lng: -122.0363 },
-      { city: 'Cupertino', state: 'CA', lat: 37.3230, lng: -122.0322 },
-      { city: 'Mountain View', state: 'CA', lat: 37.3861, lng: -122.0839 },
-      { city: 'Milpitas', state: 'CA', lat: 37.4323, lng: -121.8995 }
-    ];
+    // Dynamic location data based on search parameters
+    const cityCoords = this.getCityCoordinates(params.city || '', params.state || '');
+    const searchLocation = { 
+      city: params.city || 'Unknown City', 
+      state: params.state || 'Unknown State', 
+      lat: cityCoords?.lat || 37.3541,
+      lng: cityCoords?.lng || -121.9552
+    };
+    
+    // Get nearby cities for the search location
+    const nearbyCities = this.getNearbyCities(params.city || '', params.state || '');
     
     const propertyTypes: Array<'single-family' | 'townhouse' | 'condo'> = ['single-family', 'townhouse', 'condo'];
     
-    // Generate 60+ properties to match/exceed Zillow's 55
+    // Generate 60+ properties to provide good search results
     for (let i = 0; i < 60; i++) {
-      const cityInfo = santaClaraCities[i % santaClaraCities.length];
+      const cityInfo = nearbyCities[i % nearbyCities.length];
       const propertyType = propertyTypes[i % propertyTypes.length];
       
-      // Price distribution matching Santa Clara market
-      let basePrice;
+      // Price distribution based on state/region
+      let basePrice = this.getRegionalPricing(params.state || 'CA');
       if (i < 15) basePrice = 800000 + Math.random() * 1200000; // High-end: $800K - $2M
       else if (i < 35) basePrice = 600000 + Math.random() * 400000; // Mid-range: $600K - $1M
       else basePrice = 400000 + Math.random() * 300000; // Lower range: $400K - $700K
@@ -594,12 +659,19 @@ export class EnhancedRealEstateAPIService {
       const latVariation = (Math.random() - 0.5) * 0.02;
       const lngVariation = (Math.random() - 0.5) * 0.02;
       
+      // Generate location-specific zip codes
+      const stateZipPrefixes: { [key: string]: string } = {
+        'CA': '95', 'TX': '77', 'FL': '33', 'GA': '30', 'AL': '35',
+        'NY': '10', 'WA': '98'
+      };
+      const zipPrefix = stateZipPrefixes[cityInfo.state] || '95';
+      
       mockProperties.push({
         id: `enhanced-mock-${i + 1}`,
         address: `${1000 + i} ${['Main St', 'Oak Ave', 'Pine Dr', 'Cedar Ln', 'Maple Way', 'Elm St'][i % 6]}`,
         city: cityInfo.city,
         state: cityInfo.state,
-        zipCode: `95${String(50 + (i % 50)).padStart(3, '0')}`,
+        zipCode: `${zipPrefix}${String(50 + (i % 50)).padStart(3, '0')}`,
         purchasePrice: Math.round(basePrice),
         marketValue: Math.round(basePrice),
         bedrooms: bedrooms,
@@ -618,12 +690,12 @@ export class EnhancedRealEstateAPIService {
           lng: cityInfo.lng + lngVariation
         },
         
-        // Enhanced property data
+        // Enhanced property data with location-specific rates
         monthlyHoaFee: propertyType === 'condo' ? Math.round(50 + Math.random() * 400) : 0,
-        annualPropertyTaxes: Math.round(basePrice * 0.0074), // CA avg tax rate
-        monthlyPropertyTaxes: Math.round(basePrice * 0.0074 / 12),
-        annualInsurance: Math.round(basePrice * 0.0035), // CA avg insurance rate
-        monthlyInsurance: Math.round(basePrice * 0.0035 / 12),
+        annualPropertyTaxes: Math.round(basePrice * this.getPropertyTaxRate(cityInfo.state)),
+        monthlyPropertyTaxes: Math.round(basePrice * this.getPropertyTaxRate(cityInfo.state) / 12),
+        annualInsurance: Math.round(basePrice * this.getInsuranceRate(cityInfo.state)),
+        monthlyInsurance: Math.round(basePrice * this.getInsuranceRate(cityInfo.state) / 12),
         mortgagePayment: {
           principal: Math.round(basePrice * 0.75 * 0.006 * 0.4),
           interest: Math.round(basePrice * 0.75 * 0.006 * 0.6),

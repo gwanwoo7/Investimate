@@ -94,7 +94,7 @@ class OAuthService {
   }
 
   /**
-   * Sign in with Google
+   * Sign in with Google using the Sign-In with Google button
    */
   async signInWithGoogle(): Promise<OAuthUser> {
     if (!this.googleClientId) {
@@ -105,11 +105,25 @@ class OAuthService {
       await this.initializeGoogleSDK();
 
       return new Promise((resolve, reject) => {
+        console.log('🔐 Initializing Google Sign-In with client ID:', this.googleClientId);
+        
         window.google.accounts.id.initialize({
           client_id: this.googleClientId,
           callback: async (response: any) => {
             try {
+              console.log('✅ Google OAuth callback received');
+              
+              if (!response.credential) {
+                throw new Error('No credential received from Google');
+              }
+
               const userInfo = await this.parseGoogleJWT(response.credential);
+              console.log('📧 Google user info:', { 
+                email: userInfo.email, 
+                name: userInfo.name,
+                sub: userInfo.sub 
+              });
+              
               const oauthUser: OAuthUser = {
                 id: userInfo.sub,
                 email: userInfo.email,
@@ -117,35 +131,64 @@ class OAuthService {
                 avatar: userInfo.picture,
                 provider: 'google'
               };
+              
               resolve(oauthUser);
             } catch (error) {
-              reject(error);
+              console.error('❌ Error processing Google credential:', error);
+              reject(new Error(`Failed to process Google sign-in: ${error instanceof Error ? error.message : 'Unknown error'}`));
             }
           },
           auto_select: false,
-          cancel_on_tap_outside: true
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: true
         });
 
-        window.google.accounts.id.prompt((notification: any) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // Fallback to popup if prompt is not displayed
-            window.google.accounts.id.renderButton(
-              document.createElement('div'),
-              {
-                theme: 'outline',
-                size: 'large',
-                width: '100%',
-                click_listener: () => {
-                  window.google.accounts.id.prompt();
+        // Create a temporary button to trigger the sign-in
+        const tempButton = document.createElement('div');
+        tempButton.id = 'google-signin-button-temp';
+        document.body.appendChild(tempButton);
+
+        try {
+          window.google.accounts.id.renderButton(tempButton, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            text: 'signin_with',
+            width: '300'
+          });
+
+          // Programmatically click the button to trigger sign-in
+          setTimeout(() => {
+            const button = tempButton.querySelector('div[role="button"]') as HTMLElement;
+            if (button) {
+              console.log('🖱️ Triggering Google sign-in button click');
+              button.click();
+            } else {
+              // Fallback to prompt if button rendering fails
+              console.log('🔄 Button not found, trying prompt...');
+              window.google.accounts.id.prompt((notification: any) => {
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                  reject(new Error('Google sign-in prompt was not displayed. Please check your browser settings and try again.'));
                 }
-              }
-            );
+              });
+            }
+          }, 500);
+
+        } catch (error) {
+          document.body.removeChild(tempButton);
+          reject(new Error(`Failed to render Google sign-in button: ${error instanceof Error ? error.message : 'Unknown error'}`));
+        }
+
+        // Clean up the temporary button after 10 seconds
+        setTimeout(() => {
+          if (document.body.contains(tempButton)) {
+            document.body.removeChild(tempButton);
           }
-        });
+        }, 10000);
       });
     } catch (error) {
-      console.error('Google sign-in error:', error);
-      throw new Error('Google sign-in failed. Please try again.');
+      console.error('❌ Google sign-in initialization error:', error);
+      throw new Error(`Google sign-in failed to initialize: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

@@ -64,7 +64,7 @@ export default function PropertyCalculatorWithMap({
       
       console.log('🔍 PropertyCalculatorWithMap: Searching with params:', searchData);
       
-      const foundProperties = await EnhancedRealEstateAPIService.searchPropertiesWithBoundary(searchData);
+      const foundProperties = await EnhancedRealEstateAPIService.searchPropertiesWithBoundary(searchData, undefined);
       console.log('🏠 Properties found:', foundProperties.length);
       
       setProperties(foundProperties);
