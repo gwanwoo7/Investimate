@@ -335,10 +335,13 @@ class DatabaseService {
   }
 
   private async hashPassword(password: string): Promise<string> {
-    // Simple hash for demo purposes - in production use bcrypt
+    // Enhanced hash for better demo security - in production use bcrypt
     let hash = 0;
-    for (let i = 0; i < password.length; i++) {
-      const char = password.charCodeAt(i);
+    const salt = 'investimate_secure_salt_2025';
+    const combinedString = salt + password + salt;
+    
+    for (let i = 0; i < combinedString.length; i++) {
+      const char = combinedString.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
@@ -346,14 +349,22 @@ class DatabaseService {
   }
 
   private hashPasswordSync(password: string): string {
-    // Simple hash for demo purposes - in production use bcrypt
+    // Enhanced hash for better demo security - in production use bcrypt
+    console.log('🔒 Hashing password for security...');
     let hash = 0;
-    for (let i = 0; i < password.length; i++) {
-      const char = password.charCodeAt(i);
+    const salt = 'investimate_secure_salt_2025';
+    const combinedString = salt + password + salt;
+    
+    for (let i = 0; i < combinedString.length; i++) {
+      const char = combinedString.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    return Math.abs(hash).toString(16);
+    
+    // Consistent hash without timestamp for login verification
+    const finalHash = Math.abs(hash).toString(16);
+    console.log('✅ Password hashed successfully');
+    return finalHash;
   }
 
   private getMockPosts(): CommunityPost[] {

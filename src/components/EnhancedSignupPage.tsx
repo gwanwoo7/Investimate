@@ -144,11 +144,11 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       
       // Create user directly
       const user = await db.createUser(email, password, name);
-      console.log('✅ User created:', user);
+      console.log('✅ User created successfully:', user.email);
       
       // Set current user
       db.setCurrentUser(user);
-      console.log('✅ Current user set');
+      console.log('✅ Current user set for signup:', user.email);
       
       setSuccess('Account created successfully! Redirecting...');
       
@@ -178,14 +178,19 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setError('');
 
     try {
+      console.log('🔐 Attempting Google OAuth signup...');
+      
       // Simplified Google OAuth
       if (!oauthService.isGoogleConfigured()) {
+        console.error('❌ Google OAuth not configured');
         setError('Google OAuth is not configured. Please sign up with email instead.');
         setLoading(false);
         return;
       }
 
+      console.log('📧 Google OAuth configured, proceeding...');
       const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
+      console.log('✅ Google OAuth successful:', oauthUser.email);
       
       // Create or get user
       let user;

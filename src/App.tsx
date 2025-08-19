@@ -42,7 +42,11 @@ const theme = createTheme({
 function App() {
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
-  const [searchCount, setSearchCount] = useState(0);
+  const [searchCount, setSearchCount] = useState(() => {
+    // Restore search count from localStorage
+    const saved = localStorage.getItem('investimate_search_count');
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
@@ -55,15 +59,19 @@ function App() {
 
   // Restore user session on app startup
   useEffect(() => {
+    console.log('🔄 App starting - checking for existing user session...');
     const currentUser = db.getCurrentUser();
     if (currentUser) {
-      console.log('🔄 Restoring user session:', currentUser.email);
+      console.log('✅ Restoring user session for:', currentUser.email);
       setUser({
         email: currentUser.email,
         isSubscribed: currentUser.isSubscribed || false,
         name: currentUser.name,
         id: currentUser.id
       });
+      console.log('📊 User session restored successfully');
+    } else {
+      console.log('ℹ️ No existing user session found');
     }
   }, []);
 
@@ -168,10 +176,26 @@ function App() {
   };
 
   const handleLogout = () => {
+    console.log('👋 Logging out user...');
+    
+    // Clear user session from DatabaseService
     db.setCurrentUser(null);
+    
+    // Reset application state
     setUser(null);
     setSearchCount(0);
     setCurrentTab(0);
+    
+    // Clear any cached data
+    setShowLogin(false);
+    setShowSignup(false);
+    setShowPayment(false);
+    setShowAdmin(false);
+    
+    // Clear search count from localStorage
+    localStorage.removeItem('investimate_search_count');
+    
+    console.log('✅ User logged out successfully, state cleared');
   };
 
   const canSearch = () => {
@@ -180,7 +204,12 @@ function App() {
 
   const handleSearch = () => {
     if (!user?.isSubscribed) {
-      setSearchCount(prev => prev + 1);
+      const newCount = searchCount + 1;
+      setSearchCount(newCount);
+      
+      // Persist search count to localStorage
+      localStorage.setItem('investimate_search_count', newCount.toString());
+      console.log('🔍 Search count updated:', newCount);
     }
   };
 

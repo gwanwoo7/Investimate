@@ -69,7 +69,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
       
       // Set current user
       db.setCurrentUser(user);
-      console.log('✅ Current user set');
+      console.log('✅ Current user set:', user.email);
       
       // Redirect to main app
       onLogin(user.email);
@@ -97,30 +97,39 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     setError('');
 
     try {
+      console.log('🔐 Attempting Google OAuth login...');
+      
       // Simplified Google OAuth
       if (!oauthService.isGoogleConfigured()) {
+        console.error('❌ Google OAuth not configured');
         setError('Google OAuth is not configured. Please use email login instead.');
         setLoading(false);
         return;
       }
 
+      console.log('📧 Google OAuth configured, proceeding...');
       const oauthUser: OAuthUser = await oauthService.signInWithGoogle();
+      console.log('✅ Google OAuth successful:', oauthUser.email);
       
       // Try to find existing user or create new one
       let user;
       try {
         user = await db.authenticateOAuthUser(oauthUser.provider, oauthUser.id, oauthUser.email);
+        console.log('✅ Existing OAuth user found:', user.email);
       } catch {
         // User doesn't exist, create new one
+        console.log('📝 Creating new OAuth user...');
         user = await db.createOAuthUser(oauthUser.email, oauthUser.name, oauthUser.provider, oauthUser.id, oauthUser.avatar);
+        console.log('✅ New OAuth user created:', user.email);
       }
       
       if (user) {
         db.setCurrentUser(user);
+        console.log('✅ OAuth user authenticated successfully');
         onLogin(user.email);
       }
     } catch (err) {
-      console.error('Google login error:', err);
+      console.error('❌ Google login error:', err);
       setError('Google login failed. Please use email login instead.');
     } finally {
       setLoading(false);

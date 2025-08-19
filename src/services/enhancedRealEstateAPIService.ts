@@ -241,6 +241,12 @@ export class EnhancedRealEstateAPIService {
         latitude: property.latitude || this.getCityCoordinates(city, state)?.lat,
         longitude: property.longitude || this.getCityCoordinates(city, state)?.lng,
         
+        // Add coordinates property for map compatibility
+        coordinates: {
+          lat: property.latitude || this.getCityCoordinates(city, state)?.lat || 37.3541,
+          lng: property.longitude || this.getCityCoordinates(city, state)?.lng || -121.9552
+        },
+        
         // Enhanced financial data
         monthlyHoaFee: monthlyHOA,
         annualPropertyTaxes: annualPropertyTaxes,
@@ -605,6 +611,12 @@ export class EnhancedRealEstateAPIService {
         source: 'Enhanced Demo Data',
         latitude: cityInfo.lat + latVariation,
         longitude: cityInfo.lng + lngVariation,
+        
+        // Add coordinates property for consistency
+        coordinates: {
+          lat: cityInfo.lat + latVariation,
+          lng: cityInfo.lng + lngVariation
+        },
         
         // Enhanced property data
         monthlyHoaFee: propertyType === 'condo' ? Math.round(50 + Math.random() * 400) : 0,
