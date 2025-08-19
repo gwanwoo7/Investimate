@@ -20,24 +20,6 @@ import {
 } from '@mui/icons-material';
 import type { PropertyListing } from '../types/property';
 
-// Extend the Leaflet namespace to include Draw
-declare global {
-  namespace L {
-    namespace Draw {
-      const Event: {
-        CREATED: string;
-        EDITED: string;
-        DELETED: string;
-        DRAWSTART: string;
-        DRAWSTOP: string;
-      };
-    }
-    class Control {
-      static Draw: new (options?: any) => L.Control;
-    }
-  }
-}
-
 interface InteractiveMapWithBoundaryProps {
   properties: PropertyListing[];
   selectedProperty: PropertyListing | null;
