@@ -4,7 +4,7 @@ import { Typography, Box, Button, Card, CardContent, Container, Tab, Tabs } from
 import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
 import PropertyCalculatorWithMap from './components/PropertyCalculatorWithMap';
 import CommunityChat from './components/CommunityChat';
-// import PaymentPage from './components/PaymentPage';
+import PaymentPage from './components/PaymentPage';
 import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
@@ -14,7 +14,8 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import NavigationBar from './components/NavigationBar';
-import { useState } from 'react';
+import DatabaseService from './services/databaseService';
+import { useState, useEffect } from 'react';
 
 const theme = createTheme({
   palette: {
@@ -40,7 +41,7 @@ const theme = createTheme({
 
 function App() {
   const [currentTab, setCurrentTab] = useState(0);
-  const [user, setUser] = useState<{ email: string; isSubscribed: boolean } | null>(null);
+  const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
   const [searchCount, setSearchCount] = useState(0);
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
@@ -49,6 +50,22 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+
+  const db = DatabaseService.getInstance();
+
+  // Restore user session on app startup
+  useEffect(() => {
+    const currentUser = db.getCurrentUser();
+    if (currentUser) {
+      console.log('🔄 Restoring user session:', currentUser.email);
+      setUser({
+        email: currentUser.email,
+        isSubscribed: currentUser.isSubscribed || false,
+        name: currentUser.name,
+        id: currentUser.id
+      });
+    }
+  }, []);
 
   const MAX_FREE_SEARCHES = 5;
 
@@ -114,12 +131,32 @@ function App() {
   };
 
   const handleLogin = (email: string) => {
-    setUser({ email, isSubscribed: false });
+    const currentUser = db.getCurrentUser();
+    if (currentUser) {
+      setUser({
+        email: currentUser.email,
+        isSubscribed: currentUser.isSubscribed || false,
+        name: currentUser.name,
+        id: currentUser.id
+      });
+    } else {
+      setUser({ email, isSubscribed: false });
+    }
     setShowLogin(false);
   };
 
   const handleSignup = (email: string) => {
-    setUser({ email, isSubscribed: false });
+    const currentUser = db.getCurrentUser();
+    if (currentUser) {
+      setUser({
+        email: currentUser.email,
+        isSubscribed: currentUser.isSubscribed || false,
+        name: currentUser.name,
+        id: currentUser.id
+      });
+    } else {
+      setUser({ email, isSubscribed: false });
+    }
     setShowSignup(false);
   };
 
@@ -131,6 +168,7 @@ function App() {
   };
 
   const handleLogout = () => {
+    db.setCurrentUser(null);
     setUser(null);
     setSearchCount(0);
     setCurrentTab(0);
@@ -234,8 +272,7 @@ function App() {
     );
   }
 
-  // Temporarily disable payment page
-  /*
+  // Re-enable payment page
   if (showPayment) {
     return (
       <ThemeProvider theme={theme}>
@@ -255,7 +292,6 @@ function App() {
       </ThemeProvider>
     );
   }
-  */
 
   if (currentTab === 1) {
     return (

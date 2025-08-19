@@ -118,7 +118,7 @@ export default function PropertyCalculatorWithMap({
       
       console.log('🗺️ Boundary search with bounds:', bounds);
       
-      const foundProperties = await EnhancedRealEstateAPIService.searchPropertiesWithBoundary(searchParams);
+      const foundProperties = await EnhancedRealEstateAPIService.searchPropertiesWithBoundary(searchParams, bounds);
       console.log('🏠 Properties found in boundary:', foundProperties.length);
       
       setProperties(foundProperties);
