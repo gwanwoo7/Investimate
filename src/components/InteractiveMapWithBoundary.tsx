@@ -20,6 +20,24 @@ import {
 } from '@mui/icons-material';
 import type { PropertyListing } from '../types/property';
 
+// Extend the Leaflet namespace to include Draw
+declare global {
+  namespace L {
+    namespace Draw {
+      const Event: {
+        CREATED: string;
+        EDITED: string;
+        DELETED: string;
+        DRAWSTART: string;
+        DRAWSTOP: string;
+      };
+    }
+    class Control {
+      static Draw: new (options?: any) => L.Control;
+    }
+  }
+}
+
 interface InteractiveMapWithBoundaryProps {
   properties: PropertyListing[];
   selectedProperty: PropertyListing | null;
@@ -129,12 +147,16 @@ export default function InteractiveMapWithBoundary({
   // Initialize map
   useEffect(() => {
     if (!mapRef.current) {
+      console.log('🗺️ Initializing map with boundary drawing...');
+      
       // Default to Santa Clara, CA - matching the Zillow link
       mapRef.current = L.map('map-with-boundary', {
         center: [37.3541, -121.9552],
         zoom: 12,
         zoomControl: true
       });
+      
+      console.log('🗺️ Map created:', mapRef.current);
       
       // Add tile layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -145,88 +167,103 @@ export default function InteractiveMapWithBoundary({
       // Add drawn items layer
       mapRef.current.addLayer(drawnItemsRef.current);
 
-      // Initialize draw control
-      const drawControl = new L.Control.Draw({
-        position: 'topleft',
-        draw: {
-          rectangle: {
-            shapeOptions: {
-              color: '#2196f3', // Zillow-like blue color
-              fillColor: '#2196f3',
-              fillOpacity: 0.1,
-              weight: 2
-            }
+      // Initialize draw control with better error handling
+      try {
+        console.log('🎨 Creating draw control...');
+        
+        const drawControl = new (L.Control as any).Draw({
+          position: 'topleft',
+          draw: {
+            rectangle: {
+              shapeOptions: {
+                color: '#2196f3', // Zillow-like blue color
+                fillColor: '#2196f3',
+                fillOpacity: 0.1,
+                weight: 2
+              }
+            },
+            polygon: false,
+            polyline: false,
+            circle: false,
+            marker: false,
+            circlemarker: false
           },
-          polygon: false,
-          polyline: false,
-          circle: false,
-          marker: false,
-          circlemarker: false
-        },
-        edit: {
-          featureGroup: drawnItemsRef.current,
-          remove: true,
-          edit: false
-        }
-      });
+          edit: {
+            featureGroup: drawnItemsRef.current,
+            remove: true,
+            edit: false
+          }
+        });
 
-      drawControlRef.current = drawControl;
-      
-      // Add draw control to map
-      mapRef.current.addControl(drawControl);
+        drawControlRef.current = drawControl;
+        
+        console.log('🎨 Draw control created:', drawControl);
+        
+        // Add draw control to map
+        mapRef.current.addControl(drawControl);
+        console.log('✅ Draw control added to map');
 
-      // Handle draw events
-      mapRef.current.on(L.Draw.Event.CREATED, (event: any) => {
-        const layer = event.layer;
-        
-        // Remove previous boundary
-        if (currentBoundary) {
-          drawnItemsRef.current.removeLayer(currentBoundary);
-        }
-        
-        // Add new boundary
-        drawnItemsRef.current.addLayer(layer);
-        setCurrentBoundary(layer);
-        
-        // Extract bounds for search
-        if (layer instanceof L.Rectangle) {
-          const bounds = layer.getBounds();
-          const newBounds = {
-            north: bounds.getNorth(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            west: bounds.getWest()
-          };
-          setBoundaryBounds(newBounds);
+        // Handle draw events
+        mapRef.current.on('draw:created', (event: any) => {
+          console.log('🎯 Rectangle drawn:', event);
+          const layer = event.layer;
           
-          // Trigger search within boundary
-          onBoundarySearch(newBounds);
-        }
+          // Remove previous boundary
+          if (currentBoundary) {
+            drawnItemsRef.current.removeLayer(currentBoundary);
+          }
+          
+          // Add new boundary
+          drawnItemsRef.current.addLayer(layer);
+          setCurrentBoundary(layer);
+          
+          // Extract bounds for search
+          if (layer.getBounds) {
+            const bounds = layer.getBounds();
+            const newBounds = {
+              north: bounds.getNorth(),
+              south: bounds.getSouth(),
+              east: bounds.getEast(),
+              west: bounds.getWest()
+            };
+            console.log('🎯 Extracted bounds:', newBounds);
+            setBoundaryBounds(newBounds);
+            
+            // Trigger search within boundary
+            onBoundarySearch(newBounds);
+          }
+          
+          // Exit drawing mode
+          if (onDrawingModeChange) {
+            onDrawingModeChange(false);
+          }
+        });
+
+        mapRef.current.on('draw:deleted', () => {
+          console.log('🗑️ Rectangle deleted');
+          setCurrentBoundary(null);
+          setBoundaryBounds(null);
+        });
+
+        mapRef.current.on('draw:edited', (event: any) => {
+          console.log('✏️ Rectangle edited:', event);
+          if (currentBoundary && event.layers.getLayers().includes(currentBoundary)) {
+            const bounds = currentBoundary.getBounds();
+            const newBounds = {
+              north: bounds.getNorth(),
+              south: bounds.getSouth(),
+              east: bounds.getEast(),
+              west: bounds.getWest()
+            };
+            setBoundaryBounds(newBounds);
+            onBoundarySearch(newBounds);
+          }
+        });
         
-        // Exit drawing mode
-        if (onDrawingModeChange) {
-          onDrawingModeChange(false);
-        }
-      });
-
-      mapRef.current.on(L.Draw.Event.DELETED, () => {
-        setCurrentBoundary(null);
-        setBoundaryBounds(null);
-      });
-
-      mapRef.current.on(L.Draw.Event.EDITED, (event: any) => {
-        if (currentBoundary && event.layers.getLayers().includes(currentBoundary)) {
-          const bounds = currentBoundary.getBounds();
-          const newBounds = {
-            north: bounds.getNorth(),
-            south: bounds.getSouth(),
-            east: bounds.getEast(),
-            west: bounds.getWest()
-          };
-          setBoundaryBounds(newBounds);
-          onBoundarySearch(newBounds);
-        }
-      });
+      } catch (error) {
+        console.error('❌ Error creating draw control:', error);
+        console.error('Make sure leaflet-draw is properly installed');
+      }
     }
 
     return () => {

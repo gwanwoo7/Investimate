@@ -58,10 +58,12 @@ class DatabaseService {
 
   // User Management
   async createUser(email: string, password: string, name: string): Promise<User> {
+    console.log('📝 Creating user:', { email, name });
     const users = this.getUsers();
     
     // Check if user already exists
     if (users.find(user => user.email === email)) {
+      console.error('❌ User already exists:', email);
       throw new Error('User already exists');
     }
 
@@ -72,28 +74,34 @@ class DatabaseService {
       avatar: this.generateAvatar(name),
       isSubscribed: false,
       joinDate: new Date().toISOString(),
-      hashedPassword: await this.hashPassword(password)
+      hashedPassword: this.hashPasswordSync(password)
     };
 
     users.push(user);
     localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+    console.log('✅ User created successfully:', user.email);
     
     return user;
   }
 
   async authenticateUser(email: string, password: string): Promise<User> {
+    console.log('🔐 Authenticating user:', email);
     const users = this.getUsers();
     const user = users.find(u => u.email === email);
     
     if (!user) {
+      console.error('❌ User not found:', email);
       throw new Error('User not found');
     }
 
-    const hashedPassword = await this.hashPassword(password);
+    const hashedPassword = this.hashPasswordSync(password);
     if (user.hashedPassword !== hashedPassword) {
+      console.error('❌ Invalid password for user:', email);
       throw new Error('Invalid password');
     }
 
+    console.log('✅ User authenticated successfully:', email);
+    
     // Don't return password hash
     const { hashedPassword: _, ...userWithoutPassword } = user;
     return userWithoutPassword;
@@ -309,26 +317,43 @@ class DatabaseService {
     }
     
     return null;
-  }  // Utility methods
+  }  // Utility functions
   private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   private generateAvatar(name: string): string {
-    const avatars = ['👤', '👨‍💼', '👩‍💼', '👨‍💻', '👩‍💻', '👨‍🔬', '👩‍🔬', '👨‍🏫', '👩‍🏫'];
-    const index = name.length % avatars.length;
-    return avatars[index];
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+    const color = colors[name.length % colors.length];
+    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return `data:image/svg+xml,${encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="20" fill="${color}"/>
+        <text x="20" y="25" font-family="Arial" font-size="16" font-weight="bold" text-anchor="middle" fill="white">${initials}</text>
+      </svg>`
+    )}`;
   }
 
   private async hashPassword(password: string): Promise<string> {
-    // Simple hash for demo - use bcrypt or similar in production
+    // Simple hash for demo purposes - in production use bcrypt
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
       const char = password.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    return hash.toString();
+    return Math.abs(hash).toString(16);
+  }
+
+  private hashPasswordSync(password: string): string {
+    // Simple hash for demo purposes - in production use bcrypt
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+      const char = password.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(16);
   }
 
   private getMockPosts(): CommunityPost[] {
