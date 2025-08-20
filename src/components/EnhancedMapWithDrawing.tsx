@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import 'leaflet-draw';
 import {
   Box,
   Typography,
@@ -10,7 +12,9 @@ import {
   Tooltip,
   ToggleButton,
   ToggleButtonGroup,
-  IconButton
+  IconButton,
+  Chip,
+  Badge
 } from '@mui/material';
 import {
   CropFree,
@@ -18,7 +22,12 @@ import {
   Search,
   Edit,
   Rectangle,
-  Gesture
+  Gesture,
+  MyLocation,
+  Layers,
+  FilterList,
+  Undo,
+  Redo
 } from '@mui/icons-material';
 import type { PropertyListing } from '../types/property';
 
@@ -55,12 +64,20 @@ export default function EnhancedMapWithDrawing({
   const rectangleRef = useRef<L.Rectangle | null>(null);
   const polygonRef = useRef<L.Polygon | null>(null);
   const drawingLineRef = useRef<L.Polyline | null>(null);
+  const drawControlRef = useRef<L.Control.Draw | null>(null);
+  const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
   
   const [drawingMode, setDrawingMode] = useState<DrawingMode>('none');
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingStart, setDrawingStart] = useState<{ lat: number; lng: number } | null>(null);
   const [polygonPoints, setPolygonPoints] = useState<Array<{ lat: number; lng: number }>>([]);
   const [currentBounds, setCurrentBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+  const [mapFilters, setMapFilters] = useState({
+    minPrice: 0,
+    maxPrice: 5000000,
+    propertyTypes: ['single-family', 'condo', 'townhouse']
+  });
+  const [showPropertyCount, setShowPropertyCount] = useState(true);
 
   // Initialize map
   useEffect(() => {
@@ -75,7 +92,91 @@ export default function EnhancedMapWithDrawing({
         attribution: '© OpenStreetMap contributors'
       }).addTo(mapRef.current);
 
-      // Handle drawing interactions
+      // Add the drawn items layer
+      if (mapRef.current) {
+        mapRef.current.addLayer(drawnItemsRef.current);
+      }
+
+      // Initialize Leaflet Draw
+      const drawControl = new L.Control.Draw({
+        position: 'topleft',
+        draw: {
+          polygon: {
+            allowIntersection: false,
+            drawError: {
+              color: '#e1e100',
+              message: '<strong>Oh snap!</strong> you can\'t draw that!'
+            },
+            shapeOptions: {
+              color: '#2196f3',
+              weight: 3,
+              opacity: 0.8,
+              fillOpacity: 0.2
+            }
+          },
+          rectangle: {
+            shapeOptions: {
+              color: '#2196f3',
+              weight: 3,
+              opacity: 0.8,
+              fillOpacity: 0.2
+            }
+          },
+          circle: false,
+          circlemarker: false,
+          marker: false,
+          polyline: false
+        },
+        edit: {
+          featureGroup: drawnItemsRef.current
+        }
+      });
+
+      if (mapRef.current) {
+        mapRef.current.addControl(drawControl);
+        drawControlRef.current = drawControl;
+      }
+
+      // Handle drawing events
+      mapRef.current.on(L.Draw.Event.CREATED, (e: any) => {
+        const layer = e.layer;
+        drawnItemsRef.current.addLayer(layer);
+        
+        if (e.layerType === 'polygon') {
+          const points = layer.getLatLngs()[0].map((latlng: L.LatLng) => ({
+            lat: latlng.lat,
+            lng: latlng.lng
+          }));
+          onPolygonSearch(points);
+          
+          // Also calculate bounding box
+          const bounds = layer.getBounds();
+          const boundingBox = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+          onBoundarySearch(boundingBox);
+        } else if (e.layerType === 'rectangle') {
+          const bounds = layer.getBounds();
+          const boundingBox = {
+            north: bounds.getNorth(),
+            south: bounds.getSouth(),
+            east: bounds.getEast(),
+            west: bounds.getWest()
+          };
+          setCurrentBounds(boundingBox);
+          onBoundarySearch(boundingBox);
+        }
+      });
+
+      mapRef.current.on(L.Draw.Event.DELETED, () => {
+        setCurrentBounds(null);
+        setPolygonPoints([]);
+      });
+
+      // Handle manual drawing interactions for custom drawing
       mapRef.current.on('click', handleMapClick);
       mapRef.current.on('mousemove', handleMouseMove);
     }
@@ -256,18 +357,91 @@ export default function EnhancedMapWithDrawing({
       });
       markersRef.current = [];
 
-      // Add new markers
-      properties.forEach((property) => {
-        if (property.latitude && property.longitude) {
-          const marker = L.marker([property.latitude, property.longitude])
+      // Group nearby properties for cluster display
+      const propertyGroups = groupPropertiesByLocation(properties);
+
+      // Add new markers with Zillow-style design
+      propertyGroups.forEach((group) => {
+        if (group.properties.length === 1) {
+          const property = group.properties[0];
+          if (property.latitude && property.longitude) {
+            // Single property marker with price
+            const priceLabel = `$${(property.purchasePrice || 0).toLocaleString()}`;
+            
+            const customIcon = L.divIcon({
+              className: 'property-price-marker',
+              html: `<div style="
+                background: white;
+                border: 2px solid #2196f3;
+                border-radius: 6px;
+                padding: 2px 6px;
+                font-size: 12px;
+                font-weight: bold;
+                color: #2196f3;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                white-space: nowrap;
+              ">${priceLabel}</div>`,
+              iconSize: [60, 24],
+              iconAnchor: [30, 24],
+              popupAnchor: [0, -24]
+            });
+
+            const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
+              .bindPopup(`
+                <div style="width: 250px;">
+                  <img src="${getPropertyImage(property, 0)}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;">
+                  <h4 style="margin: 0 0 8px 0;">${property.address}</h4>
+                  <p style="margin: 0 0 4px 0; color: #666;">${property.city}, ${property.state}</p>
+                  <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: #2196f3;">$${property.purchasePrice?.toLocaleString()}</p>
+                  <div style="display: flex; gap: 12px; color: #666; font-size: 14px;">
+                    <span>${property.bedrooms} beds</span>
+                    <span>${property.bathrooms} baths</span>
+                    <span>${property.squareFootage?.toLocaleString()} sq ft</span>
+                  </div>
+                  <p style="margin: 8px 0 0 0; color: #28a745; font-weight: bold;">Monthly Rent: $${property.monthlyRent?.toLocaleString()}</p>
+                </div>
+              `, { maxWidth: 300 });
+            
+            if (mapRef.current) {
+              marker.addTo(mapRef.current);
+              markersRef.current.push(marker);
+            }
+          }
+        } else {
+          // Cluster marker showing property count
+          const clusterIcon = L.divIcon({
+            className: 'property-cluster-marker',
+            html: `<div style="
+              background: #2196f3;
+              border: 3px solid white;
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              font-weight: bold;
+              color: white;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            ">${group.properties.length}</div>`,
+            iconSize: [40, 40],
+            iconAnchor: [20, 20],
+            popupAnchor: [0, -20]
+          });
+
+          const marker = L.marker([group.centerLat, group.centerLng], { icon: clusterIcon })
             .bindPopup(`
               <div style="width: 200px;">
-                <h4>${property.address}</h4>
-                <p>${property.city}, ${property.state}</p>
-                <p><strong>$${property.purchasePrice?.toLocaleString()}</strong></p>
-                <p>Monthly Rent: $${property.monthlyRent?.toLocaleString()}</p>
+                <h4>${group.properties.length} Properties in this area</h4>
+                <p>Price range: $${Math.min(...group.properties.map(p => p.purchasePrice || 0)).toLocaleString()} - 
+                $${Math.max(...group.properties.map(p => p.purchasePrice || 0)).toLocaleString()}</p>
+                <button onclick="window.zoomToCluster(${group.centerLat}, ${group.centerLng})" 
+                  style="background: #2196f3; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                  View Properties
+                </button>
               </div>
-            `)
+            `);
           
           if (mapRef.current) {
             marker.addTo(mapRef.current);
@@ -277,6 +451,69 @@ export default function EnhancedMapWithDrawing({
       });
     }
   }, [properties]);
+
+  // Helper function to group nearby properties
+  const groupPropertiesByLocation = (properties: PropertyListing[]) => {
+    const groups: Array<{
+      centerLat: number;
+      centerLng: number;
+      properties: PropertyListing[];
+    }> = [];
+
+    properties.forEach(property => {
+      if (!property.latitude || !property.longitude) return;
+
+      // Find existing group within 500m
+      const existingGroup = groups.find(group => {
+        const distance = getDistance(
+          property.latitude!, property.longitude!,
+          group.centerLat, group.centerLng
+        );
+        return distance < 500; // 500 meters threshold
+      });
+
+      if (existingGroup) {
+        existingGroup.properties.push(property);
+        // Update center point
+        const avgLat = existingGroup.properties.reduce((sum, p) => sum + (p.latitude || 0), 0) / existingGroup.properties.length;
+        const avgLng = existingGroup.properties.reduce((sum, p) => sum + (p.longitude || 0), 0) / existingGroup.properties.length;
+        existingGroup.centerLat = avgLat;
+        existingGroup.centerLng = avgLng;
+      } else {
+        groups.push({
+          centerLat: property.latitude,
+          centerLng: property.longitude,
+          properties: [property]
+        });
+      }
+    });
+
+    return groups;
+  };
+
+  // Helper function to calculate distance between two points
+  const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lng2-lng1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
+  // Helper function to get property image
+  const getPropertyImage = (property: PropertyListing, index: number) => {
+    const propertyId = property.id || `prop-${index}`;
+    const seed = propertyId.slice(-3);
+    const imageId = parseInt(seed, 36) % 1000 + 100;
+    return `https://picsum.photos/300/200?random=${imageId}`;
+  };
 
   // Handle search location marker
   useEffect(() => {
@@ -307,60 +544,115 @@ export default function EnhancedMapWithDrawing({
 
   return (
     <Box>
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Typography variant="h6">Interactive Property Map</Typography>
+      {/* Map Controls Toolbar */}
+      <Paper sx={{ p: 2, mb: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Search color="primary" />
+              Interactive Property Map
+            </Typography>
+            
+            {showPropertyCount && properties.length > 0 && (
+              <Badge 
+                badgeContent={properties.length} 
+                color="primary" 
+                max={999}
+                sx={{
+                  '& .MuiBadge-badge': {
+                    fontSize: '0.75rem',
+                    height: '20px',
+                    minWidth: '20px'
+                  }
+                }}
+              >
+                <Chip 
+                  label="Properties Found" 
+                  color="primary" 
+                  variant="outlined"
+                  size="small"
+                />
+              </Badge>
+            )}
+          </Box>
           
-          <ToggleButtonGroup
-            value={drawingMode}
-            exclusive
-            onChange={(_, newMode) => {
-              if (newMode !== null) {
-                clearDrawings();
-                setDrawingMode(newMode);
-              }
-            }}
-            size="small"
-          >
-            <ToggleButton value="rectangle">
-              <Tooltip title="Draw Rectangle">
-                <Rectangle />
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="polygon">
-              <Tooltip title="Draw Free Shape">
-                <Gesture />
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-          
-          <Button 
-            onClick={clearDrawings} 
-            startIcon={<Clear />}
-            variant="outlined"
-            size="small"
-          >
-            Clear
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Drawing Tools */}
+            <ToggleButtonGroup
+              value={drawingMode}
+              exclusive
+              onChange={(_, newMode) => {
+                if (newMode !== null) {
+                  clearDrawings();
+                  setDrawingMode(newMode);
+                }
+              }}
+              size="small"
+            >
+              <ToggleButton value="rectangle">
+                <Tooltip title="Draw Rectangle Search Area">
+                  <Rectangle />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="polygon">
+                <Tooltip title="Draw Custom Search Area">
+                  <Gesture />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            
+            {/* Map Controls */}
+            <Tooltip title="Clear All Drawings">
+              <IconButton onClick={clearDrawings} size="small" color="primary">
+                <Clear />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Center Map">
+              <IconButton 
+                onClick={() => {
+                  if (mapRef.current && properties.length > 0 && markersRef.current.length > 0) {
+                    const group = L.featureGroup(markersRef.current);
+                    mapRef.current.fitBounds(group.getBounds().pad(0.1));
+                  }
+                }}
+                size="small" 
+                color="primary"
+              >
+                <MyLocation />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Map Filters">
+              <IconButton size="small" color="primary">
+                <FilterList />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
         
+        {/* Drawing Instructions */}
         {drawingMode === 'rectangle' && (
-          <Typography variant="body2" color="text.secondary">
-            Click two points on the map to draw a rectangle search area
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'primary.50', borderRadius: 1 }}>
+            <Rectangle color="primary" fontSize="small" />
+            <Typography variant="body2" color="primary.main">
+              Click the rectangle tool in the map toolbar to draw a rectangular search area
+            </Typography>
+          </Box>
         )}
         
         {drawingMode === 'polygon' && (
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Click multiple points to draw a free-form search area
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'primary.50', borderRadius: 1 }}>
+            <Gesture color="primary" fontSize="small" />
+            <Typography variant="body2" color="primary.main">
+              Click the polygon tool in the map toolbar to draw a custom search area
             </Typography>
             {isDrawing && polygonPoints.length >= 3 && (
               <Button
                 onClick={finishPolygonDrawing}
                 variant="contained"
                 size="small"
-                sx={{ mt: 1 }}
+                sx={{ ml: 2 }}
                 startIcon={<Search />}
               >
                 Finish & Search ({polygonPoints.length} points)
@@ -368,26 +660,152 @@ export default function EnhancedMapWithDrawing({
             )}
           </Box>
         )}
+
+        {/* Active Search Area Info */}
+        {currentBounds && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, mt: 1 }}>
+            <CropFree color="success" fontSize="small" />
+            <Typography variant="body2" color="success.main">
+              Search area active: {currentBounds.north.toFixed(4)}°N, {currentBounds.south.toFixed(4)}°S, 
+              {currentBounds.east.toFixed(4)}°E, {currentBounds.west.toFixed(4)}°W
+            </Typography>
+            <Button 
+              onClick={clearDrawings} 
+              size="small" 
+              color="success"
+              startIcon={<Clear />}
+            >
+              Clear
+            </Button>
+          </Box>
+        )}
       </Paper>
       
+      {/* Enhanced Map Container */}
       <Box
         id="enhanced-map"
         sx={{
-          height: 500,
+          height: 600,
           width: '100%',
           border: '2px solid',
           borderColor: drawingMode !== 'none' ? 'primary.main' : 'divider',
           borderRadius: 2,
-          cursor: drawingMode !== 'none' ? 'crosshair' : 'default'
+          cursor: drawingMode !== 'none' ? 'crosshair' : 'default',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: 2,
+          '& .leaflet-control-container': {
+            '& .leaflet-draw-toolbar': {
+              '& a': {
+                backgroundColor: 'white',
+                color: '#2196f3',
+                border: '1px solid #2196f3',
+                '&:hover': {
+                  backgroundColor: '#2196f3',
+                  color: 'white'
+                }
+              }
+            }
+          },
+          '& .property-price-marker': {
+            animation: 'fadeIn 0.3s ease-in'
+          },
+          '& .property-cluster-marker': {
+            animation: 'bounceIn 0.5s ease-out'
+          }
         }}
       />
-      
-      {currentBounds && (
-        <Paper sx={{ p: 2, mt: 2, bgcolor: 'success.50' }}>
-          <Typography variant="body2" color="success.main">
-            Search area bounds: {currentBounds.north.toFixed(4)}°N, {currentBounds.south.toFixed(4)}°S, 
-            {currentBounds.east.toFixed(4)}°E, {currentBounds.west.toFixed(4)}°W
+
+      {/* Map Legend */}
+      <Paper sx={{ p: 2, mt: 2, bgcolor: 'background.paper' }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Map Legend
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box 
+              sx={{ 
+                width: 16, 
+                height: 16, 
+                bgcolor: '#2196f3', 
+                border: '2px solid white',
+                borderRadius: '50%',
+                boxShadow: 1
+              }} 
+            />
+            <Typography variant="body2">Property Cluster</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box 
+              sx={{ 
+                bgcolor: 'white',
+                border: '2px solid #2196f3',
+                borderRadius: 1,
+                px: 1,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                color: '#2196f3'
+              }}
+            >
+              $425K
+            </Box>
+            <Typography variant="body2">Individual Property</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box 
+              sx={{ 
+                width: 20, 
+                height: 2, 
+                bgcolor: '#2196f3',
+                opacity: 0.8
+              }} 
+            />
+            <Typography variant="body2">Search Boundary</Typography>
+          </Box>
+        </Box>
+      </Paper>
+
+      {/* Map Statistics */}
+      {properties.length > 0 && (
+        <Paper sx={{ p: 2, mt: 2, bgcolor: 'primary.50' }}>
+          <Typography variant="subtitle2" color="primary.main" gutterBottom>
+            Search Results Summary
           </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2 }}>
+            <Box>
+              <Typography variant="h6" color="primary.main">
+                {properties.length}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Properties Found
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" color="primary.main">
+                ${Math.min(...properties.map(p => p.purchasePrice || 0)).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Lowest Price
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" color="primary.main">
+                ${Math.max(...properties.map(p => p.purchasePrice || 0)).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Highest Price
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="h6" color="primary.main">
+                ${Math.round(properties.reduce((sum, p) => sum + (p.purchasePrice || 0), 0) / properties.length).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Average Price
+              </Typography>
+            </Box>
+          </Box>
         </Paper>
       )}
     </Box>
