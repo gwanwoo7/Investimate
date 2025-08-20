@@ -310,6 +310,15 @@ export class EnhancedRealEstateAPIService {
     return insuranceRates[state] || 0.005; // Default 0.5%
   }
 
+  // Method aliases for consistency with property generation calls
+  private static getPropertyTaxRate(state: string): number {
+    return this.getTaxRateByState(state);
+  }
+
+  private static getInsuranceRate(state: string): number {
+    return this.getInsuranceRateByState(state);
+  }
+
   // Get city coordinates for fallback
   private static getCityCoordinates(city: string, state: string): { lat: number; lng: number } | null {
     const cityCoords: { [key: string]: { lat: number; lng: number } } = {

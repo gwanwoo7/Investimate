@@ -175,7 +175,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           } else {
             setSuccess('Account created and verified successfully! Redirecting...');
             setTimeout(() => {
-              onSignup(user.email);
+              onSignup(supabaseUser.email);
             }, 1500);
           }
         }
