@@ -823,42 +823,6 @@ export default function SuperEnhancedFreeDrawMap({
         overflow: 'auto' // Add scrolling capability
       }}
     >
-      {/* Simple Control Panel */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          zIndex: 1000,
-          display: 'flex',
-          gap: 1
-        }}
-      >
-        <Tooltip title="Clear all drawn areas">
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={clearAllPolygons}
-            sx={{ minWidth: 'auto', px: 2 }}
-          >
-            <Clear fontSize="small" />
-          </Button>
-        </Tooltip>
-        <Tooltip title="Search properties in drawn area">
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            onClick={handleSearchInPolygon}
-            disabled={polygonCount === 0}
-            sx={{ minWidth: 'auto', px: 2 }}
-          >
-            <Search fontSize="small" />
-          </Button>
-        </Tooltip>
-      </Box>
-
       {/* Super Enhanced Map Container */}
       <Box
         id="super-enhanced-freedraw-map"
