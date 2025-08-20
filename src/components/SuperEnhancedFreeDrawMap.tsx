@@ -255,11 +255,11 @@ export default function SuperEnhancedFreeDrawMap({
         .addTo(mapRef.current);
       }
 
-      // Initialize Enhanced FreeDraw
+      // Initialize Enhanced FreeDraw with CREATE mode active
       freeDrawRef.current = new FreeDraw({
-        mode: NONE,
+        mode: CREATE, // Start in drawing mode
         smoothFactor: drawingSettings.smoothFactor,
-        strokeWidth: drawingSettings.strokeWidth,
+        strokeWidth: 3, // Fixed stroke width
         mergePolygons: drawingSettings.mergePolygons,
         concavePolygon: true,
         simplifyFactor: 1.1,
