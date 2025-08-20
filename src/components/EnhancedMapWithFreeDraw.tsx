@@ -70,9 +70,12 @@ export default function EnhancedMapWithFreeDraw({
   const freeDrawRef = useRef<any>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const searchMarkerRef = useRef<L.Marker | null>(null);
+  const currentLocationMarkerRef = useRef<L.Marker | null>(null);
   
   const [drawingMode, setDrawingMode] = useState<DrawingMode>('none');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [drawingSettings, setDrawingSettings] = useState({
     strokeWidth: 3,
     smoothFactor: 0.3,
@@ -82,21 +85,94 @@ export default function EnhancedMapWithFreeDraw({
   const [activePolygons, setActivePolygons] = useState<any[]>([]);
   const [polygonCount, setPolygonCount] = useState(0);
 
-  // Initialize map and FreeDraw
+  // Get user's current location
   useEffect(() => {
-    if (!mapRef.current) {
-      // Create map
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ lat: latitude, lng: longitude });
+          setLocationError(null);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setLocationError('Location access denied. Using default location.');
+          // Fallback to US center
+          setCurrentLocation({ lat: 39.8283, lng: -98.5795 });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    } else {
+      setLocationError('Geolocation not supported. Using default location.');
+      setCurrentLocation({ lat: 39.8283, lng: -98.5795 });
+    }
+  }, []);
+
+  // Initialize map and FreeDraw when location is available
+  useEffect(() => {
+    if (!mapRef.current && currentLocation) {
+      // Create map with user's current location or fallback
       mapRef.current = L.map('enhanced-freedraw-map', {
-        center: [39.8283, -98.5795], // Geographic center of United States
-        zoom: 4, // Zoom out to show more area
+        center: [currentLocation.lat, currentLocation.lng],
+        zoom: currentLocation.lat === 39.8283 ? 4 : 12, // Zoom in if we have user location
         zoomControl: true,
         doubleClickZoom: false, // Disable to prevent conflicts with FreeDraw
       });
 
-      // Add tile layer
+      // Use OpenStreetMap with better tiles for drawing
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+        minZoom: 3
       }).addTo(mapRef.current);
+
+      // Add current location marker if we have user's actual location
+      if (currentLocation.lat !== 39.8283 && currentLocation.lng !== -98.5795) {
+        const currentLocationIcon = L.divIcon({
+          className: 'current-location-marker',
+          html: `<div style="
+            background: #4285f4;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            box-shadow: 0 2px 6px rgba(66, 133, 244, 0.4);
+            position: relative;
+          ">
+            <div style="
+              background: #4285f4;
+              border: 2px solid white;
+              border-radius: 50%;
+              width: 12px;
+              height: 12px;
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              animation: pulse 2s infinite;
+            "></div>
+          </div>
+          <style>
+            @keyframes pulse {
+              0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+              50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.2); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+          </style>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+
+        currentLocationMarkerRef.current = L.marker([currentLocation.lat, currentLocation.lng], { 
+          icon: currentLocationIcon 
+        })
+        .bindPopup('Your Current Location')
+        .addTo(mapRef.current);
+      }
 
       // Initialize FreeDraw with comprehensive options
       freeDrawRef.current = new FreeDraw({
@@ -182,7 +258,7 @@ export default function EnhancedMapWithFreeDraw({
         }
       };
     }
-  }, []);
+  }, [currentLocation]); // Depend on currentLocation
 
   // Update FreeDraw mode when drawing mode changes
   useEffect(() => {
@@ -600,10 +676,41 @@ export default function EnhancedMapWithFreeDraw({
                 <MyLocation />
               </IconButton>
             </Tooltip>
+
+            <Tooltip title="Go to My Location">
+              <IconButton 
+                onClick={() => {
+                  if (mapRef.current && currentLocation) {
+                    mapRef.current.setView([currentLocation.lat, currentLocation.lng], 15);
+                  }
+                }}
+                size="small" 
+                color="secondary"
+                disabled={!currentLocation}
+              >
+                <MyLocation />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
         
         {/* Drawing Instructions */}
+        {locationError && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              {locationError}
+            </Typography>
+          </Alert>
+        )}
+
+        {currentLocation && !locationError && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              ✓ Using your current location for better search results
+            </Typography>
+          </Alert>
+        )}
+
         {drawingMode === 'create' && (
           <Alert severity="info" icon={<TouchApp />} sx={{ mb: 2 }}>
             <Typography variant="body2">

@@ -104,22 +104,46 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         return;
       }
 
-      // Simulate successful subscription creation
-      // In production, you would send paymentMethod.id to your backend
-      // to create a subscription with Stripe
-      console.log('Payment method created:', paymentMethod.id);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // For demo: automatically succeed
+      // Create actual Stripe subscription
+      const response = await fetch('/api/create-subscription', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id,
+          email,
+          name,
+          priceId: 'price_1Ru3iJFDHpK9BJBPVkqTWoGU' // Your actual price ID from Stripe Dashboard
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.error) {
+        onError(result.error);
+        setLoading(false);
+        return;
+      }
+
+      // Handle 3D Secure authentication if required
+      if (result.status === 'requires_action') {
+        const { error: confirmError } = await stripe.confirmCardPayment(result.clientSecret);
+        
+        if (confirmError) {
+          onError(confirmError.message || 'Payment confirmation failed.');
+          setLoading(false);
+          return;
+        }
+      }
+
       setLoading(false);
       onSuccess();
 
     } catch (err) {
       setLoading(false);
       console.error('Payment error:', err);
-      onError('An unexpected error occurred. Please try again.');
+      onError('Network error. Please check your connection and try again.');
     }
   };
 
@@ -167,7 +191,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
             Processing...
           </Box>
         ) : (
-          'Subscribe Now - $0.01/month (Testing)'
+          '        Subscribe Now - $4.99/month'
         )}
       </Button>
 
@@ -393,8 +417,8 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
           <DialogContent>
             <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="body2">
-                <strong>Test Mode:</strong> You'll be charged $0.01 for testing purposes. 
-                In production, this would be $4.99/month. Use test card: 4242 4242 4242 4242
+                <strong>Secure Payment:</strong> You'll be charged $4.99/month for unlimited access to premium features.
+                Cancel anytime from your account settings.
               </Typography>
             </Alert>
             

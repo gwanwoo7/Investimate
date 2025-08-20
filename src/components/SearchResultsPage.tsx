@@ -122,9 +122,7 @@ export default function SearchResultsPage({
   return (
     <Box sx={{ 
       bgcolor: 'grey.50', 
-      minHeight: '100vh',
-      maxHeight: '100vh', // Set max height to enable scrolling
-      overflowY: 'auto' // Enable vertical scrolling
+      minHeight: '100vh'
     }}>
       <NavigationBar
         title="Search Results"
@@ -142,8 +140,7 @@ export default function SearchResultsPage({
         maxWidth="xl" 
         sx={{ 
           py: 3,
-          height: 'calc(100vh - 64px)', // Account for navbar height
-          overflow: 'auto' // Enable scrolling within container
+          // Remove height restrictions to allow natural page scrolling
         }}
       >
         {/* Search Summary */}
