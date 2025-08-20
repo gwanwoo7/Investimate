@@ -8,18 +8,22 @@ import {
   Card,
   CardContent,
   Divider,
-  Chip
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import {
   Search,
   Map as MapIcon,
   List as ListIcon,
-  PinDrop
+  PinDrop,
+  Brush
 } from '@mui/icons-material';
 import AreaSearchForm from './AreaSearchForm';
 import PropertyListView from './PropertyListView';
 import PropertyResultsPage from './PropertyResultsPage';
 import SimpleMapWithBoundary from './SimpleMapWithBoundary';
+import EnhancedMapWithFreeDraw from './EnhancedMapWithFreeDraw';
 import type { PropertyListing, AreaSearchParams } from '../types/property';
 import { EnhancedRealEstateAPIService } from '../services/enhancedRealEstateAPIService';
 
@@ -53,6 +57,7 @@ export default function PropertyCalculatorWithMap({
   const [currentSearchLocation, setCurrentSearchLocation] = useState<string>('');
   const [lastSearchParams, setLastSearchParams] = useState<AreaSearchParams | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [mapType, setMapType] = useState<'standard' | 'freedraw'>('standard');
 
   const handleAreaSearch = async (searchData: AreaSearchParams) => {
     // Check search limits before proceeding
@@ -162,6 +167,26 @@ export default function PropertyCalculatorWithMap({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePolygonSearch = async (polygon: Array<{ lat: number; lng: number }>) => {
+    if (!canSearch) {
+      if (onUpgrade) onUpgrade();
+      return;
+    }
+
+    // Calculate bounding box from polygon
+    const lats = polygon.map(p => p.lat);
+    const lngs = polygon.map(p => p.lng);
+    const bounds = {
+      north: Math.max(...lats),
+      south: Math.min(...lats),
+      east: Math.max(...lngs),
+      west: Math.min(...lngs)
+    };
+
+    // Use the same logic as boundary search but with polygon data
+    await handleBoundarySearch(bounds);
   };
 
   const handlePropertySelect = (property: PropertyListing) => {
@@ -308,21 +333,59 @@ export default function PropertyCalculatorWithMap({
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <MapIcon />
-                  Interactive Map
+                  Interactive Property Map
                 </Typography>
-                <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
-                  💡 Draw rectangles to search specific areas
-                </Typography>
+                
+                {/* Map Type Toggle */}
+                <ToggleButtonGroup
+                  value={mapType}
+                  exclusive
+                  onChange={(_, newMapType) => {
+                    if (newMapType !== null) {
+                      setMapType(newMapType);
+                    }
+                  }}
+                  size="small"
+                  sx={{ ml: 2 }}
+                >
+                  <ToggleButton value="standard">
+                    <MapIcon sx={{ mr: 1 }} />
+                    Standard
+                  </ToggleButton>
+                  <ToggleButton value="freedraw">
+                    <Brush sx={{ mr: 1 }} />
+                    Free Draw
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Box>
+              
+              <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
+                {mapType === 'standard' 
+                  ? '💡 Draw rectangles to search specific areas' 
+                  : '✏️ Free-hand draw custom search areas'
+                }
+              </Typography>
+              
               <Divider sx={{ mb: 1 }} />
               <Box sx={{ flex: 1, minHeight: 0 }}>
-                <SimpleMapWithBoundary 
-                  properties={properties}
-                  selectedProperty={selectedProperty}
-                  onPropertySelect={handlePropertySelect}
-                  searchLocation={currentSearchLocation}
-                  onBoundarySearch={handleBoundarySearch}
-                />
+                {mapType === 'standard' ? (
+                  <SimpleMapWithBoundary 
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onPropertySelect={handlePropertySelect}
+                    searchLocation={currentSearchLocation}
+                    onBoundarySearch={handleBoundarySearch}
+                  />
+                ) : (
+                  <EnhancedMapWithFreeDraw 
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onPropertySelect={handlePropertySelect}
+                    searchLocation={currentSearchLocation}
+                    onBoundarySearch={handleBoundarySearch}
+                    onPolygonSearch={handlePolygonSearch}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
