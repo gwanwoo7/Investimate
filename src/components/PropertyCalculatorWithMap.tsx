@@ -8,19 +8,26 @@ import {
   Card,
   CardContent,
   Divider,
-  Chip
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip
 } from '@mui/material';
 import {
   Search,
   Map as MapIcon,
   List as ListIcon,
   PinDrop,
-  Brush
+  Brush,
+  Layers,
+  Public
 } from '@mui/icons-material';
 import AreaSearchForm from './AreaSearchForm';
 import PropertyListView from './PropertyListView';
 import PropertyResultsPage from './PropertyResultsPage';
 import EnhancedMapWithFreeDraw from './EnhancedMapWithFreeDraw';
+import SuperEnhancedFreeDrawMap from './SuperEnhancedFreeDrawMap';
+import GoogleMapsDrawing from './GoogleMapsDrawing';
 import type { PropertyListing, AreaSearchParams } from '../types/property';
 import { EnhancedRealEstateAPIService } from '../services/enhancedRealEstateAPIService';
 
@@ -38,6 +45,8 @@ interface PropertyCalculatorWithMapProps {
   }) => void;
 }
 
+type MapProvider = 'leaflet' | 'super-enhanced' | 'google-maps';
+
 export default function PropertyCalculatorWithMap({ 
   canSearch = true, 
   onSearch, 
@@ -54,6 +63,7 @@ export default function PropertyCalculatorWithMap({
   const [currentSearchLocation, setCurrentSearchLocation] = useState<string>('');
   const [lastSearchParams, setLastSearchParams] = useState<AreaSearchParams | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const [mapProvider, setMapProvider] = useState<MapProvider>('super-enhanced');
 
   const handleAreaSearch = async (searchData: AreaSearchParams) => {
     // Check search limits before proceeding
@@ -329,24 +339,74 @@ export default function PropertyCalculatorWithMap({
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Brush />
-                  Free-Hand Drawing Map Search
+                  Interactive Map Search
                 </Typography>
+                
+                {/* Map Provider Selector */}
+                <ToggleButtonGroup
+                  value={mapProvider}
+                  exclusive
+                  onChange={(_, newProvider) => {
+                    if (newProvider) setMapProvider(newProvider);
+                  }}
+                  size="small"
+                >
+                  <ToggleButton value="leaflet">
+                    <Tooltip title="Leaflet FreeDraw (Original)">
+                      <Layers fontSize="small" />
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="super-enhanced">
+                    <Tooltip title="Super Enhanced FreeDraw (Best)">
+                      <Brush fontSize="small" />
+                    </Tooltip>
+                  </ToggleButton>
+                  <ToggleButton value="google-maps">
+                    <Tooltip title="Google Maps Drawing Tools">
+                      <Public fontSize="small" />
+                    </Tooltip>
+                  </ToggleButton>
+                </ToggleButtonGroup>
               </Box>
               
               <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                ✏️ Free-hand draw custom search areas on the map
+                {mapProvider === 'leaflet' && '✏️ Original free-hand drawing with Leaflet'}
+                {mapProvider === 'super-enhanced' && '🎨 Advanced free-hand drawing with enhanced tools'}
+                {mapProvider === 'google-maps' && '🗺️ Google Maps with professional drawing tools'}
               </Typography>
               
               <Divider sx={{ mb: 1 }} />
               <Box sx={{ flex: 1, minHeight: 0 }}>
-                <EnhancedMapWithFreeDraw 
-                  properties={properties}
-                  selectedProperty={selectedProperty}
-                  onPropertySelect={handlePropertySelect}
-                  searchLocation={currentSearchLocation}
-                  onBoundarySearch={handleBoundarySearch}
-                  onPolygonSearch={handlePolygonSearch}
-                />
+                {mapProvider === 'leaflet' && (
+                  <EnhancedMapWithFreeDraw 
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onPropertySelect={handlePropertySelect}
+                    searchLocation={currentSearchLocation}
+                    onBoundarySearch={handleBoundarySearch}
+                    onPolygonSearch={handlePolygonSearch}
+                  />
+                )}
+                {mapProvider === 'super-enhanced' && (
+                  <SuperEnhancedFreeDrawMap 
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onPropertySelect={handlePropertySelect}
+                    searchLocation={currentSearchLocation}
+                    onBoundarySearch={handleBoundarySearch}
+                    onPolygonSearch={handlePolygonSearch}
+                  />
+                )}
+                {mapProvider === 'google-maps' && (
+                  <GoogleMapsDrawing 
+                    properties={properties}
+                    selectedProperty={selectedProperty}
+                    onPropertySelect={handlePropertySelect}
+                    searchLocation={currentSearchLocation}
+                    onBoundarySearch={handleBoundarySearch}
+                    onPolygonSearch={handlePolygonSearch}
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
