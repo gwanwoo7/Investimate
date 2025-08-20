@@ -60,7 +60,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51Ru3iJFDHpK9BJBPUk1NJueBwWLmzQYuMI8eNNHui1e
 
 # Add these new ones:
 STRIPE_SECRET_KEY=sk_test_51Ru3iJFDHpK9BJBPvAhwEvy5mHtDW9N3uhpH36dGl4yWLEi7BH6KHwAEqJkfCYT05jHuB4TE8I7G0AVejy5VM1PU00njnKNg6c
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+STRIPE_WEBHOOK_SECRET=whsec_U83icPH9smJMft8luNZjP0mIAuI74Nsh
 ```
 
 #### **In Your Local .env.local (already configured ✅):**
