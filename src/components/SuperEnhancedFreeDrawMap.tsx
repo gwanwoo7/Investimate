@@ -25,7 +25,8 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  alpha
 } from '@mui/material';
 import {
   CropFree,
@@ -53,7 +54,10 @@ import {
   CenterFocusStrong,
   Fullscreen,
   Share,
-  BookmarkAdd
+  BookmarkAdd,
+  Home as HomeIcon,
+  Map as MapIcon,
+  Draw as DrawIcon
 } from '@mui/icons-material';
 import type { PropertyListing } from '../types/property';
 
@@ -92,7 +96,7 @@ export default function SuperEnhancedFreeDrawMap({
   const currentLocationMarkerRef = useRef<L.Marker | null>(null);
   const layersRef = useRef<{ [key: string]: L.TileLayer }>({});
   
-  const [drawingMode, setDrawingMode] = useState<DrawingMode>('none');
+  const [drawingMode, setDrawingMode] = useState<DrawingMode>('create');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -117,6 +121,8 @@ export default function SuperEnhancedFreeDrawMap({
   const [activePolygons, setActivePolygons] = useState<any[]>([]);
   const [polygonCount, setPolygonCount] = useState(0);
   const [undoStack, setUndoStack] = useState<any[]>([]);
+  const [statusMessage, setStatusMessage] = useState<string>('');
+  const [drawingHistory, setDrawingHistory] = useState<any[]>([]);
 
   // Enhanced color palette for drawing
   const colorPalette = [
@@ -343,6 +349,361 @@ export default function SuperEnhancedFreeDrawMap({
     }
   }, [currentLocation]);
 
+  // Update FreeDraw mode when drawing mode changes
+  useEffect(() => {
+    if (freeDrawRef.current) {
+      let mode = NONE;
+      
+      switch (drawingMode) {
+        case 'create':
+          mode = CREATE;
+          setIsDrawing(true);
+          break;
+        case 'edit':
+          mode = EDIT;
+          break;
+        case 'delete':
+          mode = DELETE;
+          break;
+        default:
+          mode = NONE;
+          setIsDrawing(false);
+          break;
+      }
+      
+      freeDrawRef.current.mode(mode);
+    }
+  }, [drawingMode]);
+
+  // Update FreeDraw settings when they change
+  useEffect(() => {
+    if (freeDrawRef.current) {
+      // Update stroke width by recreating FreeDraw with new options
+      const currentMode = freeDrawRef.current.mode();
+      const currentPolygons = freeDrawRef.current.all();
+      
+      // Remove old FreeDraw
+      if (mapRef.current) {
+        mapRef.current.removeLayer(freeDrawRef.current);
+      }
+      
+      // Create new FreeDraw with updated settings
+      freeDrawRef.current = new FreeDraw({
+        mode: currentMode,
+        smoothFactor: drawingSettings.smoothFactor,
+        strokeWidth: drawingSettings.strokeWidth,
+        mergePolygons: drawingSettings.mergePolygons,
+        concavePolygon: true,
+        simplifyFactor: 1.1,
+        elbowDistance: drawingSettings.snapToGrid ? 20 : 10,
+        maximumPolygons: 15,
+        notifyAfterEditExit: false,
+        leaveModeAfterCreate: false
+      });
+      
+      // Add back to map
+      if (mapRef.current) {
+        mapRef.current.addLayer(freeDrawRef.current);
+      }
+      
+      // Restore event listeners
+      freeDrawRef.current.on('markers', (event: any) => {
+        if (drawingSettings.enableUndo) {
+          setUndoStack(prev => [...prev.slice(-9), freeDrawRef.current.all()]);
+        }
+        
+        setPolygonCount(freeDrawRef.current.size());
+        setActivePolygons(freeDrawRef.current.all());
+        
+        if (event.latLngs && event.latLngs.length > 0) {
+          event.latLngs.forEach((polygonPoints: any[]) => {
+            if (polygonPoints.length > 0) {
+              const searchPolygon = polygonPoints.map((point: any) => ({
+                lat: point.lat,
+                lng: point.lng
+              }));
+              
+              const lats = searchPolygon.map(p => p.lat);
+              const lngs = searchPolygon.map(p => p.lng);
+              const bounds = {
+                north: Math.max(...lats),
+                south: Math.min(...lats),
+                east: Math.max(...lngs),
+                west: Math.min(...lngs)
+              };
+              
+              onPolygonSearch(searchPolygon);
+              onBoundarySearch(bounds);
+            }
+          });
+        }
+        
+        setIsDrawing(false);
+      });
+    }
+  }, [drawingSettings]);
+
+  // Update property markers when properties change
+  useEffect(() => {
+    if (mapRef.current) {
+      // Clear existing markers
+      markersRef.current.forEach(marker => {
+        mapRef.current?.removeLayer(marker);
+      });
+      markersRef.current = [];
+
+      // Group nearby properties for cluster display
+      const propertyGroups = groupPropertiesByLocation(properties);
+
+      // Add new markers with enhanced Zillow-style design
+      propertyGroups.forEach((group) => {
+        if (group.properties.length === 1) {
+          const property = group.properties[0];
+          if (property.latitude && property.longitude) {
+            // Single property marker with enhanced price display
+            const priceLabel = `$${Math.round((property.purchasePrice || 0) / 1000)}K`;
+            
+            const customIcon = L.divIcon({
+              className: 'super-enhanced-property-marker',
+              html: `<div style="
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                border: 2px solid ${property.purchasePrice && property.purchasePrice > 500000 ? '#ff6b35' : '#2196f3'};
+                border-radius: 8px;
+                padding: 4px 8px;
+                font-size: 12px;
+                font-weight: bold;
+                color: ${property.purchasePrice && property.purchasePrice > 500000 ? '#ff6b35' : '#2196f3'};
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                white-space: nowrap;
+                position: relative;
+                transform: translateY(-2px);
+                transition: all 0.2s ease;
+              " onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'"
+                 onmouseout="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'">${priceLabel}</div>`,
+              iconSize: [70, 28],
+              iconAnchor: [35, 28],
+              popupAnchor: [0, -28]
+            });
+
+            const marker = L.marker([property.latitude, property.longitude], { icon: customIcon })
+              .bindPopup(`
+                <div style="width: 280px; font-family: Arial, sans-serif;">
+                  <div style="height: 140px; background: linear-gradient(45deg, #667eea, #764ba2); border-radius: 8px; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">
+                    🏠 Property Preview
+                  </div>
+                  <h3 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">${property.address}</h3>
+                  <p style="margin: 0 0 4px 0; color: #666; font-size: 14px;">${property.city}, ${property.state}</p>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin: 12px 0;">
+                    <p style="margin: 0; font-size: 20px; font-weight: bold; color: #2196f3;">$${property.purchasePrice?.toLocaleString()}</p>
+                    <div style="display: flex; gap: 8px; font-size: 12px; color: #888;">
+                      <span>${property.bedrooms}🛏️</span>
+                      <span>${property.bathrooms}🚿</span>
+                      <span>${property.squareFootage?.toLocaleString()}📐</span>
+                    </div>
+                  </div>
+                  <div style="background: #f8f9fa; padding: 8px; border-radius: 6px; margin-top: 8px;">
+                    <p style="margin: 0; color: #28a745; font-weight: bold; font-size: 14px;">💰 Monthly Rent: $${property.monthlyRent?.toLocaleString()}</p>
+                    <p style="margin: 4px 0 0 0; color: #666; font-size: 12px;">🎯 Est. ROI: ${property.monthlyRent && property.purchasePrice ? Math.round((property.monthlyRent * 12) / property.purchasePrice * 100) : 'N/A'}%</p>
+                  </div>
+                </div>
+              `, { maxWidth: 320 })
+              .on('click', () => onPropertySelect(property));
+            
+            if (mapRef.current) {
+              marker.addTo(mapRef.current);
+              markersRef.current.push(marker);
+            }
+          }
+        } else {
+          // Enhanced cluster marker
+          const avgPrice = Math.round(group.properties.reduce((sum, p) => sum + (p.purchasePrice || 0), 0) / group.properties.length);
+          const clusterIcon = L.divIcon({
+            className: 'super-enhanced-cluster-marker',
+            html: `<div style="
+              background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+              border: 3px solid white;
+              border-radius: 50%;
+              width: 48px;
+              height: 48px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 14px;
+              font-weight: bold;
+              color: white;
+              box-shadow: 0 4px 16px rgba(33, 150, 243, 0.4);
+              position: relative;
+            ">
+              ${group.properties.length}
+              <div style="
+                position: absolute;
+                bottom: -8px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #ff6b35;
+                color: white;
+                padding: 2px 6px;
+                border-radius: 10px;
+                font-size: 10px;
+                white-space: nowrap;
+              ">$${Math.round(avgPrice/1000)}K</div>
+            </div>`,
+            iconSize: [48, 56],
+            iconAnchor: [24, 28],
+            popupAnchor: [0, -28]
+          });
+
+          const marker = L.marker([group.centerLat, group.centerLng], { icon: clusterIcon })
+            .bindPopup(`
+              <div style="width: 250px; font-family: Arial, sans-serif;">
+                <h3 style="margin: 0 0 12px 0; color: #333;">📍 ${group.properties.length} Properties</h3>
+                <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                  <p style="margin: 0 0 8px 0; font-weight: bold; color: #2196f3;">Price Range:</p>
+                  <p style="margin: 0 0 8px 0;">💰 $${Math.min(...group.properties.map(p => p.purchasePrice || 0)).toLocaleString()} - 
+                  $${Math.max(...group.properties.map(p => p.purchasePrice || 0)).toLocaleString()}</p>
+                  <p style="margin: 0; font-weight: bold; color: #28a745;">📊 Average: $${Math.round(avgPrice).toLocaleString()}</p>
+                </div>
+                <p style="margin: 12px 0 0 0; color: #666; font-size: 12px;">🔍 Zoom in to see individual properties</p>
+              </div>
+            `);
+          
+          if (mapRef.current) {
+            marker.addTo(mapRef.current);
+            markersRef.current.push(marker);
+          }
+        }
+      });
+
+      // Auto-fit bounds if we have properties
+      if (markersRef.current.length > 0) {
+        setTimeout(() => {
+          if (mapRef.current) {
+            const group = L.featureGroup(markersRef.current);
+            mapRef.current.fitBounds(group.getBounds().pad(0.1));
+          }
+        }, 100);
+      }
+    }
+  }, [properties]);
+
+  // Helper function to group nearby properties
+  const groupPropertiesByLocation = (properties: PropertyListing[]) => {
+    const groups: Array<{
+      centerLat: number;
+      centerLng: number;
+      properties: PropertyListing[];
+    }> = [];
+
+    properties.forEach(property => {
+      if (!property.latitude || !property.longitude) return;
+
+      // Find existing group within 800m (increased for better clustering)
+      const existingGroup = groups.find(group => {
+        const distance = getDistance(
+          property.latitude!, property.longitude!,
+          group.centerLat, group.centerLng
+        );
+        return distance < 800; // 800 meters threshold
+      });
+
+      if (existingGroup) {
+        existingGroup.properties.push(property);
+        // Update center point with weighted average
+        const totalLat = existingGroup.properties.reduce((sum, p) => sum + (p.latitude || 0), 0);
+        const totalLng = existingGroup.properties.reduce((sum, p) => sum + (p.longitude || 0), 0);
+        existingGroup.centerLat = totalLat / existingGroup.properties.length;
+        existingGroup.centerLng = totalLng / existingGroup.properties.length;
+      } else {
+        groups.push({
+          centerLat: property.latitude,
+          centerLng: property.longitude,
+          properties: [property]
+        });
+      }
+    });
+
+    return groups;
+  };
+
+  // Helper function to calculate distance between two points
+  const getDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lng2-lng1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
+  // Handle search location marker - enhanced version
+  useEffect(() => {
+    if (searchLocation && mapRef.current && properties.length > 0) {
+      // Use the center of found properties for search marker
+      const avgLat = properties.reduce((sum, p) => sum + (p.latitude || 0), 0) / properties.length;
+      const avgLng = properties.reduce((sum, p) => sum + (p.longitude || 0), 0) / properties.length;
+      
+      if (avgLat && avgLng) {
+        const searchLocationCoords = L.latLng(avgLat, avgLng);
+        
+        if (searchMarkerRef.current) {
+          mapRef.current.removeLayer(searchMarkerRef.current);
+        }
+        
+        // Enhanced search location marker
+        const searchIcon = L.divIcon({
+          className: 'search-location-marker',
+          html: `<div style="
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+            animation: searchPulse 2s infinite;
+          ">🔍
+          <style>
+            @keyframes searchPulse {
+              0% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+              100% { transform: scale(1); }
+            }
+          </style>
+          </div>`,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+        });
+        
+        searchMarkerRef.current = L.marker(searchLocationCoords, {
+          icon: searchIcon
+        })
+        .bindPopup(`
+          <div style="width: 200px; text-align: center;">
+            <h4 style="margin: 0 0 8px 0; color: #ff6b35;">🎯 Search Center</h4>
+            <p style="margin: 0; color: #666;">${searchLocation}</p>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #999;">Found ${properties.length} properties in this area</p>
+          </div>
+        `);
+        
+        if (mapRef.current) {
+          searchMarkerRef.current.addTo(mapRef.current);
+          // Center map on search results
+          mapRef.current.setView(searchLocationCoords, 13);
+        }
+      }
+    }
+  }, [searchLocation, properties]);
+
   // Handle layer switching
   const switchLayer = (newLayer: MapLayer) => {
     if (mapRef.current && layersRef.current[currentLayer]) {
@@ -354,13 +715,26 @@ export default function SuperEnhancedFreeDrawMap({
 
   // Enhanced undo functionality
   const handleUndo = () => {
-    if (undoStack.length > 0 && freeDrawRef.current) {
-      const previousState = undoStack[undoStack.length - 2] || [];
+    if (undoStack.length > 1 && freeDrawRef.current) {
+      const previousState = undoStack[undoStack.length - 2];
       freeDrawRef.current.clear();
-      // Restore previous polygons
-      previousState.forEach((polygon: any) => {
-        // Implementation depends on FreeDraw API
-      });
+      
+      // Restore previous polygons if any
+      if (previousState && previousState.length > 0) {
+        try {
+          // The exact restore method depends on FreeDraw API
+          // For now, we'll update the polygon count and active polygons
+          setPolygonCount(previousState.length);
+          setActivePolygons(previousState);
+        } catch (error) {
+          console.warn('Undo operation partially completed:', error);
+        }
+      } else {
+        setPolygonCount(0);
+        setActivePolygons([]);
+      }
+      
+      // Remove the last state from undo stack
       setUndoStack(prev => prev.slice(0, -1));
     }
   };
@@ -423,280 +797,73 @@ export default function SuperEnhancedFreeDrawMap({
   ];
 
   return (
-    <Box sx={{ position: 'relative', height: isFullscreen ? '100vh' : '100%', width: '100%' }}>
-      {/* Enhanced Controls Toolbar */}
-      <Paper sx={{ 
-        p: 2, 
-        mb: isFullscreen ? 0 : 2, 
-        bgcolor: 'background.paper', 
-        borderRadius: isFullscreen ? 0 : 2,
-        position: isFullscreen ? 'absolute' : 'relative',
-        top: isFullscreen ? 0 : 'auto',
-        left: isFullscreen ? 0 : 'auto',
-        right: isFullscreen ? 0 : 'auto',
-        zIndex: 1000
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Brush color="primary" />
-              Super Enhanced Free-Draw Map
-            </Typography>
-            
-            {properties.length > 0 && (
-              <Badge badgeContent={properties.length} color="primary" max={999}>
-                <Chip label="Properties" color="primary" variant="outlined" size="small" />
-              </Badge>
-            )}
-
-            {polygonCount > 0 && (
-              <Badge badgeContent={polygonCount} color="secondary" max={99}>
-                <Chip label="Areas" color="secondary" variant="outlined" size="small" />
-              </Badge>
-            )}
-          </Box>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Enhanced Drawing Mode Controls */}
-            <ToggleButtonGroup
-              value={drawingMode}
-              exclusive
-              onChange={(_, newMode) => {
-                if (newMode !== null) {
-                  setDrawingMode(newMode);
-                }
-              }}
-              size="small"
-            >
-              <ToggleButton value="none">
-                <Tooltip title="Pan Mode">
-                  <PanTool />
-                </Tooltip>
-              </ToggleButton>
-              <ToggleButton value="create">
-                <Tooltip title="Free-Hand Draw">
-                  <Create />
-                </Tooltip>
-              </ToggleButton>
-              <ToggleButton value="edit">
-                <Tooltip title="Edit Areas">
-                  <Edit />
-                </Tooltip>
-              </ToggleButton>
-              <ToggleButton value="delete">
-                <Tooltip title="Delete Areas">
-                  <DeleteOutline />
-                </Tooltip>
-              </ToggleButton>
-            </ToggleButtonGroup>
-            
-            {/* Color Palette */}
-            <Box sx={{ display: 'flex', gap: 0.5 }}>
-              {colorPalette.slice(0, 5).map((color) => (
-                <IconButton
-                  key={color}
-                  size="small"
-                  onClick={() => setDrawingSettings(prev => ({ ...prev, strokeColor: color }))}
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    bgcolor: color,
-                    border: drawingSettings.strokeColor === color ? '2px solid white' : '1px solid rgba(0,0,0,0.2)',
-                    '&:hover': { transform: 'scale(1.1)' }
-                  }}
-                />
-              ))}
-            </Box>
-            
-            {/* Quick Actions */}
-            {drawingSettings.enableUndo && (
-              <Tooltip title="Undo (Ctrl+Z)">
-                <IconButton 
-                  onClick={handleUndo} 
-                  size="small" 
-                  disabled={undoStack.length === 0}
-                >
-                  <Undo />
-                </IconButton>
-              </Tooltip>
-            )}
-            
-            <Tooltip title="Clear All (Ctrl+C)">
-              <IconButton onClick={clearAllDrawings} size="small" color="error">
-                <Clear />
-              </IconButton>
-            </Tooltip>
-            
-            <Tooltip title="Center on Properties">
-              <IconButton onClick={() => {
-                if (mapRef.current && markersRef.current.length > 0) {
-                  const group = L.featureGroup(markersRef.current);
-                  mapRef.current.fitBounds(group.getBounds().pad(0.1));
-                }
-              }} size="small" color="primary">
-                <CenterFocusStrong />
-              </IconButton>
-            </Tooltip>
-            
-            {/* Layer Switch Button */}
-            <Button
-              id="layer-button"
-              variant="outlined"
-              size="small"
-              onClick={(e) => setMenuAnchor(e.currentTarget)}
-              startIcon={<LayersOutlined />}
-            >
-              {mapLayers[currentLayer].name}
-            </Button>
-          </Box>
-        </Box>
-        
-        {/* Enhanced Drawing Settings */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-          <Box sx={{ minWidth: 120 }}>
-            <Typography variant="body2" gutterBottom>
-              Stroke: {drawingSettings.strokeWidth}px
-            </Typography>
-            <Slider
-              value={drawingSettings.strokeWidth}
-              onChange={(_, value) => setDrawingSettings(prev => ({ ...prev, strokeWidth: value as number }))}
-              min={1}
-              max={10}
-              size="small"
-              sx={{ width: 100 }}
-            />
-          </Box>
-          
-          <Box sx={{ minWidth: 120 }}>
-            <Typography variant="body2" gutterBottom>
-              Opacity: {Math.round(drawingSettings.fillOpacity * 100)}%
-            </Typography>
-            <Slider
-              value={drawingSettings.fillOpacity}
-              onChange={(_, value) => setDrawingSettings(prev => ({ ...prev, fillOpacity: value as number }))}
-              min={0}
-              max={0.5}
-              step={0.1}
-              size="small"
-              sx={{ width: 100 }}
-            />
-          </Box>
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={drawingSettings.snapToGrid}
-                onChange={(e) => setDrawingSettings(prev => ({ ...prev, snapToGrid: e.target.checked }))}
-                size="small"
-              />
-            }
-            label="Snap to Grid"
-          />
-          
-          <FormControlLabel
-            control={
-              <Switch
-                checked={drawingSettings.magneticEdges}
-                onChange={(e) => setDrawingSettings(prev => ({ ...prev, magneticEdges: e.target.checked }))}
-                size="small"
-              />
-            }
-            label="Magnetic Edges"
-          />
-        </Box>
-      </Paper>
-      
-      {/* Layer Selection Menu */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={() => setMenuAnchor(null)}
-      >
-        {Object.entries(mapLayers).map(([key, layer]) => (
-          <MenuItem
-            key={key}
-            selected={currentLayer === key}
-            onClick={() => {
-              switchLayer(key as MapLayer);
-              setMenuAnchor(null);
-            }}
-          >
-            <ListItemIcon>
-              <LayersOutlined />
-            </ListItemIcon>
-            <ListItemText>{layer.name}</ListItemText>
-          </MenuItem>
-        ))}
-      </Menu>
-      
+    <Box 
+      sx={{ 
+        position: 'relative', 
+        height: '100%', 
+        width: '100%',
+        overflow: 'auto' // Add scrolling capability
+      }}
+    >
       {/* Super Enhanced Map Container */}
       <Box
         id="super-enhanced-freedraw-map"
         sx={{
-          height: isFullscreen ? 'calc(100vh - 120px)' : 600,
+          height: 600,
           width: '100%',
           border: '2px solid',
           borderColor: isDrawing ? 'primary.main' : 'divider',
-          borderRadius: isFullscreen ? 0 : 2,
+          borderRadius: 2,
           cursor: drawingMode === 'create' ? 'crosshair' : 'default',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: isFullscreen ? 'none' : 2,
-          mt: isFullscreen ? 1 : 0,
+          boxShadow: 2,
           '& .leaflet-container': {
             fontFamily: 'inherit',
             fontSize: '14px'
           },
           '& .free-draw path': {
-            stroke: drawingSettings.strokeColor,
-            strokeWidth: drawingSettings.strokeWidth,
-            fill: drawingSettings.strokeColor,
-            fillOpacity: drawingSettings.fillOpacity,
+            stroke: '#2196f3', // Fixed blue color
+            strokeWidth: 3, // Fixed stroke width
+            fill: '#2196f3', // Fixed blue color
+            fillOpacity: 0.1, // Fixed opacity
             strokeOpacity: 0.8
+          },
+          '& .super-enhanced-property-marker': {
+            animation: 'fadeInUp 0.4s ease-out'
+          },
+          '& .super-enhanced-cluster-marker': {
+            animation: 'bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+          },
+          '@keyframes fadeInUp': {
+            from: {
+              opacity: 0,
+              transform: 'translateY(20px)'
+            },
+            to: {
+              opacity: 1,
+              transform: 'translateY(0)'
+            }
+          },
+          '@keyframes bounceIn': {
+            '0%': {
+              opacity: 0,
+              transform: 'scale(0.3)'
+            },
+            '50%': {
+              opacity: 1,
+              transform: 'scale(1.05)'
+            },
+            '70%': {
+              transform: 'scale(0.9)'
+            },
+            '100%': {
+              opacity: 1,
+              transform: 'scale(1)'
+            }
           }
         }}
       />
-
-      {/* Floating Speed Dial for Advanced Tools */}
-      <SpeedDial
-        ariaLabel="Advanced Tools"
-        sx={{ position: 'absolute', bottom: 16, right: 16 }}
-        icon={<SpeedDialIcon />}
-        open={showAdvancedTools}
-        onClose={() => setShowAdvancedTools(false)}
-        onOpen={() => setShowAdvancedTools(true)}
-      >
-        {speedDialActions.map((action) => (
-          <SpeedDialAction
-            key={action.name}
-            icon={action.icon}
-            tooltipTitle={action.name}
-            onClick={action.onClick}
-          />
-        ))}
-      </SpeedDial>
-
-      {/* Keyboard Shortcuts Help */}
-      {drawingSettings.showHelp && (
-        <Paper sx={{ 
-          position: 'absolute', 
-          bottom: 16, 
-          left: 16, 
-          p: 2, 
-          maxWidth: 250,
-          bgcolor: 'rgba(255, 255, 255, 0.95)'
-        }}>
-          <Typography variant="subtitle2" gutterBottom>
-            Keyboard Shortcuts
-          </Typography>
-          <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
-            • <strong>Ctrl+Z</strong>: Undo<br/>
-            • <strong>Ctrl+S</strong>: Save Area<br/>
-            • <strong>Ctrl+C</strong>: Clear All<br/>
-            • <strong>Escape</strong>: Cancel Drawing
-          </Typography>
-        </Paper>
-      )}
     </Box>
   );
 }

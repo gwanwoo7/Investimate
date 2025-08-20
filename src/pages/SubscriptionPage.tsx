@@ -114,7 +114,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           paymentMethodId: paymentMethod.id,
           email,
           name,
-          priceId: 'price_1Ru3iJFDHpK9BJBPVkqTWoGU' // Your actual price ID from Stripe Dashboard
+          priceId: 'price_1Ry5YwFDHpK9BJBPL3vW6j1N' // Investimate Pro Monthly - $4.99
         }),
       });
 

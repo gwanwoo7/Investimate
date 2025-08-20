@@ -8,26 +8,18 @@ import {
   Card,
   CardContent,
   Divider,
-  Chip,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip
+  Chip
 } from '@mui/material';
 import {
   Search,
-  Map as MapIcon,
   List as ListIcon,
   PinDrop,
-  Brush,
-  Layers,
-  Public
+  Brush
 } from '@mui/icons-material';
 import AreaSearchForm from './AreaSearchForm';
 import PropertyListView from './PropertyListView';
 import PropertyResultsPage from './PropertyResultsPage';
-import EnhancedMapWithFreeDraw from './EnhancedMapWithFreeDraw';
 import SuperEnhancedFreeDrawMap from './SuperEnhancedFreeDrawMap';
-import GoogleMapsDrawing from './GoogleMapsDrawing';
 import type { PropertyListing, AreaSearchParams } from '../types/property';
 import { EnhancedRealEstateAPIService } from '../services/enhancedRealEstateAPIService';
 
@@ -45,7 +37,7 @@ interface PropertyCalculatorWithMapProps {
   }) => void;
 }
 
-type MapProvider = 'leaflet' | 'super-enhanced' | 'google-maps';
+type MapProvider = 'super-enhanced';
 
 export default function PropertyCalculatorWithMap({ 
   canSearch = true, 
@@ -63,7 +55,7 @@ export default function PropertyCalculatorWithMap({
   const [currentSearchLocation, setCurrentSearchLocation] = useState<string>('');
   const [lastSearchParams, setLastSearchParams] = useState<AreaSearchParams | null>(null);
   const [showResults, setShowResults] = useState(false);
-  const [mapProvider, setMapProvider] = useState<MapProvider>('super-enhanced');
+  const [mapProvider] = useState<MapProvider>('super-enhanced');
 
   const handleAreaSearch = async (searchData: AreaSearchParams) => {
     // Check search limits before proceeding
@@ -219,11 +211,26 @@ export default function PropertyCalculatorWithMap({
   return (
     <Box 
       sx={{ 
-        height: '100%',
+        height: '100vh',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: 'background.default'
+        bgcolor: 'background.default',
+        overflow: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+          borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '10px',
+          '&:hover': {
+            background: '#555',
+          },
+        },
       }}
     >
       {/* Header */}
@@ -341,72 +348,17 @@ export default function PropertyCalculatorWithMap({
                   <Brush />
                   Interactive Map Search
                 </Typography>
-                
-                {/* Map Provider Selector */}
-                <ToggleButtonGroup
-                  value={mapProvider}
-                  exclusive
-                  onChange={(_, newProvider) => {
-                    if (newProvider) setMapProvider(newProvider);
-                  }}
-                  size="small"
-                >
-                  <ToggleButton value="leaflet">
-                    <Tooltip title="Leaflet FreeDraw (Original)">
-                      <Layers fontSize="small" />
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="super-enhanced">
-                    <Tooltip title="Super Enhanced FreeDraw (Best)">
-                      <Brush fontSize="small" />
-                    </Tooltip>
-                  </ToggleButton>
-                  <ToggleButton value="google-maps">
-                    <Tooltip title="Google Maps Drawing Tools">
-                      <Public fontSize="small" />
-                    </Tooltip>
-                  </ToggleButton>
-                </ToggleButtonGroup>
               </Box>
-              
-              <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                {mapProvider === 'leaflet' && '✏️ Original free-hand drawing with Leaflet'}
-                {mapProvider === 'super-enhanced' && '🎨 Advanced free-hand drawing with enhanced tools'}
-                {mapProvider === 'google-maps' && '🗺️ Google Maps with professional drawing tools'}
-              </Typography>
-              
               <Divider sx={{ mb: 1 }} />
               <Box sx={{ flex: 1, minHeight: 0 }}>
-                {mapProvider === 'leaflet' && (
-                  <EnhancedMapWithFreeDraw 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                    onPolygonSearch={handlePolygonSearch}
-                  />
-                )}
-                {mapProvider === 'super-enhanced' && (
-                  <SuperEnhancedFreeDrawMap 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                    onPolygonSearch={handlePolygonSearch}
-                  />
-                )}
-                {mapProvider === 'google-maps' && (
-                  <GoogleMapsDrawing 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                    onPolygonSearch={handlePolygonSearch}
-                  />
-                )}
+                <SuperEnhancedFreeDrawMap 
+                  properties={properties}
+                  selectedProperty={selectedProperty}
+                  onPropertySelect={handlePropertySelect}
+                  searchLocation={currentSearchLocation}
+                  onBoundarySearch={handleBoundarySearch}
+                  onPolygonSearch={handlePolygonSearch}
+                />
               </Box>
             </CardContent>
           </Card>
