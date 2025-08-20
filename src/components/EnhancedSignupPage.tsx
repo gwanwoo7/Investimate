@@ -140,28 +140,69 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     setSuccess('');
 
     try {
-      console.log('📝 Attempting to create user:', { email, name });
+      console.log('📝 Attempting to create user with Supabase:', { email, name });
       
-      // Create user directly
-      const user = await db.createUser(email, password, name);
-      console.log('✅ User created successfully:', user.email);
+      // Use Supabase for authentication with email verification
+      const supabaseAuth = SupabaseAuthService.getInstance();
       
-      // Set current user
-      db.setCurrentUser(user);
-      console.log('✅ Current user set for signup:', user.email);
-      
-      setSuccess('Account created successfully! Redirecting...');
-      
-      // Redirect after success
-      setTimeout(() => {
-        onSignup(user.email);
-      }, 1500);
+      if (supabaseAuth.isConfigured()) {
+        console.log('🔐 Using Supabase authentication...');
+        
+        const { user: supabaseUser, error } = await supabaseAuth.signUp({
+          email,
+          password,
+          name
+        });
+
+        if (error) {
+          throw new Error(error);
+        }
+
+        if (supabaseUser) {
+          console.log('✅ Supabase user created successfully:', supabaseUser.email);
+          
+          // Also create in local database for compatibility
+          try {
+            await db.createUser(email, password, name);
+          } catch (localError) {
+            console.log('ℹ️ Local user creation skipped (may already exist)');
+          }
+
+          if (!supabaseUser.emailVerified) {
+            setSuccess('Account created! Please check your email for verification link before signing in.');
+            setError('');
+            // Don't auto-login until email is verified
+          } else {
+            setSuccess('Account created and verified successfully! Redirecting...');
+            setTimeout(() => {
+              onSignup(user.email);
+            }, 1500);
+          }
+        }
+      } else {
+        console.log('ℹ️ Supabase not configured, falling back to local database...');
+        
+        // Fallback to local database
+        const user = await db.createUser(email, password, name);
+        console.log('✅ Local user created successfully:', user.email);
+        
+        db.setCurrentUser(user);
+        console.log('✅ Current user set for signup:', user.email);
+        
+        setSuccess('Account created successfully! Redirecting...');
+        
+        setTimeout(() => {
+          onSignup(user.email);
+        }, 1500);
+      }
       
     } catch (err) {
       console.error('❌ Signup error:', err);
       if (err instanceof Error) {
-        if (err.message.includes('already exists')) {
+        if (err.message.includes('already exists') || err.message.includes('already registered')) {
           setError('An account with this email already exists. Please use a different email or try logging in.');
+        } else if (err.message.includes('Password should be at least 6 characters')) {
+          setError('Password must be at least 6 characters long.');
         } else {
           setError(`Signup failed: ${err.message}`);
         }

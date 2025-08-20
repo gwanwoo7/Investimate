@@ -10,6 +10,7 @@ import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
 import OAuthDebug from './components/OAuthDebug';
+import GeographicSearchTest from './components/GeographicSearchTest';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -459,6 +460,7 @@ function App() {
                     onClick={() => setCurrentTab(5)}
                     sx={{ 
                       mt: 2,
+                      mr: 1,
                       color: 'white',
                       borderColor: 'white',
                       '&:hover': { 
@@ -468,6 +470,23 @@ function App() {
                     }}
                   >
                     Debug OAuth
+                  </Button>
+                  
+                  <Button 
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setCurrentTab(6)}
+                    sx={{ 
+                      mt: 2,
+                      color: 'white',
+                      borderColor: 'white',
+                      '&:hover': { 
+                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                        borderColor: 'white'
+                      }
+                    }}
+                  >
+                    Test Geographic Search
                   </Button>
                 </Box>
               </Container>
@@ -681,6 +700,15 @@ function App() {
             minHeight: 'calc(100vh - 64px)' // Just nav bar height
           }}>
             <OAuthDebug />
+          </Box>
+        )}
+
+        {currentTab === 6 && (
+          <Box sx={{ 
+            width: '100%', 
+            minHeight: 'calc(100vh - 64px)' // Just nav bar height
+          }}>
+            <GeographicSearchTest />
           </Box>
         )}
       </Box>

@@ -63,24 +63,72 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
     try {
       console.log('🔐 Attempting to login user:', email);
       
-      // Direct authentication
-      const user = await db.authenticateUser(email, password);
-      console.log('✅ User authenticated:', user);
+      // Try Supabase authentication first
+      const supabaseAuth = SupabaseAuthService.getInstance();
       
-      // Set current user
-      db.setCurrentUser(user);
-      console.log('✅ Current user set:', user.email);
-      
-      // Redirect to main app
-      onLogin(user.email);
+      if (supabaseAuth.isConfigured()) {
+        console.log('🔐 Using Supabase authentication...');
+        
+        const { user: supabaseUser, error } = await supabaseAuth.signIn({
+          email,
+          password
+        });
+
+        if (error) {
+          // If Supabase fails, try local database fallback
+          console.log('ℹ️ Supabase login failed, trying local database...', error);
+          const user = await db.authenticateUser(email, password);
+          console.log('✅ Local user authenticated:', user.email);
+          
+          db.setCurrentUser(user);
+          onLogin(user.email);
+        } else if (supabaseUser) {
+          if (!supabaseUser.emailVerified) {
+            setError('Please verify your email address before logging in. Check your inbox for the verification link.');
+            setLoading(false);
+            return;
+          }
+          
+          console.log('✅ Supabase user authenticated:', supabaseUser.email);
+          
+          // Sync with local database for compatibility
+          try {
+            const localUser = await db.authenticateUser(email, password);
+            db.setCurrentUser(localUser);
+          } catch {
+            // Create local user if doesn't exist
+            try {
+              const newLocalUser = await db.createUser(email, 'synced-from-supabase', supabaseUser.name || 'User');
+              db.setCurrentUser(newLocalUser);
+            } catch {
+              console.log('ℹ️ Local user sync skipped');
+            }
+          }
+          
+          onLogin(supabaseUser.email);
+        }
+      } else {
+        console.log('ℹ️ Supabase not configured, using local database...');
+        
+        // Fallback to local database
+        const user = await db.authenticateUser(email, password);
+        console.log('✅ User authenticated:', user);
+        
+        db.setCurrentUser(user);
+        console.log('✅ Current user set:', user.email);
+        
+        onLogin(user.email);
+      }
       
     } catch (err) {
       console.error('❌ Login error:', err);
       if (err instanceof Error) {
-        if (err.message.includes('not found')) {
-          setError('No account found with this email. Please sign up first.');
+        if (err.message.includes('not found') || err.message.includes('Invalid login')) {
+          setError('No account found with this email or incorrect password. Please check your credentials or sign up first.');
         } else if (err.message.includes('Invalid password')) {
           setError('Incorrect password. Please try again.');
+        } else if (err.message.includes('Email not confirmed')) {
+          setError('Please verify your email address before logging in. Check your inbox for the verification link.');
         } else {
           setError(`Login failed: ${err.message}`);
         }
