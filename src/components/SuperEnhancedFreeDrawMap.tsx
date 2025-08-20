@@ -99,6 +99,7 @@ export default function SuperEnhancedFreeDrawMap({
   const [drawingMode, setDrawingMode] = useState<DrawingMode>('create');
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [hasDrawnArea, setHasDrawnArea] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [currentLayer, setCurrentLayer] = useState<MapLayer>('street');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -257,7 +258,7 @@ export default function SuperEnhancedFreeDrawMap({
 
       // Initialize Enhanced FreeDraw with CREATE mode active
       freeDrawRef.current = new FreeDraw({
-        mode: CREATE, // Start in drawing mode
+        mode: CREATE | EDIT | DELETE, // Allow create, edit, and delete
         smoothFactor: drawingSettings.smoothFactor,
         strokeWidth: 3, // Fixed stroke width
         mergePolygons: drawingSettings.mergePolygons,
@@ -787,6 +788,23 @@ export default function SuperEnhancedFreeDrawMap({
     }
   };
 
+  // Clear all polygons - alias for clearAllDrawings
+  const clearAllPolygons = clearAllDrawings;
+
+  // Handle search in polygon
+  const handleSearchInPolygon = () => {
+    if (activePolygons.length > 0) {
+      const polygon = activePolygons[activePolygons.length - 1];
+      if (polygon && polygon.length > 0) {
+        const formattedPolygon = polygon.map((point: any) => ({
+          lat: point.lat,
+          lng: point.lng
+        }));
+        onPolygonSearch(formattedPolygon);
+      }
+    }
+  };
+
   const speedDialActions = [
     { icon: <LayersOutlined />, name: 'Switch Layer', onClick: () => setMenuAnchor(document.getElementById('layer-button')) },
     { icon: <Save />, name: 'Save Area', onClick: handleSaveArea },
@@ -805,6 +823,42 @@ export default function SuperEnhancedFreeDrawMap({
         overflow: 'auto' // Add scrolling capability
       }}
     >
+      {/* Simple Control Panel */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          zIndex: 1000,
+          display: 'flex',
+          gap: 1
+        }}
+      >
+        <Tooltip title="Clear all drawn areas">
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            onClick={clearAllPolygons}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
+            <Clear fontSize="small" />
+          </Button>
+        </Tooltip>
+        <Tooltip title="Search properties in drawn area">
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleSearchInPolygon}
+            disabled={polygonCount === 0}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
+            <Search fontSize="small" />
+          </Button>
+        </Tooltip>
+      </Box>
+
       {/* Super Enhanced Map Container */}
       <Box
         id="super-enhanced-freedraw-map"

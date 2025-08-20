@@ -158,7 +158,7 @@ export default function PropertyListView({
                   }
                 }}
               >
-                <CardActionArea onClick={() => onPropertySelect(property)}>
+                <CardActionArea onClick={() => handleFullAnalysis(property)}>
                   <CardMedia
                     component="img"
                     height={180}
@@ -321,7 +321,7 @@ export default function PropertyListView({
                     key={property.id} 
                     hover 
                     sx={{ cursor: 'pointer' }}
-                    onClick={() => onPropertySelect(property)}
+                    onClick={() => handleFullAnalysis(property)}
                   >
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

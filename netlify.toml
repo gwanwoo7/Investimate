@@ -8,6 +8,10 @@
   # Default build command
   command = "npm run build"
 
+# Directory for Netlify functions
+[functions]
+  directory = "netlify/functions"
+
 [build.environment]
   # Node version to use
   NODE_VERSION = "18"
