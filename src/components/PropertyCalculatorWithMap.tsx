@@ -8,9 +8,7 @@ import {
   Card,
   CardContent,
   Divider,
-  Chip,
-  ToggleButton,
-  ToggleButtonGroup
+  Chip
 } from '@mui/material';
 import {
   Search,
@@ -22,7 +20,6 @@ import {
 import AreaSearchForm from './AreaSearchForm';
 import PropertyListView from './PropertyListView';
 import PropertyResultsPage from './PropertyResultsPage';
-import SimpleMapWithBoundary from './SimpleMapWithBoundary';
 import EnhancedMapWithFreeDraw from './EnhancedMapWithFreeDraw';
 import type { PropertyListing, AreaSearchParams } from '../types/property';
 import { EnhancedRealEstateAPIService } from '../services/enhancedRealEstateAPIService';
@@ -57,7 +54,6 @@ export default function PropertyCalculatorWithMap({
   const [currentSearchLocation, setCurrentSearchLocation] = useState<string>('');
   const [lastSearchParams, setLastSearchParams] = useState<AreaSearchParams | null>(null);
   const [showResults, setShowResults] = useState(false);
-  const [mapType, setMapType] = useState<'standard' | 'freedraw'>('standard');
 
   const handleAreaSearch = async (searchData: AreaSearchParams) => {
     // Check search limits before proceeding
@@ -122,8 +118,8 @@ export default function PropertyCalculatorWithMap({
       ...lastSearchParams,
       bounds,
       // Set default values if no previous search
-      city: lastSearchParams?.city || 'Santa Clara',
-      state: lastSearchParams?.state || 'CA',
+      city: lastSearchParams?.city || '',
+      state: lastSearchParams?.state || '',
       propertyTypes: lastSearchParams?.propertyTypes || ['single-family', 'condo', 'townhouse', 'multi-family'],
       minPrice: lastSearchParams?.minPrice || 50000,
       maxPrice: lastSearchParams?.maxPrice || 20000000,
@@ -332,60 +328,25 @@ export default function PropertyCalculatorWithMap({
             <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MapIcon />
-                  Interactive Property Map
+                  <Brush />
+                  Free-Hand Drawing Map Search
                 </Typography>
-                
-                {/* Map Type Toggle */}
-                <ToggleButtonGroup
-                  value={mapType}
-                  exclusive
-                  onChange={(_, newMapType) => {
-                    if (newMapType !== null) {
-                      setMapType(newMapType);
-                    }
-                  }}
-                  size="small"
-                  sx={{ ml: 2 }}
-                >
-                  <ToggleButton value="standard">
-                    <MapIcon sx={{ mr: 1 }} />
-                    Standard
-                  </ToggleButton>
-                  <ToggleButton value="freedraw">
-                    <Brush sx={{ mr: 1 }} />
-                    Free Draw
-                  </ToggleButton>
-                </ToggleButtonGroup>
               </Box>
               
               <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold', mb: 1 }}>
-                {mapType === 'standard' 
-                  ? '💡 Draw rectangles to search specific areas' 
-                  : '✏️ Free-hand draw custom search areas'
-                }
+                ✏️ Free-hand draw custom search areas on the map
               </Typography>
               
               <Divider sx={{ mb: 1 }} />
               <Box sx={{ flex: 1, minHeight: 0 }}>
-                {mapType === 'standard' ? (
-                  <SimpleMapWithBoundary 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                  />
-                ) : (
-                  <EnhancedMapWithFreeDraw 
-                    properties={properties}
-                    selectedProperty={selectedProperty}
-                    onPropertySelect={handlePropertySelect}
-                    searchLocation={currentSearchLocation}
-                    onBoundarySearch={handleBoundarySearch}
-                    onPolygonSearch={handlePolygonSearch}
-                  />
-                )}
+                <EnhancedMapWithFreeDraw 
+                  properties={properties}
+                  selectedProperty={selectedProperty}
+                  onPropertySelect={handlePropertySelect}
+                  searchLocation={currentSearchLocation}
+                  onBoundarySearch={handleBoundarySearch}
+                  onPolygonSearch={handlePolygonSearch}
+                />
               </Box>
             </CardContent>
           </Card>

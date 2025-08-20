@@ -120,7 +120,12 @@ export default function SearchResultsPage({
   };
 
   return (
-    <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh' }}>
+    <Box sx={{ 
+      bgcolor: 'grey.50', 
+      minHeight: '100vh',
+      maxHeight: '100vh', // Set max height to enable scrolling
+      overflowY: 'auto' // Enable vertical scrolling
+    }}>
       <NavigationBar
         title="Search Results"
         showBackButton={true}
@@ -133,7 +138,14 @@ export default function SearchResultsPage({
         showNavButtons={true}
       />
 
-      <Container maxWidth="xl" sx={{ py: 3 }}>
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          py: 3,
+          height: 'calc(100vh - 64px)', // Account for navbar height
+          overflow: 'auto' // Enable scrolling within container
+        }}
+      >
         {/* Search Summary */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>

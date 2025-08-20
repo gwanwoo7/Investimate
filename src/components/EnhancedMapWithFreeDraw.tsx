@@ -87,8 +87,8 @@ export default function EnhancedMapWithFreeDraw({
     if (!mapRef.current) {
       // Create map
       mapRef.current = L.map('enhanced-freedraw-map', {
-        center: [37.3541, -121.9552], // Santa Clara, CA default
-        zoom: 10,
+        center: [39.8283, -98.5795], // Geographic center of United States
+        zoom: 4, // Zoom out to show more area
         zoomControl: true,
         doubleClickZoom: false, // Disable to prevent conflicts with FreeDraw
       });
@@ -459,32 +459,37 @@ export default function EnhancedMapWithFreeDraw({
     return `https://picsum.photos/300/200?random=${imageId}`;
   };
 
-  // Handle search location marker
+  // Handle search location marker - only show if there are actual search results
   useEffect(() => {
-    if (searchLocation && mapRef.current) {
-      // This would require geocoding - simplified for now
-      const defaultLocation = L.latLng(37.3541, -121.9552);
+    if (searchLocation && mapRef.current && properties.length > 0) {
+      // Use the center of found properties instead of hardcoded location
+      const avgLat = properties.reduce((sum, p) => sum + (p.latitude || 0), 0) / properties.length;
+      const avgLng = properties.reduce((sum, p) => sum + (p.longitude || 0), 0) / properties.length;
       
-      if (searchMarkerRef.current) {
-        mapRef.current.removeLayer(searchMarkerRef.current);
-      }
-      
-      searchMarkerRef.current = L.marker(defaultLocation, {
-        icon: L.icon({
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-red.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41],
-          popupAnchor: [1, -34],
+      if (avgLat && avgLng) {
+        const searchLocationCoords = L.latLng(avgLat, avgLng);
+        
+        if (searchMarkerRef.current) {
+          mapRef.current.removeLayer(searchMarkerRef.current);
+        }
+        
+        searchMarkerRef.current = L.marker(searchLocationCoords, {
+          icon: L.icon({
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-red.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+          })
         })
-      })
-      .bindPopup(`Search Location: ${searchLocation}`)
-      
-      if (mapRef.current) {
-        searchMarkerRef.current.addTo(mapRef.current);
-        mapRef.current.setView(defaultLocation, 12);
+        .bindPopup(`Search Results: ${searchLocation}`)
+        
+        if (mapRef.current) {
+          searchMarkerRef.current.addTo(mapRef.current);
+          mapRef.current.setView(searchLocationCoords, 12);
+        }
       }
     }
-  }, [searchLocation]);
+  }, [searchLocation, properties]);
 
   return (
     <Box>

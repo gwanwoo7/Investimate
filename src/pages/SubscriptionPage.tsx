@@ -73,6 +73,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
     event.preventDefault();
 
     if (!stripe || !elements) {
+      onError('Stripe is not loaded. Please refresh the page and try again.');
       return;
     }
 
@@ -81,6 +82,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
     const cardElement = elements.getElement(CardElement);
 
     if (!cardElement) {
+      onError('Card information is required.');
       setLoading(false);
       return;
     }
@@ -97,23 +99,27 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
       });
 
       if (error) {
-        onError(error.message || 'Payment failed');
+        onError(error.message || 'Payment failed. Please check your card information and try again.');
         setLoading(false);
         return;
       }
 
-      // Here you would send the paymentMethod.id to your backend
+      // Simulate successful subscription creation
+      // In production, you would send paymentMethod.id to your backend
       // to create a subscription with Stripe
+      console.log('Payment method created:', paymentMethod.id);
       
-      // For demo purposes, we'll simulate a successful payment
-      setTimeout(() => {
-        setLoading(false);
-        onSuccess();
-      }, 2000);
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // For demo: automatically succeed
+      setLoading(false);
+      onSuccess();
 
     } catch (err) {
       setLoading(false);
-      onError('An unexpected error occurred');
+      console.error('Payment error:', err);
+      onError('An unexpected error occurred. Please try again.');
     }
   };
 
@@ -300,10 +306,10 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
                 Pro <Star color="primary" />
               </Typography>
               <Typography variant="h2" color="primary" gutterBottom>
-                $0.01
+                $4.99
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                per month (Testing Mode)
+                per month (billed monthly)
               </Typography>
 
               <List>
@@ -385,9 +391,12 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
             Subscribe to Investimate Pro
           </DialogTitle>
           <DialogContent>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              You'll be charged $0.01 monthly for testing purposes. This is a test subscription.
-            </Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Test Mode:</strong> You'll be charged $0.01 for testing purposes. 
+                In production, this would be $4.99/month. Use test card: 4242 4242 4242 4242
+              </Typography>
+            </Alert>
             
             {paymentError && (
               <Alert severity="error" sx={{ mb: 2 }}>
