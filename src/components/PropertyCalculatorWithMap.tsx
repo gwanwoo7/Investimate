@@ -29,6 +29,12 @@ interface PropertyCalculatorWithMapProps {
   onUpgrade?: () => void;
   searchCount?: number;
   maxSearches?: number;
+  onShowResults?: (data: {
+    properties: any[];
+    searchType: 'boundary' | 'area';
+    searchQuery?: string;
+    boundaryInfo?: { north: number; south: number; east: number; west: number };
+  }) => void;
 }
 
 export default function PropertyCalculatorWithMap({ 
@@ -36,7 +42,8 @@ export default function PropertyCalculatorWithMap({
   onSearch, 
   onUpgrade, 
   searchCount: _searchCount = 0, 
-  maxSearches = 5 
+  maxSearches = 5,
+  onShowResults
 }: PropertyCalculatorWithMapProps) {
   const [properties, setProperties] = useState<PropertyListing[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<PropertyListing | null>(null);
@@ -78,8 +85,17 @@ export default function PropertyCalculatorWithMap({
         setError('No properties found matching your criteria. Try adjusting your search parameters or drawing a different area on the map.');
       } else {
         setSuccess(`Found ${foundProperties.length} investment properties matching your criteria!`);
-        // Show results page after successful search
-        setShowResults(true);
+        
+        if (onShowResults) {
+          onShowResults({
+            properties: foundProperties,
+            searchType: 'area',
+            searchQuery: searchLocation
+          });
+        } else {
+          // Fallback to inline results
+          setShowResults(true);
+        }
       }
     } catch (err) {
       console.error('Search error:', err);
@@ -127,7 +143,17 @@ export default function PropertyCalculatorWithMap({
         setError('No properties found in the selected area. Try expanding your search area or adjusting your criteria.');
       } else {
         setSuccess(`Found ${foundProperties.length} investment properties in the selected area!`);
-        setShowResults(true);
+        
+        if (onShowResults) {
+          onShowResults({
+            properties: foundProperties,
+            searchType: 'boundary',
+            boundaryInfo: bounds
+          });
+        } else {
+          // Fallback to inline results
+          setShowResults(true);
+        }
       }
     } catch (err) {
       console.error('Boundary search error:', err);

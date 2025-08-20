@@ -54,6 +54,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [wantsPro, setWantsPro] = useState(false);
 
   const db = DatabaseService.getInstance();
   const oauthService = OAuthService.getInstance();
@@ -183,13 +184,13 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
         console.log('ℹ️ Supabase not configured, falling back to local database...');
         
         // Fallback to local database
-        const user = await db.createUser(email, password, name);
+        const user = await db.createUser(email, password, name, wantsPro);
         console.log('✅ Local user created successfully:', user.email);
         
         db.setCurrentUser(user);
         console.log('✅ Current user set for signup:', user.email);
         
-        setSuccess('Account created successfully! Redirecting...');
+        setSuccess(`Account created successfully! ${wantsPro ? 'Pro membership activated!' : ''} Redirecting...`);
         
         setTimeout(() => {
           onSignup(user.email);
@@ -200,7 +201,14 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       console.error('❌ Signup error:', err);
       if (err instanceof Error) {
         if (err.message.includes('already exists') || err.message.includes('already registered')) {
-          setError('An account with this email already exists. Please use a different email or try logging in.');
+          setError('An account with this email already exists.');
+          // Show a button to redirect to login
+          setTimeout(() => {
+            const shouldRedirect = window.confirm('This email is already registered. Would you like to go to the login page instead?');
+            if (shouldRedirect) {
+              onLogin();
+            }
+          }, 1000);
         } else if (err.message.includes('Password should be at least 6 characters')) {
           setError('Password must be at least 6 characters long.');
         } else {
@@ -495,8 +503,38 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                     </Link>
                   </Typography>
                 }
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
               />
+
+              <Box sx={{ 
+                border: '1px solid', 
+                borderColor: 'primary.main', 
+                borderRadius: 2, 
+                p: 2, 
+                mb: 3,
+                bgcolor: alpha(theme.palette.primary.main, 0.05)
+              }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={wantsPro}
+                      onChange={(e) => setWantsPro(e.target.checked)}
+                      color="success"
+                      disabled={loading}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold" color="success.main">
+                        🌟 Upgrade to Pro Membership
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        Unlimited property searches, advanced analytics, and priority support
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
 
               <Button
                 type="submit"

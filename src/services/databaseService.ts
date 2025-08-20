@@ -57,8 +57,8 @@ class DatabaseService {
   }
 
   // User Management
-  async createUser(email: string, password: string, name: string): Promise<User> {
-    console.log('📝 Creating user:', { email, name });
+  async createUser(email: string, password: string, name: string, isSubscribed: boolean = false): Promise<User> {
+    console.log('📝 Creating user:', { email, name, isSubscribed });
     const users = this.getUsers();
     
     // Check if user already exists
@@ -72,14 +72,14 @@ class DatabaseService {
       email,
       name,
       avatar: this.generateAvatar(name),
-      isSubscribed: false,
+      isSubscribed,
       joinDate: new Date().toISOString(),
       hashedPassword: this.hashPasswordSync(password)
     };
 
     users.push(user);
     localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
-    console.log('✅ User created successfully:', user.email);
+    console.log('✅ User created successfully:', user.email, isSubscribed ? '(Pro Member)' : '(Free)');
     
     return user;
   }

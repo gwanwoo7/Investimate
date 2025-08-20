@@ -3,6 +3,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Typography, Box, Button, Card, CardContent, Container, Tab, Tabs } from '@mui/material';
 import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
 import PropertyCalculatorWithMap from './components/PropertyCalculatorWithMap';
+import SearchResultsPage from './components/SearchResultsPage';
 import CommunityChat from './components/CommunityChat';
 import PaymentPage from './components/PaymentPage';
 import AdminDashboard from './components/AdminDashboard';
@@ -56,6 +57,13 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResultsData, setSearchResultsData] = useState<{
+    properties: any[];
+    searchType: 'boundary' | 'area';
+    searchQuery?: string;
+    boundaryInfo?: { north: number; south: number; east: number; west: number };
+  } | null>(null);
 
   const db = DatabaseService.getInstance();
 
@@ -107,7 +115,7 @@ function App() {
   };
 
   const handleShowPayment = () => {
-    setShowPayment(true);
+    setShowSubscription(true); // Changed to show subscription page instead
     setShowLogin(false);
     setShowSignup(false);
   };
@@ -137,6 +145,18 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
+    setShowSearchResults(false);
+    setCurrentTab(0);
+  };
+
+  const handleShowSearchResults = (data: {
+    properties: any[];
+    searchType: 'boundary' | 'area';
+    searchQuery?: string;
+    boundaryInfo?: { north: number; south: number; east: number; west: number };
+  }) => {
+    setSearchResultsData(data);
+    setShowSearchResults(true);
     setCurrentTab(0);
   };
 
@@ -218,7 +238,7 @@ function App() {
   const renderNavigation = () => (
     <NavigationBar
       onLogoClick={handleLogoClick}
-      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription}
+      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription && !showSearchResults}
       currentTab={currentTab}
       onTabChange={handleTabChange}
       onAboutClick={handleShowAbout}
@@ -324,6 +344,30 @@ function App() {
     );
   }
 
+  if (showSearchResults && searchResultsData) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SearchResultsPage
+          properties={searchResultsData.properties}
+          searchType={searchResultsData.searchType}
+          searchQuery={searchResultsData.searchQuery}
+          boundaryInfo={searchResultsData.boundaryInfo}
+          onBack={handleBackToMain}
+          onPropertySelect={(property) => {
+            console.log('Selected property:', property);
+            // Could open property detail modal here
+          }}
+          user={user}
+          onLogout={handleLogout}
+          onLoginClick={handleShowLogin}
+          onSignupClick={handleShowSignup}
+          onSubscriptionClick={handleShowSubscription}
+        />
+      </ThemeProvider>
+    );
+  }
+
   if (currentTab === 1) {
     return (
       <ThemeProvider theme={theme}>
@@ -341,6 +385,7 @@ function App() {
             onUpgrade={handleShowPayment}
             searchCount={searchCount}
             maxSearches={MAX_FREE_SEARCHES}
+            onShowResults={handleShowSearchResults}
           />
         </Box>
       </ThemeProvider>
