@@ -109,34 +109,59 @@ const SORT_OPTIONS = [
 ];
 
 export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProps) {
-  const [searchData, setSearchData] = useState<AreaSearchParams>({
+  const [formData, setFormData] = useState<AreaSearchParams>({
     city: '',
     state: '',
-    maxPrice: 200000,
+    zipCode: '',
+    propertyTypes: ['single-family', 'condo', 'townhouse'],
     minPrice: 50000,
-    propertyTypes: ['single-family', 'condo'],
+    maxPrice: 2000000,
     minBedrooms: 2,
-    sortBy: 'cashOnCashROI',
-    sortOrder: 'desc',
-    limit: 50
+    maxBedrooms: 10,
+    minBathrooms: 1,
+    maxBathrooms: 10
   });
+
+  // Custom styling for reduced font sizes (30% smaller)
+  const smallTextStyle = {
+    fontSize: '0.7rem', // ~30% smaller than default
+    '& .MuiInputLabel-root': {
+      fontSize: '0.7rem',
+    },
+    '& .MuiInputBase-input': {
+      fontSize: '0.7rem',
+    },
+    '& .MuiFormHelperText-root': {
+      fontSize: '0.6rem',
+    }
+  };
+
+  const smallTypographyStyle = {
+    fontSize: '0.7rem',
+    lineHeight: 1.2
+  };
+
+  const smallButtonStyle = {
+    fontSize: '0.7rem',
+    padding: '6px 12px'
+  };
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    console.log('� AreaSearchForm: Form submitted with search data:', searchData);
-    console.log('📝 AreaSearchForm: City:', searchData.city, 'State:', searchData.state);
-    console.log('📝 AreaSearchForm: Complete data object:', JSON.stringify(searchData, null, 2));
+    console.log('🔍 AreaSearchForm: Form submitted with search data:', formData);
+    console.log('📝 AreaSearchForm: City:', formData.city, 'State:', formData.state);
+    console.log('📝 AreaSearchForm: Complete data object:', JSON.stringify(formData, null, 2));
     
-    if (!searchData.city && !searchData.zipCode && !searchData.county) {
+    if (!formData.city && !formData.zipCode && !formData.county) {
       setError('Please enter a city, zip code, or county to search');
       return;
     }
     
-    console.log('📝 AreaSearchForm: Calling onSearch with:', searchData);
-    onSearch(searchData);
+    console.log('📝 AreaSearchForm: Calling onSearch with:', formData);
+    onSearch(formData);
   };
 
   const handleChange = (field: keyof AreaSearchParams) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,24 +173,24 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
       value = parseFloat(value) || undefined;
     }
     
-    setSearchData(prev => ({
+    setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
   const handleSelectChange = (field: keyof AreaSearchParams) => (e: any) => {
-    setSearchData(prev => ({
+    setFormData(prev => ({
       ...prev,
       [field]: e.target.value
     }));
   };
 
   const handlePropertyTypeChange = (type: string) => {
-    setSearchData(prev => {
+    setFormData(prev => {
       const currentTypes = prev.propertyTypes || [];
       const newTypes = currentTypes.includes(type as any)
-        ? currentTypes.filter(t => t !== type)
+        ? currentTypes.filter((t: any) => t !== type)
         : [...currentTypes, type as any];
       
       return {
@@ -176,14 +201,14 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
   };
 
   const handleCitySelect = (city: string) => {
-    setSearchData(prev => ({
+    setFormData(prev => ({
       ...prev,
       city
     }));
   };
 
   const getCurrentStateCities = () => {
-    return INVESTMENT_CITIES.find(item => item.state === searchData.state)?.cities || [];
+    return INVESTMENT_CITIES.find(item => item.state === formData.state)?.cities || [];
   };
 
   return (
@@ -228,11 +253,11 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
           pb: 5 // Extra padding at bottom for better scroll experience
         }}>
           <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <MapPin size={24} style={{ color: '#1976d2', marginBottom: '8px' }} />
-            <Typography variant="h6" gutterBottom>
+            <MapPin size={20} style={{ color: '#1976d2', marginBottom: '6px' }} />
+            <Typography variant="h6" gutterBottom sx={smallTypographyStyle}>
               Property Search
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={smallTypographyStyle}>
               Find properties by location and criteria
             </Typography>
           </Box>
@@ -246,18 +271,19 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
       <Stack spacing={3}>
         {/* Location Section */}
         <Box>
-                    <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <MapPin size={16} />
+                    <Typography variant="subtitle2" gutterBottom sx={{ ...smallTypographyStyle, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <MapPin size={14} />
             Location
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
             <TextField
               select
               label="State"
-              value={searchData.state}
+              value={formData.state}
               onChange={handleSelectChange('state')}
               disabled={loading}
-              sx={{ minWidth: 200 }}
+              sx={{ ...smallTextStyle, minWidth: 160 }}
+              size="small"
             >
               {US_STATES.map(state => (
                 <MenuItem key={state.value} value={state.value}>
@@ -268,16 +294,17 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
             
             <TextField
               label="City"
-              value={searchData.city}
+              value={formData.city}
               onChange={handleChange('city')}
               placeholder="Enter city name"
               disabled={loading}
-              sx={{ flex: 1, minWidth: 200 }}
+              sx={{ ...smallTextStyle, flex: 1, minWidth: 200 }}
+              size="small"
             />
             
             <TextField
               label="Zip Code (Optional)"
-              value={searchData.zipCode || ''}
+              value={formData.zipCode || ''}
               onChange={handleChange('zipCode')}
               placeholder="12345"
               disabled={loading}
@@ -289,7 +316,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
           {getCurrentStateCities().length > 0 && (
             <Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Popular investment cities in {US_STATES.find(s => s.value === searchData.state)?.label}:
+                Popular investment cities in {US_STATES.find(s => s.value === formData.state)?.label}:
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {getCurrentStateCities().map(city => (
@@ -298,8 +325,8 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                     label={city}
                     size="small"
                     onClick={() => handleCitySelect(city)}
-                    color={searchData.city === city ? 'primary' : 'default'}
-                    variant={searchData.city === city ? 'filled' : 'outlined'}
+                    color={formData.city === city ? 'primary' : 'default'}
+                    variant={formData.city === city ? 'filled' : 'outlined'}
                     disabled={loading}
                   />
                 ))}
@@ -327,7 +354,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <FormControl sx={{ minWidth: 200 }}>
                     <InputLabel>Sort By</InputLabel>
                     <Select
-                      value={searchData.sortBy || 'cashOnCashROI'}
+                      value={formData.sortBy || 'cashOnCashROI'}
                       onChange={handleSelectChange('sortBy')}
                       label="Sort By"
                       disabled={loading}
@@ -342,7 +369,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <FormControl sx={{ minWidth: 120 }}>
                     <InputLabel>Order</InputLabel>
                     <Select
-                      value={searchData.sortOrder || 'desc'}
+                      value={formData.sortOrder || 'desc'}
                       onChange={handleSelectChange('sortOrder')}
                       label="Order"
                       disabled={loading}
@@ -354,7 +381,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <FormControl sx={{ minWidth: 150 }}>
                     <InputLabel>Results Limit</InputLabel>
                     <Select
-                      value={searchData.limit || 50}
+                      value={formData.limit || 50}
                       onChange={handleSelectChange('limit')}
                       label="Results Limit"
                       disabled={loading}
@@ -377,7 +404,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Min ROI %"
                     type="number"
-                    value={searchData.minCashOnCashROI || ''}
+                    value={formData.minCashOnCashROI || ''}
                     onChange={handleChange('minCashOnCashROI')}
                     placeholder="8"
                     disabled={loading}
@@ -386,7 +413,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Max ROI %"
                     type="number"
-                    value={searchData.maxCashOnCashROI || ''}
+                    value={formData.maxCashOnCashROI || ''}
                     onChange={handleChange('maxCashOnCashROI')}
                     placeholder="25"
                     disabled={loading}
@@ -403,7 +430,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Min Cap Rate %"
                     type="number"
-                    value={searchData.minCapRate || ''}
+                    value={formData.minCapRate || ''}
                     onChange={handleChange('minCapRate')}
                     placeholder="6"
                     disabled={loading}
@@ -412,7 +439,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Max Cap Rate %"
                     type="number"
-                    value={searchData.maxCapRate || ''}
+                    value={formData.maxCapRate || ''}
                     onChange={handleChange('maxCapRate')}
                     placeholder="15"
                     disabled={loading}
@@ -429,7 +456,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Min Cash Flow"
                     type="number"
-                    value={searchData.minMonthlyCashFlow || ''}
+                    value={formData.minMonthlyCashFlow || ''}
                     onChange={handleChange('minMonthlyCashFlow')}
                     placeholder="200"
                     InputProps={{ startAdornment: '$' }}
@@ -439,7 +466,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Max Cash Flow"
                     type="number"
-                    value={searchData.maxMonthlyCashFlow || ''}
+                    value={formData.maxMonthlyCashFlow || ''}
                     onChange={handleChange('maxMonthlyCashFlow')}
                     placeholder="1000"
                     InputProps={{ startAdornment: '$' }}
@@ -457,7 +484,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Min Score"
                     type="number"
-                    value={searchData.minInvestmentScore || ''}
+                    value={formData.minInvestmentScore || ''}
                     onChange={handleChange('minInvestmentScore')}
                     placeholder="6"
                     inputProps={{ min: 1, max: 10 }}
@@ -467,7 +494,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   <TextField
                     label="Max Score"
                     type="number"
-                    value={searchData.maxInvestmentScore || ''}
+                    value={formData.maxInvestmentScore || ''}
                     onChange={handleChange('maxInvestmentScore')}
                     placeholder="10"
                     inputProps={{ min: 1, max: 10 }}
@@ -491,7 +518,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
               fullWidth
               label="Min Price"
               type="number"
-              value={searchData.minPrice || ''}
+              value={formData.minPrice || ''}
               onChange={handleChange('minPrice')}
               InputProps={{ startAdornment: '$' }}
               disabled={loading}
@@ -500,7 +527,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
               fullWidth
               label="Max Price"
               type="number"
-              value={searchData.maxPrice || ''}
+              value={formData.maxPrice || ''}
               onChange={handleChange('maxPrice')}
               InputProps={{ startAdornment: '$' }}
               disabled={loading}
@@ -518,8 +545,8 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
                   key={type.value}
                   label={type.label}
                   onClick={() => handlePropertyTypeChange(type.value)}
-                  color={searchData.propertyTypes?.includes(type.value as any) ? 'primary' : 'default'}
-                  variant={searchData.propertyTypes?.includes(type.value as any) ? 'filled' : 'outlined'}
+                  color={formData.propertyTypes?.includes(type.value as any) ? 'primary' : 'default'}
+                  variant={formData.propertyTypes?.includes(type.value as any) ? 'filled' : 'outlined'}
                   disabled={loading}
                 />
               ))}
@@ -535,7 +562,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
               <TextField
                 label="Min Bedrooms"
                 type="number"
-                value={searchData.minBedrooms || ''}
+                value={formData.minBedrooms || ''}
                 onChange={handleChange('minBedrooms')}
                 disabled={loading}
                 sx={{ minWidth: 150 }}
@@ -543,7 +570,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
               <TextField
                 label="Search Radius (miles)"
                 type="number"
-                value={searchData.radius || ''}
+                value={formData.radius || ''}
                 onChange={handleChange('radius')}
                 placeholder="25"
                 disabled={loading}

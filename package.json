@@ -12,7 +12,6 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@googlemaps/js-api-loader": "^1.16.10",
     "@mui/icons-material": "^7.3.1",
     "@mui/lab": "^7.0.0-beta.16",
     "@mui/material": "^7.3.1",
@@ -20,7 +19,6 @@
     "@stripe/react-stripe-js": "^3.9.0",
     "@stripe/stripe-js": "^7.8.0",
     "@supabase/supabase-js": "^2.55.0",
-    "@types/google.maps": "^3.58.1",
     "@types/leaflet-draw": "^1.0.12",
     "@types/node": "^24.2.1",
     "axios": "^1.11.0",

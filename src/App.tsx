@@ -12,7 +12,6 @@ import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
 import OAuthDebug from './components/OAuthDebug';
 import GeographicSearchTest from './components/GeographicSearchTest';
-import GoogleMapsTest from './components/GoogleMapsTest';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -380,7 +379,14 @@ function App() {
           width: '100vw',
           overflow: 'auto'
         }}>
-          <GoogleMapsTest />
+          <PropertyCalculatorWithMap 
+            canSearch={canSearch()}
+            onSearch={handleSearch}
+            onUpgrade={handleShowPayment}
+            searchCount={searchCount}
+            maxSearches={MAX_FREE_SEARCHES}
+            onShowResults={handleShowSearchResults}
+          />
         </Box>
       </ThemeProvider>
     );
