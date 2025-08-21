@@ -12,6 +12,9 @@ const GoogleMapsTest: React.FC = () => {
       try {
         const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
         
+        console.log('All environment variables:', import.meta.env);
+        console.log('VITE_GOOGLE_MAPS_API_KEY:', apiKey);
+        
         if (!apiKey) {
           throw new Error('Google Maps API key not found in environment variables');
         }
@@ -66,11 +69,18 @@ const GoogleMapsTest: React.FC = () => {
       )}
       
       <Typography variant="body2" sx={{ mt: 2 }}>
-        API Key: {import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.substring(0, 10)}...
+        API Key: {import.meta.env.VITE_GOOGLE_MAPS_API_KEY ? 
+          import.meta.env.VITE_GOOGLE_MAPS_API_KEY.substring(0, 10) + '...' : 
+          'NOT FOUND'
+        }
       </Typography>
       
       <Typography variant="body2">
         Environment: {import.meta.env.MODE}
+      </Typography>
+      
+      <Typography variant="body2">
+        All env vars: {Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')).join(', ')}
       </Typography>
     </Box>
   );
