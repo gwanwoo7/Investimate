@@ -20,10 +20,12 @@ A comprehensive React TypeScript application for analyzing rental property inves
 - **Expense Tracking**: Operating costs, taxes, insurance, and maintenance
 
 ### 🗺️ Interactive Property Maps
-- **Location Search**: Find properties by city, state, or ZIP code
-- **Map Visualization**: Interactive maps powered by Leaflet
-- **Property Markers**: Visual representation of available properties
-- **Neighborhood Analysis**: Local market insights
+- **Google Maps Integration**: Professional mapping with Google Maps JavaScript API
+- **Boundary Drawing**: Interactive polygon drawing for custom search areas
+- **Property Markers**: Enhanced markers with price displays and detailed info windows
+- **Location Services**: Automatic current location detection and centering
+- **Fullscreen Mode**: Immersive map experience with responsive controls
+- **Property Clustering**: Smart grouping of nearby properties for better performance
 
 ### 💬 Investor Community
 - **Discussion Forums**: Connect with fellow investors
@@ -47,7 +49,7 @@ A comprehensive React TypeScript application for analyzing rental property inves
 
 - **Frontend**: React 18, TypeScript, Material-UI v7
 - **Build Tool**: Vite for fast development and optimized builds
-- **Maps**: Leaflet for interactive property maps
+- **Maps**: Google Maps JavaScript API with drawing tools
 - **Icons**: Lucide React for modern iconography
 - **State Management**: React Hooks and Context
 
@@ -72,11 +74,17 @@ A comprehensive React TypeScript application for analyzing rental property inves
 
 3. **Set up environment variables**
    ```bash
-   cp .env.example .env
-   # Edit .env with your API keys
+   cp .env.example .env.local
+   # Add your Google Maps API key and other credentials
    ```
 
-4. **Start development server**
+4. **Configure Google Maps API**
+   - Get API key from [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable Maps JavaScript API and Drawing API
+   - Add API key to `.env.local` as `VITE_GOOGLE_MAPS_API_KEY`
+   - See [GOOGLE_MAPS_SETUP_GUIDE.md](./GOOGLE_MAPS_SETUP_GUIDE.md) for details
+
+5. **Start development server**
    ```bash
    npm run dev
    ```
