@@ -119,35 +119,44 @@ export default function EnhancedPropertySearchForm({
   ];
 
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
+    <Paper sx={{ p: 2.5, mb: 2 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '1.1rem', fontWeight: 'bold' }}>
           <LocationOn color="primary" />
           Find Investment Properties
         </Typography>
         
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.8rem' }}>
           Search for rental properties with strong investment potential. Use the form below or draw a boundary on the map.
         </Typography>
 
         {/* Search Results Summary */}
         {foundProperties > 0 && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Found {foundProperties} properties matching your criteria
+          <Alert severity="success" sx={{ mb: 1.5 }}>
+            <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+              Found {foundProperties} properties matching your criteria
+            </Typography>
           </Alert>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+          <Alert severity="error" sx={{ mb: 1.5 }}>
+            <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+              {error}
+            </Typography>
           </Alert>
         )}
 
-        <Stack spacing={3}>
+        <Stack spacing={2}>
           {/* Basic Search Fields */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <TextField
-              sx={{ flex: 2, minWidth: 200 }}
+              sx={{ 
+                flex: 2, 
+                minWidth: 200, 
+                '& .MuiInputLabel-root': { fontSize: '0.8rem' },
+                '& .MuiInputBase-input': { fontSize: '0.8rem' }
+              }}
               label="City"
               value={searchData.city || ''}
               onChange={handleChange('city')}
@@ -155,7 +164,12 @@ export default function EnhancedPropertySearchForm({
               disabled={loading}
             />
             
-            <FormControl sx={{ flex: 1, minWidth: 100 }} disabled={loading}>
+            <FormControl sx={{ 
+              flex: 1, 
+              minWidth: 100,
+              '& .MuiInputLabel-root': { fontSize: '0.8rem' },
+              '& .MuiSelect-select': { fontSize: '0.8rem' }
+            }} disabled={loading}>
               <InputLabel>State</InputLabel>
               <Select
                 value={searchData.state || 'CA'}
@@ -171,7 +185,12 @@ export default function EnhancedPropertySearchForm({
             </FormControl>
             
             <TextField
-              sx={{ flex: 1, minWidth: 120 }}
+              sx={{ 
+                flex: 1, 
+                minWidth: 120,
+                '& .MuiInputLabel-root': { fontSize: '0.8rem' },
+                '& .MuiInputBase-input': { fontSize: '0.8rem' }
+              }}
               label="Zip Code"
               value={searchData.zipCode || ''}
               onChange={handleChange('zipCode')}
@@ -185,7 +204,7 @@ export default function EnhancedPropertySearchForm({
               onClick={toggleDrawingMode}
               color={isDrawingMode ? 'primary' : 'inherit'}
               disabled={loading}
-              sx={{ minWidth: 140 }}
+              sx={{ minWidth: 140, fontSize: '0.8rem' }}
             >
               {isDrawingMode ? 'Drawing...' : 'Draw Area'}
             </Button>
@@ -194,25 +213,35 @@ export default function EnhancedPropertySearchForm({
           {/* Price Range */}
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <TextField
-              sx={{ flex: 1, minWidth: 150 }}
+              sx={{ 
+                flex: 1, 
+                minWidth: 150,
+                '& .MuiInputLabel-root': { fontSize: '0.8rem' },
+                '& .MuiInputBase-input': { fontSize: '0.8rem' }
+              }}
               label="Min Price"
               type="number"
               value={searchData.minPrice || ''}
               onChange={handleChange('minPrice')}
               disabled={loading}
               InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                startAdornment: <Typography sx={{ mr: 1, fontSize: '0.8rem' }}>$</Typography>
               }}
             />
             <TextField
-              sx={{ flex: 1, minWidth: 150 }}
+              sx={{ 
+                flex: 1, 
+                minWidth: 150,
+                '& .MuiInputLabel-root': { fontSize: '0.8rem' },
+                '& .MuiInputBase-input': { fontSize: '0.8rem' }
+              }}
               label="Max Price"
               type="number"
               value={searchData.maxPrice || ''}
               onChange={handleChange('maxPrice')}
               disabled={loading}
               InputProps={{
-                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>
+                startAdornment: <Typography sx={{ mr: 1, fontSize: '0.8rem' }}>$</Typography>
               }}
             />
           </Box>
@@ -343,24 +372,24 @@ export default function EnhancedPropertySearchForm({
               size="large"
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : <Search />}
-              sx={{ minWidth: 200 }}
+              sx={{ minWidth: 200, fontSize: '0.85rem' }}
             >
               {loading ? 'Searching...' : 'Search Properties'}
             </Button>
 
             {foundProperties > 0 && (
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 Showing {foundProperties} properties
               </Typography>
             )}
           </Box>
 
           {/* Search Tips */}
-          <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.dark' }}>
-            <Typography variant="subtitle2" gutterBottom>
+          <Paper sx={{ p: 1.5, bgcolor: 'info.light', color: 'info.dark' }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>
               💡 Search Tips:
             </Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ fontSize: '0.75rem', lineHeight: 1.6 }}>
               • Try broader price ranges to find more properties<br/>
               • Use the "Draw Area" feature to search within specific neighborhoods<br/>
               • For Santa Clara, CA: Enhanced search finds 55+ properties matching Zillow results<br/>

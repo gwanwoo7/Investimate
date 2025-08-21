@@ -3,7 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 import 'leaflet-draw';
-import type { PropertyListing } from '../types/property';
+import type { PropertyListing } from "../types/property";
 import { Box, Typography, Chip, Paper, Button, Alert } from '@mui/material';
 import { Search, MapPin, Home, DollarSign } from 'lucide-react';
 
