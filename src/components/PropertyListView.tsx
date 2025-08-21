@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import type { PropertyListing } from '../types/property';
 import { getPropertyImageUrl, getPropertyListingLinks } from '../utils/propertyLinks';
+import DetailedPropertyAnalysis from './DetailedPropertyAnalysis';
 
 interface PropertyListViewProps {
   properties: PropertyListing[];
@@ -87,7 +88,7 @@ export default function PropertyListView({
   if (loading) {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Typography variant="h6">Loading investment properties...</Typography>
+        <Typography variant="body1" sx={{ fontSize: '0.9rem' }}>Loading investment properties...</Typography>
       </Box>
     );
   }
@@ -96,7 +97,7 @@ export default function PropertyListView({
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Home size={64} style={{ color: '#ccc', marginBottom: '16px' }} />
-        <Typography variant="h6" color="text.secondary" gutterBottom>
+        <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontSize: '0.9rem' }}>
           No properties found
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -110,7 +111,7 @@ export default function PropertyListView({
     <Box>
       {/* View Mode Toggle */}
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">
+        <Typography variant="h6" sx={{ fontSize: '1rem' }}>
           {properties.length} Properties Found
         </Typography>
         <Stack direction="row" spacing={1}>
@@ -118,7 +119,8 @@ export default function PropertyListView({
             variant={viewMode === 'cards' ? 'contained' : 'outlined'}
             size="small"
             onClick={() => setViewMode('cards')}
-            startIcon={<Eye size={16} />}
+            startIcon={<Eye size={14} />}
+            sx={{ fontSize: '0.75rem' }}
           >
             Cards
           </Button>
@@ -126,7 +128,8 @@ export default function PropertyListView({
             variant={viewMode === 'table' ? 'contained' : 'outlined'}
             size="small"
             onClick={() => setViewMode('table')}
-            startIcon={<BarChart3 size={16} />}
+            startIcon={<BarChart3 size={14} />}
+            sx={{ fontSize: '0.75rem' }}
           >
             Table
           </Button>
@@ -169,7 +172,7 @@ export default function PropertyListView({
                     }}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="h6" component="h2" noWrap gutterBottom>
+                    <Typography variant="subtitle1" component="h2" noWrap gutterBottom sx={{ fontSize: '0.9rem' }}>
                       {property.address}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -198,7 +201,7 @@ export default function PropertyListView({
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="h5" color="primary" gutterBottom>
+                      <Typography variant="h6" color="primary" gutterBottom sx={{ fontSize: '1.1rem' }}>
                         {formatCurrency(property.purchasePrice || property.marketValue)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -302,13 +305,13 @@ export default function PropertyListView({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>Property</TableCell>
-                <TableCell align="right">Price</TableCell>
-                <TableCell align="right">Rent</TableCell>
-                <TableCell align="right">Cash Flow</TableCell>
-                <TableCell align="right">COC Return</TableCell>
-                <TableCell align="center">Rank</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Property</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Price</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Rent</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Cash Flow</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>COC Return</TableCell>
+                <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Rank</TableCell>
+                <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -497,100 +500,12 @@ export default function PropertyListView({
         </DialogActions>
       </Dialog>
 
-      {/* Full Analysis Dialog */}
-      <Dialog open={fullAnalysisOpen} onClose={() => setFullAnalysisOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Detailed Investment Analysis</DialogTitle>
-        <DialogContent>
-          {selectedForAnalysis && (
-            <Box>
-              <Typography variant="h5" gutterBottom>
-                {selectedForAnalysis.address}
-              </Typography>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                {selectedForAnalysis.city}, {selectedForAnalysis.state} {selectedForAnalysis.zipCode}
-              </Typography>
-
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, mb: 3 }}>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="success.main">
-                      {selectedForAnalysis.estimatedCOCReturn.toFixed(1)}%
-                    </Typography>
-                    <Typography variant="subtitle1">Cash-on-Cash Return</Typography>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary.main">
-                      {selectedForAnalysis.estimatedCapRate.toFixed(1)}%
-                    </Typography>
-                    <Typography variant="subtitle1">Cap Rate</Typography>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography 
-                      variant="h4" 
-                      color={selectedForAnalysis.estimatedCashFlow > 0 ? 'success.main' : 'error.main'}
-                    >
-                      {formatCurrency(selectedForAnalysis.estimatedCashFlow)}
-                    </Typography>
-                    <Typography variant="subtitle1">Monthly Cash Flow</Typography>
-                  </CardContent>
-                </Card>
-              </Box>
-
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>Monthly Cash Flow Analysis</Typography>
-                  <Stack spacing={2}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography>Monthly Rental Income:</Typography>
-                      <Typography color="success.main" fontWeight="bold">
-                        +{formatCurrency(selectedForAnalysis.quickAnalysis.monthlyRent)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography>Operating Expenses:</Typography>
-                      <Typography color="error.main">
-                        -{formatCurrency(selectedForAnalysis.quickAnalysis.monthlyExpenses)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography>Mortgage Payment:</Typography>
-                      <Typography color="error.main">
-                        -{formatCurrency(selectedForAnalysis.quickAnalysis.monthlyMortgage)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', borderTop: 1, borderColor: 'divider', pt: 1 }}>
-                      <Typography variant="h6">Net Cash Flow:</Typography>
-                      <Typography 
-                        variant="h6" 
-                        color={selectedForAnalysis.estimatedCashFlow > 0 ? 'success.main' : 'error.main'}
-                        fontWeight="bold"
-                      >
-                        {formatCurrency(selectedForAnalysis.estimatedCashFlow)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFullAnalysisOpen(false)}>Close</Button>
-          <Button 
-            variant="contained" 
-            onClick={() => {
-              setFullAnalysisOpen(false);
-              if (selectedForAnalysis) onPropertySelect(selectedForAnalysis);
-            }}
-          >
-            Select This Property
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* New Detailed Property Analysis */}
+      <DetailedPropertyAnalysis
+        open={fullAnalysisOpen}
+        onClose={() => setFullAnalysisOpen(false)}
+        property={selectedForAnalysis}
+      />
     </Box>
   );
 }

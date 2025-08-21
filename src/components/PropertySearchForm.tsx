@@ -45,10 +45,10 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="h5" gutterBottom>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem' }}>
         Search for a Property
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.8rem' }}>
         Enter the property address or zip code to get started with your investment analysis.
       </Typography>
 
@@ -58,7 +58,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
         </Alert>
       )}
 
-      <Stack spacing={3}>
+      <Stack spacing={2}>
         <TextField
           fullWidth
           label="Property Address"
@@ -66,6 +66,8 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
           onChange={handleChange('address')}
           placeholder="e.g., 28215 Cherry Street"
           disabled={loading}
+          size="small"
+          sx={{ '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
         />
         
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -76,6 +78,8 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             onChange={handleChange('city')}
             placeholder="e.g., Detroit"
             disabled={loading}
+            size="small"
+            sx={{ '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
           />
           
           <TextField
@@ -84,7 +88,8 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             onChange={handleChange('state')}
             placeholder="MI"
             disabled={loading}
-            sx={{ minWidth: 100 }}
+            size="small"
+            sx={{ minWidth: 100, '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
           />
           
           <TextField
@@ -93,19 +98,20 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             onChange={handleChange('zipCode')}
             placeholder="48201"
             disabled={loading}
-            sx={{ minWidth: 120 }}
+            size="small"
+            sx={{ minWidth: 120, '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
           />
         </Box>
       </Stack>
 
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: 2 }}>
         <Button
           type="submit"
           variant="contained"
-          size="large"
+          size="medium"
           disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : <Search />}
-          sx={{ minWidth: 150 }}
+          startIcon={loading ? <CircularProgress size={16} /> : <Search size={16} />}
+          sx={{ minWidth: 140, fontSize: '0.8rem' }}
         >
           {loading ? 'Searching...' : 'Search Property'}
         </Button>
