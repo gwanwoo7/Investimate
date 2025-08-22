@@ -120,7 +120,7 @@ export default function PropertyListView({
             size="small"
             onClick={() => setViewMode('cards')}
             startIcon={<Eye size={14} />}
-            sx={{ fontSize: '0.75rem' }}
+            sx={{ fontSize: '10.5px' }}
           >
             Cards
           </Button>
@@ -129,7 +129,7 @@ export default function PropertyListView({
             size="small"
             onClick={() => setViewMode('table')}
             startIcon={<BarChart3 size={14} />}
-            sx={{ fontSize: '0.75rem' }}
+            sx={{ fontSize: '10.5px' }}
           >
             Table
           </Button>

@@ -39,6 +39,111 @@ const theme = createTheme({
     h2: {
       fontWeight: 600,
     },
+    body2: {
+      fontSize: '10.5px',
+      lineHeight: 1.4,
+    },
+    caption: {
+      fontSize: '10.5px',
+      lineHeight: 1.3,
+    },
+  },
+  spacing: 8,
+  components: {
+    MuiTextField: {
+      defaultProps: {
+        size: 'small',
+        variant: 'outlined',
+      },
+      styleOverrides: {
+        root: {
+          '& .MuiInputBase-input': {
+            fontSize: '10.5px',
+            padding: '8px 12px',
+          },
+          '& .MuiInputLabel-root': {
+            fontSize: '10.5px',
+          },
+          '& .MuiFormHelperText-root': {
+            fontSize: '9px',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        size: 'small',
+      },
+      styleOverrides: {
+        root: {
+          '& .MuiSelect-select': {
+            fontSize: '10.5px',
+            padding: '8px 12px',
+          },
+        },
+      },
+    },
+    MuiFormControl: {
+      defaultProps: {
+        size: 'small',
+        variant: 'outlined',
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: '8px',
+          fontSize: '10.5px',
+        },
+        sizeSmall: {
+          fontSize: '10.5px',
+          padding: '4px 12px',
+        },
+        sizeMedium: {
+          fontSize: '11px',
+          padding: '6px 16px',
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontSize: '10.5px',
+          height: '24px',
+        },
+        sizeSmall: {
+          fontSize: '9px',
+          height: '20px',
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          fontSize: '10.5px',
+          padding: '6px 12px',
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          '&:before': {
+            display: 'none',
+          },
+          boxShadow: 'none',
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+        },
+      },
+    },
   },
 });
 

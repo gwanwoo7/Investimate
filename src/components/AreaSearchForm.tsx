@@ -122,27 +122,27 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
     maxBathrooms: 10
   });
 
-  // Custom styling for reduced font sizes (30% smaller)
+  // Custom styling for consistent 10.5px font size
   const smallTextStyle = {
-    fontSize: '0.7rem', // ~30% smaller than default
+    fontSize: '10.5px',
     '& .MuiInputLabel-root': {
-      fontSize: '0.7rem',
+      fontSize: '10.5px',
     },
     '& .MuiInputBase-input': {
-      fontSize: '0.7rem',
+      fontSize: '10.5px',
     },
     '& .MuiFormHelperText-root': {
-      fontSize: '0.6rem',
+      fontSize: '10.5px',
     }
   };
 
   const smallTypographyStyle = {
-    fontSize: '0.7rem',
-    lineHeight: 1.2
+    fontSize: '10.5px',
+    lineHeight: 1.4
   };
 
   const smallButtonStyle = {
-    fontSize: '0.7rem',
+    fontSize: '10.5px',
     padding: '6px 12px'
   };
   const [error, setError] = useState('');
@@ -253,9 +253,11 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
           pb: 5 // Extra padding at bottom for better scroll experience
         }}>
           <Box sx={{ textAlign: 'center', mb: 2 }}>
-            <MapPin size={20} style={{ color: '#1976d2', marginBottom: '6px' }} />
-            <Typography variant="h6" gutterBottom sx={smallTypographyStyle}>
-              Property Search
+            <Typography variant="h6" gutterBottom sx={{ 
+              fontSize: '1.5rem', // Same as "Interactive Map Search" 
+              fontWeight: 600 
+            }}>
+              Search Criteria
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={smallTypographyStyle}>
               Find properties by location and criteria

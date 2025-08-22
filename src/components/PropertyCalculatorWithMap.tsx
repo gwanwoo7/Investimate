@@ -245,24 +245,24 @@ export default function PropertyCalculatorWithMap({
           🏠 Investment Property Calculator
         </Typography>
         
-        <Typography variant="body1" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary', fontSize: '0.9rem' }}>
+        <Typography variant="body1" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary', fontSize: '10.5px' }}>
           Search by criteria or draw areas on the map to find profitable investment properties
         </Typography>
 
         {/* Search limit warning */}
         {!canSearch && (
           <Alert severity="warning" sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: '0.85rem' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: '10.5px' }}>
               Search Limit Reached
             </Typography>
-            <Typography sx={{ mb: 1, fontSize: '0.8rem' }}>
+            <Typography sx={{ mb: 1, fontSize: '10.5px' }}>
               You've used all {maxSearches} free searches. Upgrade to Pro for unlimited access!
             </Typography>
             <Button 
               variant="contained" 
               color="warning" 
               onClick={onUpgrade}
-              sx={{ mt: 1, fontSize: '0.8rem' }}
+              sx={{ mt: 1, fontSize: '10.5px' }}
             >
               Upgrade to Pro - $4.99/month
             </Button>
@@ -271,13 +271,13 @@ export default function PropertyCalculatorWithMap({
 
         {/* Status Messages */}
         {error && (
-          <Alert severity="error" sx={{ mb: 2, fontSize: '0.8rem' }}>
+          <Alert severity="error" sx={{ mb: 2, fontSize: '10.5px' }}>
             {error}
           </Alert>
         )}
 
         {success && (
-          <Alert severity="success" sx={{ mb: 2, fontSize: '0.8rem' }}>
+          <Alert severity="success" sx={{ mb: 2, fontSize: '10.5px' }}>
             {success}
           </Alert>
         )}
@@ -321,7 +321,7 @@ export default function PropertyCalculatorWithMap({
         }}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, pb: 1, fontSize: '0.85rem' }}>
+              <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, pb: 1, fontSize: '10.5px' }}>
                 <Search />
                 Search Criteria
               </Typography>
@@ -345,7 +345,7 @@ export default function PropertyCalculatorWithMap({
           <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.85rem' }}>
+                <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '10.5px' }}>
                   <Brush />
                   Interactive Map Search
                 </Typography>
@@ -376,7 +376,7 @@ export default function PropertyCalculatorWithMap({
           }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardContent sx={{ p: 1, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, px: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, fontSize: '0.85rem' }}>
+                <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, px: 1, position: 'sticky', top: 0, bgcolor: 'background.paper', zIndex: 1, fontSize: '10.5px' }}>
                   <ListIcon />
                   Properties ({properties.length})
                 </Typography>
