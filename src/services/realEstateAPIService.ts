@@ -242,6 +242,10 @@ export class RealEstateAPIService {
         currentRate: property.currentRate,
         loanRate: property.loanRate
       });
+
+      // Extract property images from Zillow API
+      const propertyImages = this.extractPropertyImages(property);
+      console.log(`📸 Found ${propertyImages.length} images for ${address}`);
       
       // Property taxes - try multiple Zillow fields
       const annualPropertyTaxes = property.propertyTaxes || 
@@ -323,6 +327,9 @@ export class RealEstateAPIService {
         source: 'Zillow',
         latitude: property.latitude,
         longitude: property.longitude,
+        
+        // Property images from Zillow API
+        images: propertyImages,
         
         // Enhanced financial data
         monthlyHoaFee: monthlyHOA,
@@ -667,7 +674,12 @@ export class RealEstateAPIService {
           total: 750,
           interestRate: 0.065
         },
-        interestRate: 0.065
+        interestRate: 0.065,
+        images: [
+          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop&auto=format&q=80'
+        ]
       },
       {
         id: 'mock-2',
@@ -697,7 +709,12 @@ export class RealEstateAPIService {
           total: 590,
           interestRate: 0.065
         },
-        interestRate: 0.065
+        interestRate: 0.065,
+        images: [
+          'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&auto=format&q=80'
+        ]
       },
       {
         id: 'mock-3',
@@ -727,7 +744,12 @@ export class RealEstateAPIService {
           total: 937,
           interestRate: 0.065
         },
-        interestRate: 0.065
+        interestRate: 0.065,
+        images: [
+          'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&h=600&fit=crop&auto=format&q=80',
+          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&auto=format&q=80'
+        ]
       }
     ];
 
@@ -751,5 +773,139 @@ export class RealEstateAPIService {
     });
 
     return this.sortByInvestmentScore(listings);
+  }
+
+  // Extract property images from Zillow API response
+  private static extractPropertyImages(property: any): string[] {
+    const images: string[] = [];
+    
+    try {
+      // Check different possible image fields in Zillow API
+      const imageFields = [
+        'photos',           // Main photos array
+        'images',          // Alternative images array
+        'photo',           // Single photo field
+        'imgSrc',          // Image source field
+        'photoCount',      // Photo count with urls
+        'primaryPhoto',    // Primary photo object
+        'listingPhotos',   // Listing photos array
+        'media',           // Media array
+        'gallery'          // Gallery array
+      ];
+      
+      console.log(`📸 Checking image fields for property:`, Object.keys(property));
+      
+      // Try to extract images from various fields
+      for (const field of imageFields) {
+        if (property[field]) {
+          console.log(`🖼️ Found ${field} field:`, property[field]);
+          
+          if (Array.isArray(property[field])) {
+            // Handle array of image objects or URLs
+            property[field].forEach((item: any) => {
+              const imageUrl = this.extractImageUrl(item);
+              if (imageUrl && !images.includes(imageUrl)) {
+                images.push(imageUrl);
+              }
+            });
+          } else if (typeof property[field] === 'object') {
+            // Handle single image object
+            const imageUrl = this.extractImageUrl(property[field]);
+            if (imageUrl && !images.includes(imageUrl)) {
+              images.push(imageUrl);
+            }
+          } else if (typeof property[field] === 'string' && this.isValidImageUrl(property[field])) {
+            // Handle direct URL string
+            if (!images.includes(property[field])) {
+              images.push(property[field]);
+            }
+          }
+        }
+      }
+      
+      // If no images found, try nested objects
+      if (images.length === 0) {
+        // Check for nested image structures
+        if (property.media?.photos) {
+          property.media.photos.forEach((photo: any) => {
+            const imageUrl = this.extractImageUrl(photo);
+            if (imageUrl && !images.includes(imageUrl)) {
+              images.push(imageUrl);
+            }
+          });
+        }
+        
+        // Check for photo URLs in different structures
+        if (property.photoUrls && Array.isArray(property.photoUrls)) {
+          property.photoUrls.forEach((url: string) => {
+            if (this.isValidImageUrl(url) && !images.includes(url)) {
+              images.push(url);
+            }
+          });
+        }
+      }
+      
+      // Log the extraction result
+      console.log(`📸 Extracted ${images.length} images:`, images.slice(0, 3)); // Log first 3 URLs
+      
+      // Limit to first 10 images for performance
+      return images.slice(0, 10);
+      
+    } catch (error) {
+      console.error('❌ Error extracting property images:', error);
+      return [];
+    }
+  }
+
+  // Extract image URL from various object structures
+  private static extractImageUrl(item: any): string | null {
+    if (typeof item === 'string' && this.isValidImageUrl(item)) {
+      return item;
+    }
+    
+    if (typeof item === 'object' && item !== null) {
+      // Common image URL fields
+      const urlFields = ['url', 'src', 'href', 'link', 'photoUrl', 'imageUrl', 'fullSizeUrl', 'largeUrl', 'mediumUrl'];
+      
+      for (const field of urlFields) {
+        if (item[field] && typeof item[field] === 'string' && this.isValidImageUrl(item[field])) {
+          return item[field];
+        }
+      }
+      
+      // Check nested structures
+      if (item.sizes && Array.isArray(item.sizes)) {
+        // Find the largest size image
+        const largestImage = item.sizes.reduce((largest: any, current: any) => {
+          const currentSize = (current.width || 0) * (current.height || 0);
+          const largestSize = (largest?.width || 0) * (largest?.height || 0);
+          return currentSize > largestSize ? current : largest;
+        }, null);
+        
+        if (largestImage && largestImage.url) {
+          return largestImage.url;
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // Validate if a string is a valid image URL
+  private static isValidImageUrl(url: string): boolean {
+    if (!url || typeof url !== 'string') return false;
+    
+    // Check if it's a valid URL
+    try {
+      new URL(url);
+    } catch {
+      return false;
+    }
+    
+    // Check if it has image extension or is from known image domains
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i;
+    const imageDomains = ['zillow', 'zillowstatic', 'photos.zillowstatic', 'img.zillowstatic'];
+    
+    return imageExtensions.test(url) || imageDomains.some(domain => url.includes(domain));
   }
 }

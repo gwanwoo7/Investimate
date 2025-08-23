@@ -33,10 +33,12 @@ import {
   Bath,
   Square,
   Eye,
-  BarChart3
+  BarChart3,
+  Camera
 } from 'lucide-react';
 import type { PropertyListing } from '../types/property';
-import { getPropertyImageUrl, getPropertyListingLinks } from '../utils/propertyLinks';
+import { getPropertyImageUrl, getPropertyListingLinks, getOptimizedImageUrl } from '../utils/propertyLinks';
+import PropertyPhotoGallery from './PropertyPhotoGallery';
 import DetailedPropertyAnalysis from './DetailedPropertyAnalysis';
 
 interface PropertyListViewProps {
@@ -56,6 +58,8 @@ export default function PropertyListView({
   const [fullAnalysisOpen, setFullAnalysisOpen] = useState(false);
   const [selectedForAnalysis, setSelectedForAnalysis] = useState<PropertyListing | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedForPhotos, setSelectedForPhotos] = useState<PropertyListing | null>(null);
 
   const getRankBadgeColor = (rank: string) => {
     switch (rank) {
@@ -83,6 +87,11 @@ export default function PropertyListView({
   const handleFullAnalysis = (property: PropertyListing) => {
     setSelectedForAnalysis(property);
     setFullAnalysisOpen(true);
+  };
+
+  const handleViewPhotos = (property: PropertyListing) => {
+    setSelectedForPhotos(property);
+    setShowPhotoGallery(true);
   };
 
   if (loading) {
@@ -144,7 +153,7 @@ export default function PropertyListView({
           gap: 2 
         }}>
           {properties.map((property) => {
-            const imageUrl = getPropertyImageUrl(property);
+            const imageUrl = getOptimizedImageUrl(property, 400, 300, 80);
             const listingLinks = getPropertyListingLinks(property);
             
             return (
@@ -252,6 +261,14 @@ export default function PropertyListView({
                     </Button>
                     <Button
                       size="small"
+                      variant="outlined"
+                      onClick={() => handleViewPhotos(property)}
+                      startIcon={<Camera size={14} />}
+                    >
+                      Photos
+                    </Button>
+                    <Button
+                      size="small"
                       variant="contained"
                       onClick={() => handleFullAnalysis(property)}
                       startIcon={<Calculator size={14} />}
@@ -316,7 +333,7 @@ export default function PropertyListView({
             </TableHead>
             <TableBody>
               {properties.map((property) => {
-                const imageUrl = getPropertyImageUrl(property);
+                const imageUrl = getOptimizedImageUrl(property, 100, 80, 80);
                 const listingLinks = getPropertyListingLinks(property);
                 
                 return (
@@ -506,6 +523,15 @@ export default function PropertyListView({
         onClose={() => setFullAnalysisOpen(false)}
         property={selectedForAnalysis}
       />
+
+      {/* Property Photo Gallery */}
+      {selectedForPhotos && (
+        <PropertyPhotoGallery
+          open={showPhotoGallery}
+          onClose={() => setShowPhotoGallery(false)}
+          property={selectedForPhotos}
+        />
+      )}
     </Box>
   );
 }

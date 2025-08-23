@@ -509,6 +509,12 @@ export default function EnhancedMapWithDrawing({
 
   // Helper function to get property image
   const getPropertyImage = (property: PropertyListing, index: number) => {
+    // Use property images if available
+    if (property.images && property.images.length > 0) {
+      return property.images[0];
+    }
+    
+    // Generate consistent placeholder based on property ID
     const propertyId = property.id || `prop-${index}`;
     const seed = propertyId.slice(-3);
     const imageId = parseInt(seed, 36) % 1000 + 100;
