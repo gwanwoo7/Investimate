@@ -234,7 +234,8 @@ export class OptimizedZillowAPIService {
         taxAssessedValue: property.zestimate ? property.zestimate * 0.8 : price * 0.8,
         
         // Enhanced photo data
-        photos: photos,
+        images: photos, // Map to PropertyData.images field
+        photos: photos, // Keep for backward compatibility
         photoCount: photos.length,
         featuredPhoto: photos[0] || property.imgSrc,
         

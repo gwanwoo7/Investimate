@@ -79,6 +79,52 @@ export default function PropertyListView({
     }).format(amount);
   };
 
+  // Calculate detailed financial metrics matching DetailedPropertyAnalysis
+  const calculateAccurateFinancials = (property: PropertyListing) => {
+    const salePrice = property.purchasePrice || property.marketValue;
+    const monthlyRent = property.estimatedRent;
+    
+    // Enhanced financing calculations matching DetailedPropertyAnalysis
+    const downPaymentPercent = 0.25; // 25% down payment (LTV 75%)
+    const downPayment = salePrice * downPaymentPercent;
+    const loanAmount = salePrice - downPayment;
+    const interestRate = 7.63; // Match DetailedPropertyAnalysis interest rate
+    const loanTermYears = 30;
+    
+    // Monthly mortgage calculation (P&I only) - exact formula
+    const monthlyInterestRate = interestRate / 100 / 12;
+    const numberOfPayments = loanTermYears * 12;
+    const monthlyMortgage = loanAmount * 
+      (monthlyInterestRate * Math.pow(1 + monthlyInterestRate, numberOfPayments)) / 
+      (Math.pow(1 + monthlyInterestRate, numberOfPayments) - 1);
+    
+    // Operating expenses breakdown matching DetailedPropertyAnalysis
+    const propertyManagement = monthlyRent * 0.10; // 10% property management
+    const propertyTaxes = (salePrice * 0.015) / 12; // 1.5% annually
+    const insurance = 120; // Fixed $120/month
+    const vacancyReserve = monthlyRent * 0.035; // 3.5% vacancy reserve
+    const maintenanceCapEx = monthlyRent * 0.08; // 8% maintenance + CapEx reserve
+    const monthlyExpenses = propertyManagement + propertyTaxes + insurance + vacancyReserve + maintenanceCapEx;
+    
+    // Net Operating Income and Cash Flow
+    const monthlyCashFlow = monthlyRent - monthlyExpenses - monthlyMortgage;
+    const annualCashFlow = monthlyCashFlow * 12;
+    
+    // Total cash investment
+    const closingCosts = salePrice * 0.03; // 3% closing costs
+    const rehabCosts = 14000; // From DetailedPropertyAnalysis
+    const totalCashNeeded = downPayment + closingCosts + rehabCosts;
+    
+    // Investment returns matching DetailedPropertyAnalysis calculations
+    const cashOnCashReturn = (annualCashFlow / totalCashNeeded) * 100;
+    
+    return {
+      monthlyCashFlow: Math.round(monthlyCashFlow),
+      cashOnCashReturn: Math.round(cashOnCashReturn * 100) / 100,
+      totalCashNeeded: Math.round(totalCashNeeded)
+    };
+  };
+
   const handleQuickView = (property: PropertyListing) => {
     setSelectedForAnalysis(property);
     setQuickViewOpen(true);
@@ -153,8 +199,13 @@ export default function PropertyListView({
           gap: 2 
         }}>
           {properties.map((property) => {
-            const imageUrl = getOptimizedImageUrl(property, 400, 300, 80);
+            // Use actual property image if available, fallback to optimized URL
+            const hasPropertyImages = property.images && property.images.length > 0;
+            const imageUrl = hasPropertyImages 
+              ? property.images![0] 
+              : getOptimizedImageUrl(property, 400, 300, 80);
             const listingLinks = getPropertyListingLinks(property);
+            const accurateFinancials = calculateAccurateFinancials(property);
             
             return (
               <Card 
@@ -171,15 +222,36 @@ export default function PropertyListView({
                 }}
               >
                 <CardActionArea onClick={() => handleFullAnalysis(property)}>
-                  <CardMedia
-                    component="img"
-                    height={180}
-                    image={imageUrl}
-                    alt={`${property.address}, ${property.city}`}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop&auto=format&q=80';
-                    }}
-                  />
+                  <Box sx={{ position: 'relative' }}>
+                    <CardMedia
+                      component="img"
+                      height={180}
+                      image={imageUrl}
+                      alt={`${property.address}, ${property.city}`}
+                      onError={(e) => {
+                        // If actual property image fails to load, fallback to generated image
+                        const fallbackUrl = hasPropertyImages 
+                          ? getOptimizedImageUrl(property, 400, 300, 80)
+                          : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop&auto=format&q=80';
+                        (e.target as HTMLImageElement).src = fallbackUrl;
+                      }}
+                    />
+                    {hasPropertyImages && (
+                      <Chip
+                        icon={<Camera size={12} />}
+                        label="Actual Photo"
+                        size="small"
+                        color="primary"
+                        sx={{ 
+                          position: 'absolute', 
+                          top: 8, 
+                          right: 8,
+                          fontSize: '0.875rem',
+                          height: 20
+                        }}
+                      />
+                    )}
+                  </Box>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="subtitle1" component="h2" noWrap gutterBottom sx={{ fontSize: '0.875rem' }}>
                       {property.address}
@@ -219,13 +291,13 @@ export default function PropertyListView({
                     </Box>
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                      <Typography variant="body2" color="text.secondary">ROI:</Typography>
+                      <Typography variant="body2" color="text.secondary">COC ROI:</Typography>
                       <Typography 
                         variant="body1" 
                         fontWeight="bold"
-                        color={property.estimatedCOCReturn > 8 ? 'success.main' : property.estimatedCOCReturn > 5 ? 'warning.main' : 'error.main'}
+                        color={accurateFinancials.cashOnCashReturn > 8 ? 'success.main' : accurateFinancials.cashOnCashReturn > 5 ? 'warning.main' : 'error.main'}
                       >
-                        {property.estimatedCOCReturn.toFixed(1)}%
+                        {accurateFinancials.cashOnCashReturn.toFixed(1)}%
                       </Typography>
                     </Box>
                     
@@ -234,9 +306,9 @@ export default function PropertyListView({
                       <Typography 
                         variant="body1" 
                         fontWeight="bold"
-                        color={property.estimatedCashFlow > 0 ? 'success.main' : 'error.main'}
+                        color={accurateFinancials.monthlyCashFlow > 0 ? 'success.main' : 'error.main'}
                       >
-                        {formatCurrency(property.estimatedCashFlow)}/mo
+                        {formatCurrency(accurateFinancials.monthlyCashFlow)}/mo
                       </Typography>
                     </Box>
 
@@ -333,8 +405,13 @@ export default function PropertyListView({
             </TableHead>
             <TableBody>
               {properties.map((property) => {
-                const imageUrl = getOptimizedImageUrl(property, 100, 80, 80);
+                // Use actual property image if available, fallback to optimized URL
+                const hasPropertyImages = property.images && property.images.length > 0;
+                const imageUrl = hasPropertyImages 
+                  ? property.images![0] 
+                  : getOptimizedImageUrl(property, 100, 80, 80);
                 const listingLinks = getPropertyListingLinks(property);
+                const accurateFinancials = calculateAccurateFinancials(property);
                 
                 return (
                   <TableRow 
@@ -345,20 +422,41 @@ export default function PropertyListView({
                   >
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box
-                          component="img"
-                          src={imageUrl}
-                          alt={property.address}
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&h=80&fit=crop&auto=format&q=80';
-                          }}
-                          sx={{
-                            width: 80,
-                            height: 60,
-                            borderRadius: 1,
-                            objectFit: 'cover'
-                          }}
-                        />
+                        <Box sx={{ position: 'relative' }}>
+                          <Box
+                            component="img"
+                            src={imageUrl}
+                            alt={property.address}
+                            onError={(e) => {
+                              // If actual property image fails to load, fallback to generated image
+                              const fallbackUrl = hasPropertyImages 
+                                ? getOptimizedImageUrl(property, 100, 80, 80)
+                                : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&h=80&fit=crop&auto=format&q=80';
+                              (e.target as HTMLImageElement).src = fallbackUrl;
+                            }}
+                            sx={{
+                              width: 80,
+                              height: 60,
+                              borderRadius: 1,
+                              objectFit: 'cover'
+                            }}
+                          />
+                          {hasPropertyImages && (
+                            <Box sx={{ 
+                              position: 'absolute', 
+                              top: 2, 
+                              right: 2,
+                              bgcolor: 'primary.main',
+                              borderRadius: '50%',
+                              p: 0.25,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Camera size={10} color="white" />
+                            </Box>
+                          )}
+                        </Box>
                         <Box>
                           <Typography variant="subtitle2" fontWeight="bold">
                             {property.address}
@@ -398,18 +496,18 @@ export default function PropertyListView({
                       <Typography 
                         variant="body1" 
                         fontWeight="bold"
-                        color={property.estimatedCashFlow > 0 ? 'success.main' : 'error.main'}
+                        color={accurateFinancials.monthlyCashFlow > 0 ? 'success.main' : 'error.main'}
                       >
-                        {formatCurrency(property.estimatedCashFlow)}/mo
+                        {formatCurrency(accurateFinancials.monthlyCashFlow)}/mo
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Typography 
                         variant="body1" 
                         fontWeight="bold"
-                        color={property.estimatedCOCReturn > 8 ? 'success.main' : property.estimatedCOCReturn > 5 ? 'warning.main' : 'error.main'}
+                        color={accurateFinancials.cashOnCashReturn > 8 ? 'success.main' : accurateFinancials.cashOnCashReturn > 5 ? 'warning.main' : 'error.main'}
                       >
-                        {property.estimatedCOCReturn.toFixed(1)}%
+                        {accurateFinancials.cashOnCashReturn.toFixed(1)}%
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
@@ -468,40 +566,43 @@ export default function PropertyListView({
       <Dialog open={quickViewOpen} onClose={() => setQuickViewOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Quick Property Overview</DialogTitle>
         <DialogContent>
-          {selectedForAnalysis && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {selectedForAnalysis.address}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {selectedForAnalysis.city}, {selectedForAnalysis.state} {selectedForAnalysis.zipCode}
-              </Typography>
-              
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mt: 2 }}>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">Purchase Price</Typography>
-                  <Typography variant="h6">{formatCurrency(selectedForAnalysis.purchasePrice || selectedForAnalysis.marketValue)}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">Estimated Rent</Typography>
-                  <Typography variant="h6" color="success.main">{formatCurrency(selectedForAnalysis.estimatedRent)}</Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">Monthly Cash Flow</Typography>
-                  <Typography 
-                    variant="h6" 
-                    color={selectedForAnalysis.estimatedCashFlow > 0 ? 'success.main' : 'error.main'}
-                  >
-                    {formatCurrency(selectedForAnalysis.estimatedCashFlow)}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="body2" color="text.secondary">COC Return</Typography>
-                  <Typography variant="h6" color="primary.main">{selectedForAnalysis.estimatedCOCReturn.toFixed(1)}%</Typography>
+          {selectedForAnalysis && (() => {
+            const accurateFinancials = calculateAccurateFinancials(selectedForAnalysis);
+            return (
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  {selectedForAnalysis.address}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {selectedForAnalysis.city}, {selectedForAnalysis.state} {selectedForAnalysis.zipCode}
+                </Typography>
+                
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2, mt: 2 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Purchase Price</Typography>
+                    <Typography variant="h6">{formatCurrency(selectedForAnalysis.purchasePrice || selectedForAnalysis.marketValue)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Estimated Rent</Typography>
+                    <Typography variant="h6" color="success.main">{formatCurrency(selectedForAnalysis.estimatedRent)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Monthly Cash Flow</Typography>
+                    <Typography 
+                      variant="h6" 
+                      color={accurateFinancials.monthlyCashFlow > 0 ? 'success.main' : 'error.main'}
+                    >
+                      {formatCurrency(accurateFinancials.monthlyCashFlow)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">COC Return</Typography>
+                    <Typography variant="h6" color="primary.main">{accurateFinancials.cashOnCashReturn.toFixed(1)}%</Typography>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          )}
+            );
+          })()}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setQuickViewOpen(false)}>Close</Button>

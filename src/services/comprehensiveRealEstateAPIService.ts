@@ -274,6 +274,7 @@ export class ComprehensiveRealEstateAPIService {
         pricePerSqft: price / (property.livingArea || 1500),
         
         // Enhanced photo support
+        images: property.photos ? property.photos.slice(0, 15) : [], // Map to PropertyData.images field
         photos: property.photos ? property.photos.slice(0, 15) : [],
         photoCount: property.photos ? Math.min(property.photos.length, 15) : 0
       } as PropertyData;
@@ -326,6 +327,7 @@ export class ComprehensiveRealEstateAPIService {
         pricePerSqft: price / (property.building_size?.size || 1500),
         
         // Enhanced photos from Realtor.com
+        images: property.photos ? property.photos.slice(0, 12).map((photo: any) => photo.href) : [], // Map to PropertyData.images field
         photos: property.photos ? property.photos.slice(0, 12).map((photo: any) => photo.href) : [],
         photoCount: property.photos ? Math.min(property.photos.length, 12) : 0
       } as PropertyData;
@@ -377,6 +379,7 @@ export class ComprehensiveRealEstateAPIService {
         pricePerSqft: price / (property.squareFootage || 1500),
         
         // Photos (if available)
+        images: property.photos || [], // Map to PropertyData.images field
         photos: property.photos || [],
         photoCount: property.photos ? property.photos.length : 0
       } as PropertyData;
@@ -428,6 +431,7 @@ export class ComprehensiveRealEstateAPIService {
         pricePerSqft: price / (property.description?.sqft || 1500),
         
         // Enhanced photos
+        images: property.photos ? property.photos.slice(0, 10).map((photo: any) => photo.href) : [], // Map to PropertyData.images field
         photos: property.photos ? property.photos.slice(0, 10).map((photo: any) => photo.href) : [],
         photoCount: property.photos ? Math.min(property.photos.length, 10) : 0
       } as PropertyData;

@@ -767,7 +767,8 @@ export class EnhancedRealEstateAPIService {
           interestRate: 0.068
         },
         
-        // Property features
+        // Property features with mock images
+        images: this.generateMockPropertyImages(i),
         hasGarage: Math.random() > 0.3,
         hasPool: Math.random() > 0.8,
         hasAirConditioning: true,
@@ -802,6 +803,45 @@ export class EnhancedRealEstateAPIService {
     });
 
     return this.sortByInvestmentScore(listings);
+  }
+
+  private static generateMockPropertyImages(index: number): string[] {
+    // Generate 3-8 realistic property images per property
+    const imageCount = 3 + Math.floor(Math.random() * 6);
+    const images: string[] = [];
+    
+    // Use real property-related Unsplash images
+    const propertyImageIds = [
+      'photo-1564013799919-ab600027ffc6', // Modern house exterior
+      'photo-1570129477492-45c003edd2be', // House with lawn
+      'photo-1449844908441-8829872d2607', // Modern home exterior
+      'photo-1593696954219-9c03a79d5c93', // Contemporary house
+      'photo-1558618666-fcd25c85cd64', // House front view
+      'photo-1502672260266-1c1ef2d93688', // Real estate exterior
+      'photo-1605146769289-440113cc3d00', // House with garden
+      'photo-1575517111478-7f6afd0973db'  // Modern residential
+    ];
+    
+    const interiorImageIds = [
+      'photo-1586023492125-27b2c045efd7', // Living room
+      'photo-1556909114-f6e7ad7d3136', // Kitchen
+      'photo-1556909909-f3e08abc8bee', // Bedroom
+      'photo-1571508601891-ca5e7a713859', // Bathroom
+      'photo-1505691723518-36a5ac3be353', // Dining room
+      'photo-1574692330073-d3b19e5bdb50'  // Interior space
+    ];
+    
+    // First image is always exterior
+    const exteriorId = propertyImageIds[index % propertyImageIds.length];
+    images.push(`https://images.unsplash.com/${exteriorId}?w=800&h=600&fit=crop&auto=format&q=80`);
+    
+    // Add interior images
+    for (let i = 1; i < imageCount; i++) {
+      const interiorId = interiorImageIds[(index + i) % interiorImageIds.length];
+      images.push(`https://images.unsplash.com/${interiorId}?w=800&h=600&fit=crop&auto=format&q=80`);
+    }
+    
+    return images;
   }
 }
 
