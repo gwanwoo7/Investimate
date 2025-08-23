@@ -144,9 +144,10 @@ export class RealEstateAPIService {
       params: {
         location: location,
         status_type: 'ForSale',
-        home_type: 'Houses',
+        propertyType: 'Single Family,Townhouse',
         minPrice: params.minPrice?.toString() || '50000',
-        maxPrice: params.maxPrice?.toString() || '500000'
+        maxPrice: params.maxPrice?.toString() || '500000',
+        page: '1'
       },
       headers: {
         'X-RapidAPI-Key': this.RAPID_API_KEY,
