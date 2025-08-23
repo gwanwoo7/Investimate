@@ -104,8 +104,8 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         return;
       }
 
-      // Create actual Stripe subscription
-      const response = await fetch('/api/create-subscription', {
+            // Create actual Stripe subscription
+      const response = await fetch('/.netlify/functions/create-subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,36 +114,80 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           paymentMethodId: paymentMethod.id,
           email,
           name,
-          priceId: 'price_1Ry5YwFDHpK9BJBPL3vW6j1N' // Investimate Pro Monthly - $4.99
+          priceId: 'price_1QVKJfGFYvLxqOWTEqgbDtD8', // Pro monthly price
         }),
       });
 
-      const result = await response.json();
-
-      if (result.error) {
-        onError(result.error);
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Payment failed');
       }
 
-      // Handle 3D Secure authentication if required
-      if (result.status === 'requires_action') {
-        const { error: confirmError } = await stripe.confirmCardPayment(result.clientSecret);
+      const data = await response.json();
+      
+      if (data.status === 'active') {
+        console.log('✅ Subscription created successfully:', data.subscriptionId);
+        
+        // CRITICAL FIX: Update local database immediately after successful payment
+        const databaseService = await import('../services/databaseService');
+        const db = databaseService.default.getInstance();
+        
+        // Get current user and update their subscription status
+        const currentUser = db.getCurrentUser();
+        if (currentUser) {
+          console.log('🔄 Updating user subscription status to Pro...');
+          const updatedUser = db.updateUserSubscription(currentUser.id, true);
+          if (updatedUser) {
+            // Update current user session immediately
+            db.setCurrentUser({ ...updatedUser, isSubscribed: true });
+            console.log('✅ User subscription updated successfully to Pro!');
+            
+            // Store Stripe customer info for future reference
+            localStorage.setItem('stripe_customer_id', data.customerId);
+            localStorage.setItem('stripe_subscription_id', data.subscriptionId);
+          }
+        } else {
+          // Create new user if somehow they don't exist
+          console.log('⚠️ No current user found, creating new Pro user...');
+          const newUser = await db.createUser(email, 'stripe_temp_password', name, true);
+          db.setCurrentUser(newUser);
+          
+          // Store Stripe info
+          localStorage.setItem('stripe_customer_id', data.customerId);
+          localStorage.setItem('stripe_subscription_id', data.subscriptionId);
+        }
+        
+        onSuccess();
+      } else if (data.status === 'requires_action') {
+        // Handle 3D Secure or other payment confirmations
+        const { error: confirmError } = await stripe.confirmCardPayment(data.clientSecret);
         
         if (confirmError) {
-          onError(confirmError.message || 'Payment confirmation failed.');
-          setLoading(false);
-          return;
+          throw new Error(confirmError.message);
+        } else {
+          console.log('✅ Payment confirmed, subscription active');
+          
+          // CRITICAL FIX: Also update database after payment confirmation
+          const databaseService = await import('../services/databaseService');
+          const db = databaseService.default.getInstance();
+          
+          const currentUser = db.getCurrentUser();
+          if (currentUser) {
+            const updatedUser = db.updateUserSubscription(currentUser.id, true);
+            if (updatedUser) {
+              db.setCurrentUser({ ...updatedUser, isSubscribed: true });
+            }
+          }
+          
+          onSuccess();
         }
+      } else {
+        throw new Error('Payment failed to complete');
       }
-
-      setLoading(false);
-      onSuccess();
-
     } catch (err) {
       setLoading(false);
-      console.error('Payment error:', err);
-      onError('Network error. Please check your connection and try again.');
+      console.error('❌ Payment processing error:', err);
+      onError(err instanceof Error ? err.message : 'Network error. Please check your connection and try again.');
     }
   };
 

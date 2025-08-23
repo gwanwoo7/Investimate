@@ -80,7 +80,10 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           subscriptionId: subscription.id,
+          customerId: customer.id,
+          customerEmail: customer.email,
           status: subscription.status,
+          message: 'Subscription created successfully'
         }),
       };
     } else if (subscription.status === 'incomplete') {
@@ -89,6 +92,8 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           subscriptionId: subscription.id,
+          customerId: customer.id,
+          customerEmail: customer.email,
           status: 'requires_action',
           clientSecret: subscription.latest_invoice.payment_intent.client_secret,
         }),
@@ -99,6 +104,7 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           error: 'Subscription creation failed',
+          status: subscription.status
         }),
       };
     }
