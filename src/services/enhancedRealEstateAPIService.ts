@@ -1,17 +1,18 @@
 import axios from 'axios';
 import type { AreaSearchParams, PropertyListing, PropertyData, RentEstimate } from '../types/property';
 import { ApifyZillowAPIService } from './apifyZillowAPIService';
+import { OptimizedZillowAPIService } from './optimizedZillowAPIService';
 
-// Enhanced Real Estate API Service with Apify Integration
+// Enhanced Real Estate API Service with Apify Integration and Optimized Zillow Search
 export class EnhancedRealEstateAPIService {
   private static readonly RAPID_API_KEY = import.meta.env.VITE_RAPID_API_KEY;
   private static readonly APIFY_API_TOKEN = import.meta.env.VITE_APIFY_API_TOKEN;
 
-  // Main search method - prioritizes Apify for comprehensive data
+  // Main search method - prioritizes Apify, then optimized Zillow search
   static async searchProperties(params: AreaSearchParams): Promise<PropertyListing[]> {
     console.log('🔍 Enhanced search method called with params:', params);
     
-    // Try Apify first for the most comprehensive data
+    // Try Apify first for the most comprehensive data (premium option)
     if (this.APIFY_API_TOKEN && this.APIFY_API_TOKEN !== 'your_apify_token_here') {
       console.log('🚀 Using Apify Zillow Scraper for enhanced data extraction...');
       try {
@@ -21,11 +22,23 @@ export class EnhancedRealEstateAPIService {
           return apifyResults;
         }
       } catch (error) {
-        console.log('⚠️ Apify failed, falling back to RapidAPI...', error);
+        console.log('⚠️ Apify failed, falling back to optimized Zillow search...', error);
       }
     }
     
-    // Fallback to RapidAPI if Apify is not available
+    // Use optimized Zillow search to maximize current API subscription
+    console.log('🚀 Using optimized Zillow search for maximum results...');
+    try {
+      const optimizedResults = await OptimizedZillowAPIService.searchPropertiesOptimized(params);
+      if (optimizedResults.length > 0) {
+        console.log(`✅ Optimized search returned ${optimizedResults.length} properties`);
+        return optimizedResults;
+      }
+    } catch (error) {
+      console.log('⚠️ Optimized search failed, falling back to original method...', error);
+    }
+    
+    // Final fallback to original multi-source search
     return this.searchPropertiesFromMultipleSources(params);
   }
 
@@ -50,7 +63,7 @@ export class EnhancedRealEstateAPIService {
         limit: 100 // Request more properties for boundary searches
       };
       
-      // Try Apify first for boundary searches too
+      // Try Apify first for boundary searches
       if (this.APIFY_API_TOKEN && this.APIFY_API_TOKEN !== 'your_apify_token_here') {
         console.log('🚀 Using Apify for boundary search...');
         try {
@@ -62,6 +75,17 @@ export class EnhancedRealEstateAPIService {
         } catch (error) {
           console.log('⚠️ Apify boundary search failed, falling back...', error);
         }
+      }
+      
+      // Use optimized search for boundary queries
+      try {
+        const optimizedResults = await OptimizedZillowAPIService.searchPropertiesOptimized(enhancedParams);
+        if (optimizedResults.length > 0) {
+          console.log(`✅ Optimized boundary search returned ${optimizedResults.length} properties`);
+          return optimizedResults;
+        }
+      } catch (error) {
+        console.log('⚠️ Optimized boundary search failed, using fallback...', error);
       }
       
       return this.searchPropertiesFromMultipleSources(enhancedParams);
