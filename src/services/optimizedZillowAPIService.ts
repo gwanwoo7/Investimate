@@ -164,11 +164,36 @@ export class OptimizedZillowAPIService {
         return 'single-family';
       };
 
-      // Enhanced photo extraction from carouselPhotos
+      // Enhanced photo extraction from multiple Zillow fields
       const photos: string[] = [];
+      
+      // Primary source: carouselPhotos (main listing photos)
       if (property.carouselPhotos && Array.isArray(property.carouselPhotos)) {
-        photos.push(...property.carouselPhotos.slice(0, 15).map((photo: any) => photo.url || photo));
+        photos.push(...property.carouselPhotos.slice(0, 20).map((photo: any) => {
+          // Handle different photo object formats
+          if (typeof photo === 'string') return photo;
+          if (photo.url) return photo.url;
+          if (photo.mixedSources?.jpeg && photo.mixedSources.jpeg.length > 0) {
+            return photo.mixedSources.jpeg[0].url;
+          }
+          return photo;
+        }).filter((url: any) => url && typeof url === 'string'));
       }
+      
+      // Secondary source: imgSrc (main property image)
+      if (property.imgSrc && !photos.includes(property.imgSrc)) {
+        photos.unshift(property.imgSrc); // Add as first image
+      }
+      
+      // Tertiary source: any other image fields
+      if (property.images && Array.isArray(property.images)) {
+        photos.push(...property.images.slice(0, 10).filter((img: any) => img && !photos.includes(img)));
+      }
+      
+      // Clean up and validate photo URLs
+      const validPhotos = photos
+        .filter(url => url && typeof url === 'string' && url.startsWith('http'))
+        .slice(0, 25); // Limit to 25 photos max
 
       // Calculate property taxes and insurance based on state
       const taxRate = this.getTaxRateByState(state);
@@ -234,10 +259,10 @@ export class OptimizedZillowAPIService {
         taxAssessedValue: property.zestimate ? property.zestimate * 0.8 : price * 0.8,
         
         // Enhanced photo data
-        images: photos, // Map to PropertyData.images field
-        photos: photos, // Keep for backward compatibility
-        photoCount: photos.length,
-        featuredPhoto: photos[0] || property.imgSrc,
+        images: validPhotos, // Map to PropertyData.images field
+        photos: validPhotos, // Keep for backward compatibility
+        photoCount: validPhotos.length,
+        featuredPhoto: validPhotos[0] || property.imgSrc,
         
         // Zillow-specific data
         zestimate: property.zestimate,
