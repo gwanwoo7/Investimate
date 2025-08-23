@@ -34,7 +34,7 @@ export default function ContactPage({ onBack }: ContactPageProps) {
   const [snackbar, setSnackbar] = useState({ 
     open: false, 
     message: '', 
-    severity: 'success' as 'success' | 'error' 
+    severity: 'success' as 'success' | 'error' | 'info' 
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,23 +50,42 @@ export default function ContactPage({ onBack }: ContactPageProps) {
     setLoading(true);
 
     try {
-      // Create a mailto link to send email
-      const subject = encodeURIComponent(formData.subject);
+      // Enhanced email functionality with myinvestimate.com
+      const subject = encodeURIComponent(`[Investimate Contact] ${formData.subject}`);
       const body = encodeURIComponent(
-        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+        `Contact Form Submission from Investimate.com\n\n` +
+        `Name: ${formData.name}\n` +
+        `Email: ${formData.email}\n` +
+        `Subject: ${formData.subject}\n\n` +
+        `Message:\n${formData.message}\n\n` +
+        `---\n` +
+        `Sent from: ${window.location.origin}\n` +
+        `Date: ${new Date().toLocaleString()}`
       );
-      const mailtoLink = `mailto:admin@investimate.com?subject=${subject}&body=${body}`;
       
-      // Open the user's default email client
-      window.location.href = mailtoLink;
+      // Primary method: Use mailto with myinvestimate.com
+      const mailtoLink = `mailto:support@myinvestimate.com?subject=${subject}&body=${body}`;
+      
+      // Test if mailto is supported
+      const testLink = document.createElement('a');
+      testLink.href = mailtoLink;
+      testLink.click();
       
       setSnackbar({
         open: true,
-        message: 'Your email client has been opened. Please send the message from there.',
+        message: 'Email client opened successfully! Please send the message to complete your inquiry.',
         severity: 'success'
       });
       
-      // Reset form after a delay
+      // Log for debugging
+      console.log('📧 Contact form submitted:', {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Reset form after successful submission
       setTimeout(() => {
         setFormData({
           name: '',
@@ -74,17 +93,37 @@ export default function ContactPage({ onBack }: ContactPageProps) {
           subject: '',
           message: ''
         });
-      }, 2000);
+      }, 3000);
       
     } catch (error) {
+      console.error('Email submission error:', error);
       setSnackbar({
         open: true,
-        message: 'Failed to open email client. Please copy and send the message manually to admin@investimate.com',
+        message: 'Unable to open email client. Please send your message manually to support@myinvestimate.com or try copying the details below.',
         severity: 'error'
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Test email functionality
+  const testEmailSetup = () => {
+    const testSubject = encodeURIComponent('[Test] Email Setup Verification');
+    const testBody = encodeURIComponent(
+      'This is a test email to verify the email setup for myinvestimate.com\n\n' +
+      'If you receive this, the email configuration is working correctly.\n\n' +
+      `Sent at: ${new Date().toLocaleString()}`
+    );
+    
+    const mailtoLink = `mailto:support@myinvestimate.com?subject=${testSubject}&body=${testBody}`;
+    window.location.href = mailtoLink;
+    
+    setSnackbar({
+      open: true,
+      message: 'Test email opened! Check if your email client launched correctly.',
+      severity: 'info'
+    });
   };
 
   const isFormValid = formData.name && formData.email && formData.subject && formData.message;
@@ -197,14 +236,39 @@ export default function ContactPage({ onBack }: ContactPageProps) {
                     <Email color="primary" />
                     <Box>
                       <Typography variant="subtitle2" fontWeight="bold">
-                        Email
+                        Email Support
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        admin@investimate.com
+                        support@myinvestimate.com
                       </Typography>
                     </Box>
                   </CardContent>
                 </Card>
+
+                <Card variant="outlined">
+                  <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Send color="primary" />
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        General Inquiries
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        hello@myinvestimate.com
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Test Email Button */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={testEmailSetup}
+                  startIcon={<Email />}
+                  sx={{ mt: 2 }}
+                >
+                  Test Email Setup
+                </Button>
               </Box>
             </Paper>
 
@@ -219,14 +283,37 @@ export default function ContactPage({ onBack }: ContactPageProps) {
               </Typography>
             </Paper>
 
-            {/* FAQ Link */}
-            <Paper sx={{ p: 3, mt: 3, bgcolor: 'success.light' }}>
-              <Typography variant="h6" gutterBottom color="success.dark">
-                Quick Questions?
+            {/* FAQ and Email Instructions */}
+            <Paper sx={{ p: 3, mt: 3, bgcolor: 'warning.light' }}>
+              <Typography variant="h6" gutterBottom color="warning.dark">
+                Email Setup Status
               </Typography>
-              <Typography variant="body2" color="success.dark">
-                Check out our FAQ section for common questions about property analysis, 
-                pricing, and platform features.
+              <Typography variant="body2" color="warning.dark" sx={{ mb: 2 }}>
+                <strong>Current Configuration:</strong>
+              </Typography>
+              <Typography variant="body2" color="warning.dark" component="div">
+                • Primary: support@myinvestimate.com<br/>
+                • Secondary: hello@myinvestimate.com<br/>
+                • Protocol: mailto (opens your email client)
+              </Typography>
+              <Typography variant="caption" color="warning.dark" sx={{ mt: 1, display: 'block' }}>
+                Note: Requires domain email setup to receive messages
+              </Typography>
+            </Paper>
+
+            {/* Debug Information */}
+            <Paper sx={{ p: 3, mt: 3, bgcolor: 'info.light' }}>
+              <Typography variant="h6" gutterBottom color="info.dark">
+                Testing Information
+              </Typography>
+              <Typography variant="body2" color="info.dark" sx={{ mb: 2 }}>
+                Use the "Test Email Setup" button above to verify your email client integration.
+              </Typography>
+              <Typography variant="body2" color="info.dark">
+                <strong>Supported Email Clients:</strong><br/>
+                • Apple Mail, Outlook, Gmail, Thunderbird<br/>
+                • Default system email applications<br/>
+                • Web-based email clients (with proper configuration)
               </Typography>
             </Paper>
           </Box>

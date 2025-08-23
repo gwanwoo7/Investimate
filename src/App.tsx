@@ -10,9 +10,6 @@ import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
-import OAuthDebug from './components/OAuthDebug';
-import GeographicSearchTest from './components/GeographicSearchTest';
-import ManualSubscriptionFix from './components/ManualSubscriptionFix';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -713,60 +710,6 @@ function App() {
                       'Start Analyzing Properties'
                     )}
                   </Button>
-                  
-                  {/* Temporary Debug Button */}
-                  <Button 
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setCurrentTab(5)}
-                    sx={{ 
-                      mt: 2,
-                      mr: 1,
-                      color: 'white',
-                      borderColor: 'white',
-                      '&:hover': { 
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
-                        borderColor: 'white'
-                      }
-                    }}
-                  >
-                    Debug OAuth
-                  </Button>
-                  
-                  <Button 
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setCurrentTab(6)}
-                    sx={{ 
-                      mt: 2,
-                      mr: 1,
-                      color: 'white',
-                      borderColor: 'white',
-                      '&:hover': { 
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
-                        borderColor: 'white'
-                      }
-                    }}
-                  >
-                    Test Geographic Search
-                  </Button>
-                  
-                  <Button 
-                    variant="outlined"
-                    size="small"
-                    onClick={() => setCurrentTab(7)}
-                    sx={{ 
-                      mt: 2,
-                      color: '#ffc107',
-                      borderColor: '#ffc107',
-                      '&:hover': { 
-                        bgcolor: 'rgba(255, 193, 7, 0.1)',
-                        borderColor: '#ffc107'
-                      }
-                    }}
-                  >
-                    🔧 Fix Pro Membership
-                  </Button>
                 </Box>
               </Container>
             </Box>
@@ -966,33 +909,6 @@ function App() {
             minHeight: 'calc(100vh - 64px)' // Just nav bar height
           }}>
             <CommunityChat />
-          </Box>
-        )}
-
-        {currentTab === 5 && (
-          <Box sx={{ 
-            width: '100%', 
-            minHeight: 'calc(100vh - 64px)' // Just nav bar height
-          }}>
-            <OAuthDebug />
-          </Box>
-        )}
-
-        {currentTab === 6 && (
-          <Box sx={{ 
-            width: '100%', 
-            minHeight: 'calc(100vh - 64px)' // Just nav bar height
-          }}>
-            <GeographicSearchTest />
-          </Box>
-        )}
-
-        {currentTab === 7 && (
-          <Box sx={{ 
-            width: '100%', 
-            minHeight: 'calc(100vh - 64px)' // Just nav bar height
-          }}>
-            <ManualSubscriptionFix />
           </Box>
         )}
       </Box>

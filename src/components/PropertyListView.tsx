@@ -22,7 +22,9 @@ import {
   DialogActions,
   IconButton,
   Link,
-  CardActionArea
+  CardActionArea,
+  Skeleton,
+  Badge
 } from '@mui/material';
 import { 
   Home, 
@@ -60,6 +62,8 @@ export default function PropertyListView({
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [selectedForPhotos, setSelectedForPhotos] = useState<PropertyListing | null>(null);
+    const [imageLoadingStates, setImageLoadingStates] = useState<Record<string, boolean>>({});
+  const [imageErrorStates, setImageErrorStates] = useState<{ [key: string]: boolean }>({});
 
   const getRankBadgeColor = (rank: string) => {
     switch (rank) {
@@ -138,6 +142,30 @@ export default function PropertyListView({
   const handleViewPhotos = (property: PropertyListing) => {
     setSelectedForPhotos(property);
     setShowPhotoGallery(true);
+  };
+
+  const handleImageLoad = (propertyId: string) => {
+    setImageLoadingStates(prev => ({ ...prev, [propertyId]: false }));
+  };
+
+  const handleImageError = (propertyId: string, fallbackUrl: string, imageElement: HTMLImageElement) => {
+    setImageErrorStates(prev => ({ ...prev, [propertyId]: true }));
+    imageElement.src = fallbackUrl;
+  };
+
+  const handleImageLoadStart = (propertyId: string) => {
+    setImageLoadingStates(prev => ({ ...prev, [propertyId]: true }));
+  };
+
+  const getPhotoCount = (property: PropertyListing): number => {
+    return property.images?.length || 0;
+  };
+
+  const getPhotoQualityIndicator = (property: PropertyListing): 'real' | 'generated' | 'placeholder' => {
+    if (property.images && property.images.length > 0) {
+      return 'real';
+    }
+    return 'generated';
   };
 
   if (loading) {
@@ -223,34 +251,79 @@ export default function PropertyListView({
               >
                 <CardActionArea onClick={() => handleFullAnalysis(property)}>
                   <Box sx={{ position: 'relative' }}>
+                    {imageLoadingStates[property.id] && (
+                      <Skeleton 
+                        variant="rectangular" 
+                        width="100%" 
+                        height={180}
+                        sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1 }}
+                      />
+                    )}
                     <CardMedia
                       component="img"
                       height={180}
                       image={imageUrl}
                       alt={`${property.address}, ${property.city}`}
+                      onLoadStart={() => handleImageLoadStart(property.id)}
+                      onLoad={() => handleImageLoad(property.id)}
                       onError={(e) => {
                         // If actual property image fails to load, fallback to generated image
                         const fallbackUrl = hasPropertyImages 
                           ? getOptimizedImageUrl(property, 400, 300, 80)
                           : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop&auto=format&q=80';
-                        (e.target as HTMLImageElement).src = fallbackUrl;
+                        handleImageError(property.id, fallbackUrl, e.target as HTMLImageElement);
+                      }}
+                      sx={{
+                        opacity: imageLoadingStates[property.id] ? 0 : 1,
+                        transition: 'opacity 0.3s ease-in-out'
                       }}
                     />
-                    {hasPropertyImages && (
-                      <Chip
-                        icon={<Camera size={12} />}
-                        label="Actual Photo"
-                        size="small"
-                        color="primary"
-                        sx={{ 
-                          position: 'absolute', 
-                          top: 8, 
-                          right: 8,
-                          fontSize: '0.875rem',
-                          height: 20
-                        }}
-                      />
-                    )}
+                    {/* Photo indicators */}
+                    <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 0.5 }}>
+                      {hasPropertyImages && (
+                        <Chip
+                          icon={<Camera size={12} />}
+                          label="Actual Photo"
+                          size="small"
+                          color="primary"
+                          sx={{ 
+                            fontSize: '0.875rem',
+                            height: 20,
+                            opacity: 0.9
+                          }}
+                        />
+                      )}
+                      {getPhotoCount(property) > 1 && (
+                        <Badge 
+                          badgeContent={getPhotoCount(property)} 
+                          color="secondary"
+                          sx={{ 
+                            '& .MuiBadge-badge': { 
+                              fontSize: '0.875rem',
+                              minWidth: 16,
+                              height: 16
+                            } 
+                          }}
+                        >
+                          <Chip
+                            icon={<Eye size={12} />}
+                            label="Gallery"
+                            size="small"
+                            color="info"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewPhotos(property);
+                            }}
+                            sx={{ 
+                              fontSize: '0.875rem',
+                              height: 20,
+                              opacity: 0.9,
+                              cursor: 'pointer'
+                            }}
+                          />
+                        </Badge>
+                      )}
+                    </Box>
                   </Box>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Typography variant="subtitle1" component="h2" noWrap gutterBottom sx={{ fontSize: '0.875rem' }}>
@@ -423,39 +496,80 @@ export default function PropertyListView({
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Box sx={{ position: 'relative' }}>
+                          {imageLoadingStates[property.id] && (
+                            <Skeleton 
+                              variant="rectangular" 
+                              width={80} 
+                              height={60}
+                              sx={{ position: 'absolute', top: 0, left: 0, zIndex: 1, borderRadius: 1 }}
+                            />
+                          )}
                           <Box
                             component="img"
                             src={imageUrl}
                             alt={property.address}
+                            onLoadStart={() => handleImageLoadStart(property.id)}
+                            onLoad={() => handleImageLoad(property.id)}
                             onError={(e) => {
                               // If actual property image fails to load, fallback to generated image
                               const fallbackUrl = hasPropertyImages 
                                 ? getOptimizedImageUrl(property, 100, 80, 80)
                                 : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&h=80&fit=crop&auto=format&q=80';
-                              (e.target as HTMLImageElement).src = fallbackUrl;
+                              handleImageError(property.id, fallbackUrl, e.target as HTMLImageElement);
                             }}
                             sx={{
                               width: 80,
                               height: 60,
                               borderRadius: 1,
-                              objectFit: 'cover'
+                              objectFit: 'cover',
+                              opacity: imageLoadingStates[property.id] ? 0 : 1,
+                              transition: 'opacity 0.3s ease-in-out'
                             }}
                           />
-                          {hasPropertyImages && (
-                            <Box sx={{ 
-                              position: 'absolute', 
-                              top: 2, 
-                              right: 2,
-                              bgcolor: 'primary.main',
-                              borderRadius: '50%',
-                              p: 0.25,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <Camera size={10} color="white" />
-                            </Box>
-                          )}
+                          {/* Photo indicators for table view */}
+                          <Box sx={{ 
+                            position: 'absolute', 
+                            top: 2, 
+                            right: 2,
+                            display: 'flex',
+                            gap: 0.25
+                          }}>
+                            {hasPropertyImages && (
+                              <Box sx={{ 
+                                bgcolor: 'primary.main',
+                                borderRadius: '50%',
+                                p: 0.25,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <Camera size={8} color="white" />
+                              </Box>
+                            )}
+                            {getPhotoCount(property) > 1 && (
+                              <Box 
+                                sx={{ 
+                                  bgcolor: 'info.main',
+                                  borderRadius: '50%',
+                                  p: 0.25,
+                                  minWidth: 16,
+                                  height: 16,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewPhotos(property);
+                                }}
+                              >
+                                <Typography variant="caption" color="white" fontSize="0.625rem">
+                                  {getPhotoCount(property)}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
                         <Box>
                           <Typography variant="subtitle2" fontWeight="bold">

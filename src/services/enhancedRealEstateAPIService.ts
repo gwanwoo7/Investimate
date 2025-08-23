@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AreaSearchParams, PropertyListing, PropertyData, RentEstimate } from '../types/property';
 import { ApifyZillowAPIService } from './apifyZillowAPIService';
 import { OptimizedZillowAPIService } from './optimizedZillowAPIService';
+import { RealtyMoleAPIService } from './realtyMoleAPIService';
 
 // Enhanced Real Estate API Service with Apify Integration and Optimized Zillow Search
 export class EnhancedRealEstateAPIService {
@@ -32,7 +33,9 @@ export class EnhancedRealEstateAPIService {
       const optimizedResults = await OptimizedZillowAPIService.searchPropertiesOptimized(params);
       if (optimizedResults.length > 0) {
         console.log(`✅ Optimized search returned ${optimizedResults.length} properties`);
-        return optimizedResults;
+        // Enhance with additional photos from RealtyMole
+        const enhancedResults = await RealtyMoleAPIService.enhancePropertiesWithPhotos(optimizedResults);
+        return enhancedResults;
       }
     } catch (error) {
       console.log('⚠️ Optimized search failed, falling back to original method...', error);
@@ -82,7 +85,9 @@ export class EnhancedRealEstateAPIService {
         const optimizedResults = await OptimizedZillowAPIService.searchPropertiesOptimized(enhancedParams);
         if (optimizedResults.length > 0) {
           console.log(`✅ Optimized boundary search returned ${optimizedResults.length} properties`);
-          return optimizedResults;
+          // Enhance with additional photos from RealtyMole
+          const enhancedResults = await RealtyMoleAPIService.enhancePropertiesWithPhotos(optimizedResults);
+          return enhancedResults;
         }
       } catch (error) {
         console.log('⚠️ Optimized boundary search failed, using fallback...', error);

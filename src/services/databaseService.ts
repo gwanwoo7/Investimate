@@ -317,7 +317,22 @@ class DatabaseService {
     }
     
     return null;
-  }  // Utility functions
+  }
+
+  deletePost(postId: string): boolean {
+    const posts = this.getPosts();
+    const postIndex = posts.findIndex(p => p.id === postId);
+    
+    if (postIndex !== -1) {
+      posts.splice(postIndex, 1);
+      localStorage.setItem(this.POSTS_KEY, JSON.stringify(posts));
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Utility functions
   private generateId(): string {
     return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

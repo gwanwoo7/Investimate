@@ -16,9 +16,34 @@ import {
   CardContent,
   Button,
   TextField,
-  InputAdornment
+  InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
+  Switch,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { Search, People, Security, Verified, AccountBox } from '@mui/icons-material';
+import { 
+  Search, 
+  People, 
+  Security, 
+  Verified, 
+  AccountBox,
+  Edit,
+  Delete,
+  Add,
+  Email,
+  Phone,
+  Block,
+  CheckCircle
+} from '@mui/icons-material';
 import DatabaseService, { type User } from '../services/databaseService';
 import SupabaseAuthService from '../services/supabaseAuthService';
 
@@ -27,6 +52,10 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [supabaseUsers, setSupabaseUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [membershipFilter, setMembershipFilter] = useState<'all' | 'free' | 'pro'>('all');
 
   const db = DatabaseService.getInstance();
   const supabaseAuth = SupabaseAuthService.getInstance();
@@ -54,10 +83,61 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMembership = membershipFilter === 'all' || 
+      (membershipFilter === 'pro' && user.isSubscribed) ||
+      (membershipFilter === 'free' && !user.isSubscribed);
+    return matchesSearch && matchesMembership;
+  });
+
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      // Update user in database
+      await db.updateUser(selectedUser.id, selectedUser);
+      await loadUserData();
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error('Error updating user:', error);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      await db.deleteUser(selectedUser.id);
+      await loadUserData();
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
+  const handleToggleSubscription = async (user: User) => {
+    try {
+      const updatedUser = { ...user, isSubscribed: !user.isSubscribed };
+      await db.updateUser(user.id, updatedUser);
+      await loadUserData();
+    } catch (error) {
+      console.error('Error toggling subscription:', error);
+    }
+  };
 
   const stats = {
     total: users.length,
@@ -131,21 +211,35 @@ export default function AdminDashboard() {
         </Card>
       </Box>
 
-      {/* Search */}
-      <TextField
-        fullWidth
-        placeholder="Search users by name or email..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 3 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          ),
-        }}
-      />
+      {/* Search and Filters */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <TextField
+          fullWidth
+          placeholder="Search users by name or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ flex: 1, minWidth: 300 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+        />
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel>Membership</InputLabel>
+          <Select
+            value={membershipFilter}
+            label="Membership"
+            onChange={(e) => setMembershipFilter(e.target.value as 'all' | 'free' | 'pro')}
+          >
+            <MenuItem value="all">All Users</MenuItem>
+            <MenuItem value="free">Free Users</MenuItem>
+            <MenuItem value="pro">Pro Users</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       {/* Users Table */}
       <TableContainer component={Paper}>
@@ -157,6 +251,7 @@ export default function AdminDashboard() {
               <TableCell>Join Date</TableCell>
               <TableCell>Auth Method</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -209,15 +304,51 @@ export default function AdminDashboard() {
                 
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {user.isSubscribed && (
-                      <Chip label="Subscribed" color="success" size="small" />
-                    )}
+                    <Chip 
+                      label={user.isSubscribed ? 'Pro' : 'Free'} 
+                      color={user.isSubscribed ? 'success' : 'default'} 
+                      size="small"
+                      onClick={() => handleToggleSubscription(user)}
+                      clickable
+                    />
                     {user.oauthProvider && (
                       <Chip label="Verified" color="info" size="small" />
                     )}
                     {user.email.includes('demo') && (
                       <Chip label="Demo" color="warning" size="small" />
                     )}
+                  </Box>
+                </TableCell>
+
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Tooltip title="Edit User">
+                      <IconButton 
+                        size="small" 
+                        color="primary" 
+                        onClick={() => handleEditUser(user)}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete User">
+                      <IconButton 
+                        size="small" 
+                        color="error" 
+                        onClick={() => handleDeleteUser(user)}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title={user.isSubscribed ? 'Revoke Pro' : 'Grant Pro'}>
+                      <IconButton 
+                        size="small" 
+                        color="success" 
+                        onClick={() => handleToggleSubscription(user)}
+                      >
+                        {user.isSubscribed ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
@@ -267,11 +398,61 @@ export default function AdminDashboard() {
         
         <Alert severity="warning" sx={{ mt: 2 }}>
           <Typography variant="body2">
-            <strong>Important:</strong> This dashboard shows local demo data. For production use, 
-            implement proper admin authentication and use Supabase's admin APIs with appropriate access controls.
+            <strong>Important:</strong> This dashboard shows local user data for demo purposes. 
+            In production with Supabase, user data is encrypted and stored securely in PostgreSQL with row-level security.
           </Typography>
         </Alert>
       </Paper>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit User</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <TextField
+              label="Full Name"
+              value={selectedUser?.name || ''}
+              onChange={(e) => setSelectedUser(selectedUser ? { ...selectedUser, name: e.target.value } : null)}
+              fullWidth
+            />
+            <TextField
+              label="Email"
+              type="email"
+              value={selectedUser?.email || ''}
+              onChange={(e) => setSelectedUser(selectedUser ? { ...selectedUser, email: e.target.value } : null)}
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={selectedUser?.isSubscribed || false}
+                  onChange={(e) => setSelectedUser(selectedUser ? { ...selectedUser, isSubscribed: e.target.checked } : null)}
+                />
+              }
+              label="Pro Membership"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleSaveUser} variant="contained">Save Changes</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete user "{selectedUser?.name}" ({selectedUser?.email})? 
+            This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">Delete User</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

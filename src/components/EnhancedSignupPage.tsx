@@ -18,7 +18,11 @@ import {
   useTheme,
   alpha,
   LinearProgress,
-  Chip
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   Visibility,
@@ -29,12 +33,15 @@ import {
   Google,
   PersonAddOutlined,
   CheckCircle,
-  Cancel
+  Cancel,
+  LocalOffer
 } from '@mui/icons-material';
 import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignUpData } from '../services/supabaseAuthService';
+import TermsOfService from './TermsOfService';
+import PrivacyPolicy from './PrivacyPolicy';
 
 interface SignupPageProps {
   onSignup: (email: string) => void;
@@ -55,6 +62,10 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [wantsPro, setWantsPro] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const db = DatabaseService.getInstance();
   const oauthService = OAuthService.getInstance();
@@ -88,9 +99,38 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     return 'Strong';
   };
 
+  const validatePromoCode = (code: string): boolean => {
+    // Beta test promo codes for Pro membership
+    const validPromoCodes = [
+      'BETA2025',
+      'INVESTIMATE_BETA',
+      'PRO_BETA_TEST',
+      'EARLYACCESS2025'
+    ];
+    return validPromoCodes.includes(code.toUpperCase());
+  };
+
+  const handlePromoCodeChange = (code: string) => {
+    setPromoCode(code);
+    if (code.length > 0) {
+      const isValid = validatePromoCode(code);
+      setPromoCodeValid(isValid);
+      if (isValid) {
+        setWantsPro(true);
+      }
+    } else {
+      setPromoCodeValid(null);
+    }
+  };
+
   const validateForm = () => {
     if (!name || !email || !password || !confirmPassword) {
       setError('Please fill in all fields');
+      return false;
+    }
+
+    if (!agreeToTerms) {
+      setError('Please agree to the Terms of Service and Privacy Policy');
       return false;
     }
 
@@ -162,19 +202,22 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
         if (supabaseUser) {
           console.log('✅ Supabase user created successfully:', supabaseUser.email);
           
-          // Also create in local database for compatibility
+          // Also create in local database for compatibility with promo code handling
+          const finalProStatus = wantsPro || (promoCodeValid === true);
           try {
-            await db.createUser(email, password, name);
+            await db.createUser(email, password, name, finalProStatus);
           } catch (localError) {
             console.log('ℹ️ Local user creation skipped (may already exist)');
           }
 
           if (!supabaseUser.emailVerified) {
-            setSuccess('Account created! Please check your email for verification link before signing in.');
+            const proMessage = finalProStatus ? ' Pro membership activated with promo code!' : '';
+            setSuccess(`Account created!${proMessage} Please check your email for verification link before signing in.`);
             setError('');
             // Don't auto-login until email is verified
           } else {
-            setSuccess('Account created and verified successfully! Redirecting...');
+            const proMessage = finalProStatus ? ' Pro membership activated!' : '';
+            setSuccess(`Account created and verified successfully!${proMessage} Redirecting...`);
             setTimeout(() => {
               onSignup(supabaseUser.email);
             }, 1500);
@@ -183,14 +226,17 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       } else {
         console.log('ℹ️ Supabase not configured, falling back to local database...');
         
-        // Fallback to local database
-        const user = await db.createUser(email, password, name, wantsPro);
+        // Fallback to local database with promo code handling
+        const finalProStatus = wantsPro || (promoCodeValid === true);
+        const user = await db.createUser(email, password, name, finalProStatus);
         console.log('✅ Local user created successfully:', user.email);
         
         db.setCurrentUser(user);
         console.log('✅ Current user set for signup:', user.email);
         
-        setSuccess(`Account created successfully! ${wantsPro ? 'Pro membership activated!' : ''} Redirecting...`);
+        const proMessage = finalProStatus ? 
+          (promoCodeValid ? ' Pro membership activated with beta promo code!' : ' Pro membership activated!') : '';
+        setSuccess(`Account created successfully!${proMessage} Redirecting...`);
         
         setTimeout(() => {
           onSignup(user.email);
@@ -494,17 +540,89 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 label={
                   <Typography variant="body2" color="text.secondary">
                     I agree to the{' '}
-                    <Link href="/terms" target="_blank" color="primary">
+                    <Link 
+                      component="button" 
+                      variant="body2" 
+                      color="primary" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTerms(true);
+                      }}
+                      sx={{ textDecoration: 'underline' }}
+                    >
                       Terms of Service
                     </Link>
                     {' '}and{' '}
-                    <Link href="/privacy" target="_blank" color="primary">
+                    <Link 
+                      component="button" 
+                      variant="body2" 
+                      color="primary" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowPrivacy(true);
+                      }}
+                      sx={{ textDecoration: 'underline' }}
+                    >
                       Privacy Policy
                     </Link>
                   </Typography>
                 }
                 sx={{ mb: 2 }}
               />
+
+              {/* Promo Code Section */}
+              <Box sx={{ 
+                border: '1px dashed', 
+                borderColor: 'secondary.main', 
+                borderRadius: 2, 
+                p: 2, 
+                mb: 2,
+                bgcolor: alpha(theme.palette.secondary.main, 0.05)
+              }}>
+                <Typography variant="body2" fontWeight="bold" color="secondary.main" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <LocalOffer fontSize="small" />
+                  Beta Test Promo Code (Optional)
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Enter promo code"
+                  value={promoCode}
+                  onChange={(e) => handlePromoCodeChange(e.target.value)}
+                  disabled={loading}
+                  placeholder="BETA2025"
+                  InputProps={{
+                    endAdornment: promoCodeValid !== null && (
+                      <InputAdornment position="end">
+                        {promoCodeValid ? (
+                          <CheckCircle color="success" fontSize="small" />
+                        ) : (
+                          <Cancel color="error" fontSize="small" />
+                        )}
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 1,
+                    }
+                  }}
+                />
+                {promoCodeValid === true && (
+                  <Alert severity="success" sx={{ mt: 1 }}>
+                    <Typography variant="caption">
+                      🎉 Valid promo code! Pro membership will be activated for free!
+                    </Typography>
+                  </Alert>
+                )}
+                {promoCodeValid === false && (
+                  <Alert severity="error" sx={{ mt: 1 }}>
+                    <Typography variant="caption">
+                      Invalid promo code. Please check and try again.
+                    </Typography>
+                  </Alert>
+                )}
+              </Box>
 
               <Box sx={{ 
                 border: '1px solid', 
@@ -517,19 +635,22 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={wantsPro}
+                      checked={wantsPro || promoCodeValid === true}
                       onChange={(e) => setWantsPro(e.target.checked)}
                       color="success"
-                      disabled={loading}
+                      disabled={loading || promoCodeValid === true}
                     />
                   }
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight="bold" color="success.main">
-                        🌟 Upgrade to Pro Membership
+                        🌟 {promoCodeValid ? 'Pro Membership (Beta Access)' : 'Upgrade to Pro Membership'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                        Unlimited property searches, advanced analytics, and priority support
+                        {promoCodeValid ? 
+                          'Free Pro access with your beta promo code!' :
+                          'Unlimited property searches, advanced analytics, and priority support'
+                        }
                       </Typography>
                     </Box>
                   }
@@ -612,6 +733,66 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           </CardContent>
         </Card>
       </Container>
+
+      {/* Terms of Service Dialog */}
+      <Dialog 
+        open={showTerms} 
+        onClose={() => setShowTerms(false)}
+        maxWidth="md"
+        fullWidth
+        scroll="paper"
+      >
+        <DialogTitle>
+          Terms of Service
+        </DialogTitle>
+        <DialogContent dividers>
+          <TermsOfService onBack={() => setShowTerms(false)} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowTerms(false)}>
+            Close
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setShowTerms(false);
+              setAgreeToTerms(true);
+            }}
+          >
+            I Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Privacy Policy Dialog */}
+      <Dialog 
+        open={showPrivacy} 
+        onClose={() => setShowPrivacy(false)}
+        maxWidth="md"
+        fullWidth
+        scroll="paper"
+      >
+        <DialogTitle>
+          Privacy Policy
+        </DialogTitle>
+        <DialogContent dividers>
+          <PrivacyPolicy onBack={() => setShowPrivacy(false)} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowPrivacy(false)}>
+            Close
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setShowPrivacy(false);
+              setAgreeToTerms(true);
+            }}
+          >
+            I Agree
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
