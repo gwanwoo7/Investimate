@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import AuthCallback from './components/AuthCallback';
+import ProMembershipQA from './components/ProMembershipQA';
 import AdminPage from './pages/AdminPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
@@ -273,6 +274,7 @@ function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [showProQA, setShowProQA] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResultsData, setSearchResultsData] = useState<{
     properties: any[];
@@ -295,6 +297,14 @@ function App() {
         name: currentUser.name,
         id: currentUser.id
       });
+      
+      // Reset search count for Pro members
+      if (currentUser.isSubscribed) {
+        setSearchCount(0);
+        localStorage.removeItem('investimate_search_count');
+        console.log('✅ Pro member detected, search count cleared');
+      }
+      
       console.log('📊 User session restored successfully');
     } else {
       console.log('ℹ️ No existing user session found');
@@ -361,6 +371,7 @@ function App() {
     setShowAbout(false);
     setShowContact(false);
     setShowSubscription(false);
+    setShowProQA(false);
     setShowSearchResults(false);
     setCurrentTab(0);
   };
@@ -409,6 +420,12 @@ function App() {
   const handleSubscription = () => {
     if (user) {
       setUser({ ...user, isSubscribed: true });
+      
+      // Reset search count for new Pro members
+      setSearchCount(0);
+      localStorage.removeItem('investimate_search_count');
+      console.log('✅ Pro membership activated, search count reset');
+      
       setShowPayment(false);
     }
   };
@@ -454,7 +471,7 @@ function App() {
   const renderNavigation = () => (
     <NavigationBar
       onLogoClick={handleLogoClick}
-      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription && !showSearchResults}
+      showMainTabs={!showLogin && !showSignup && !showPayment && !showAdmin && !showAbout && !showContact && !showSubscription && !showProQA && !showSearchResults}
       currentTab={currentTab}
       onTabChange={handleTabChange}
       onAboutClick={handleShowAbout}
@@ -532,9 +549,24 @@ function App() {
           onBack={handleBackToMain} 
           onSubscriptionSuccess={() => {
             setUser(prev => prev ? { ...prev, isSubscribed: true } : null);
+            
+            // Reset search count for new Pro members
+            setSearchCount(0);
+            localStorage.removeItem('investimate_search_count');
+            console.log('✅ Pro membership activated, search count reset');
+            
             handleBackToMain();
           }}
         />
+      </ThemeProvider>
+    );
+  }
+
+  if (showProQA) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ProMembershipQA onBack={handleBackToMain} />
       </ThemeProvider>
     );
   }
@@ -888,6 +920,7 @@ function App() {
                       sx={{ 
                         textTransform: 'none',
                         opacity: 0.7,
+                        mr: 1,
                         '&:hover': { 
                           color: 'primary.light',
                           opacity: 1
@@ -895,6 +928,21 @@ function App() {
                       }}
                     >
                       Admin
+                    </Button>
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={() => setShowProQA(true)}
+                      sx={{ 
+                        textTransform: 'none',
+                        opacity: 0.7,
+                        '&:hover': { 
+                          color: 'warning.light',
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      Pro QA
                     </Button>
                   </Box>
                 </Box>
