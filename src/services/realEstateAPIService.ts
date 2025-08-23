@@ -95,6 +95,11 @@ export class RealEstateAPIService {
 
   static async searchPropertiesFromZillow(params: AreaSearchParams): Promise<PropertyListing[]> {
     console.log('🔍 Searching Zillow properties only...');
+    console.log('🔑 API Key check:', { 
+      hasKey: !!this.RAPID_API_KEY, 
+      keyLength: this.RAPID_API_KEY?.length, 
+      keyPrefix: this.RAPID_API_KEY?.substring(0, 10) + '...'
+    });
     
     if (!this.RAPID_API_KEY || this.RAPID_API_KEY === 'your-rapid-api-key-here') {
       console.log('⚠️ No API key configured. Using enhanced demo data with realistic property photos...');
@@ -104,8 +109,9 @@ export class RealEstateAPIService {
     }
 
     try {
+      console.log('🚀 CALLING REAL ZILLOW API with location:', params.city, params.state);
       const properties = await this.fetchFromZillow(params);
-      console.log(`✅ Zillow API: Found ${properties.length} properties`);
+      console.log(`✅ REAL ZILLOW API SUCCESS: Found ${properties.length} properties`);
       
       const listings = await Promise.all(
         properties.map(async (property) => {
