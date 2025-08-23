@@ -17,6 +17,8 @@ import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import NavigationBar from './components/NavigationBar';
 import DatabaseService from './services/databaseService';
+import { membershipService } from './services/SecureMembershipService';
+import { UpgradeModal } from './components/UpgradeModal';
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -262,6 +264,9 @@ const theme = createTheme({
 function App() {
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
+  const [userTier, setUserTier] = useState('free');
+  const [searchesRemaining, setSearchesRemaining] = useState(0);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [searchCount, setSearchCount] = useState(() => {
     // Restore search count from localStorage
     const saved = localStorage.getItem('investimate_search_count');
@@ -285,31 +290,57 @@ function App() {
 
   const db = DatabaseService.getInstance();
 
-  // Restore user session on app startup
+  // Restore user session on app startup and check membership status
   useEffect(() => {
     console.log('🔄 App starting - checking for existing user session...');
-    const currentUser = db.getCurrentUser();
-    if (currentUser) {
-      console.log('✅ Restoring user session for:', currentUser.email);
-      setUser({
-        email: currentUser.email,
-        isSubscribed: currentUser.isSubscribed || false,
-        name: currentUser.name,
-        id: currentUser.id
-      });
-      
-      // Reset search count for Pro members
-      if (currentUser.isSubscribed) {
-        setSearchCount(0);
-        localStorage.removeItem('investimate_search_count');
-        console.log('✅ Pro member detected, search count cleared');
-      }
-      
-      console.log('📊 User session restored successfully');
-    } else {
-      console.log('ℹ️ No existing user session found');
-    }
+    checkUserMembership();
   }, []);
+
+  const checkUserMembership = async () => {
+    try {
+      const status = await membershipService.checkSubscriptionStatus();
+      setUserTier(status.tier);
+      
+      // Update user subscription status
+      const currentUser = db.getCurrentUser();
+      if (currentUser) {
+        console.log('✅ Restoring user session for:', currentUser.email);
+        const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
+        
+        setUser({
+          email: currentUser.email,
+          isSubscribed,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+        
+        // Reset search count for Pro/Trial members
+        if (isSubscribed) {
+          setSearchCount(0);
+          localStorage.removeItem('investimate_search_count');
+          console.log('✅ Pro/Trial member detected, search count cleared');
+        } else if (status.tier === 'free') {
+          // Get remaining searches for free users
+          const access = await membershipService.canAccessFeature('property_search');
+          setSearchesRemaining(access.remaining || 0);
+        }
+        
+        console.log('📊 User session restored successfully');
+      }
+    } catch (error) {
+      console.error('Error checking membership status:', error);
+      // Fallback to existing logic
+      const currentUser = db.getCurrentUser();
+      if (currentUser) {
+        setUser({
+          email: currentUser.email,
+          isSubscribed: currentUser.isSubscribed || false,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+      }
+    }
+  };
 
   const MAX_FREE_SEARCHES = 5;
 
@@ -453,19 +484,61 @@ function App() {
     console.log('✅ User logged out successfully, state cleared');
   };
 
-  const canSearch = () => {
-    return user?.isSubscribed || searchCount < MAX_FREE_SEARCHES;
-  };
+  const [canSearchState, setCanSearchState] = useState(false);
 
-  const handleSearch = () => {
-    if (!user?.isSubscribed) {
-      const newCount = searchCount + 1;
-      setSearchCount(newCount);
+  // Check if user can search
+  useEffect(() => {
+    const checkSearchAccess = async () => {
+      if (user?.isSubscribed) {
+        setCanSearchState(true);
+        return;
+      }
       
-      // Persist search count to localStorage
-      localStorage.setItem('investimate_search_count', newCount.toString());
-      console.log('🔍 Search count updated:', newCount);
+      try {
+        const access = await membershipService.canAccessFeature('property_search');
+        setCanSearchState(access.allowed);
+        setSearchesRemaining(access.remaining || 0);
+      } catch (error) {
+        console.error('Error checking search access:', error);
+        // Fallback to old logic
+        setCanSearchState(searchCount < MAX_FREE_SEARCHES);
+      }
+    };
+
+    if (user !== null) {
+      checkSearchAccess();
     }
+  }, [user, searchCount]);
+
+  const handleSearch = async () => {
+    if (!user?.isSubscribed) {
+      try {
+        // Use the membership service to track usage
+        const result = await membershipService.useFeature('property_search', { 
+          timestamp: new Date().toISOString(),
+          searchType: 'property_analysis'
+        });
+        
+        if (result.success) {
+          console.log('🔍 Search tracked, remaining:', result.remaining);
+          setSearchesRemaining(result.remaining || 0);
+          // Update search access state
+          setCanSearchState((result.remaining || 0) > 0);
+        } else {
+          console.log('❌ Search limit reached:', result.error);
+          setShowUpgradeModal(true);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error tracking search usage:', error);
+        // Fallback to old logic
+        const newCount = searchCount + 1;
+        setSearchCount(newCount);
+        localStorage.setItem('investimate_search_count', newCount.toString());
+        setCanSearchState(newCount < MAX_FREE_SEARCHES);
+      }
+    }
+    return true;
   };
 
   const renderNavigation = () => (
@@ -628,7 +701,7 @@ function App() {
           overflow: 'auto'
         }}>
           <PropertyCalculatorWithMap 
-            canSearch={canSearch()}
+            canSearch={canSearchState}
             onSearch={handleSearch}
             onUpgrade={handleShowPayment}
             searchCount={searchCount}
@@ -687,7 +760,7 @@ function App() {
                   </Typography>
                   
                   {/* Search Limit Warning */}
-                  {user && !user.isSubscribed && searchCount >= MAX_FREE_SEARCHES && (
+                  {user && !user.isSubscribed && !canSearchState && (
                     <Box sx={{ 
                       mb: 4, 
                       p: 3, 
@@ -699,14 +772,14 @@ function App() {
                         Search Limit Reached
                       </Typography>
                       <Typography sx={{ mb: 2, opacity: 0.9 }}>
-                        You've used all {MAX_FREE_SEARCHES} free searches. Upgrade to Pro for unlimited access!
+                        You've used all your free searches. Upgrade to Pro for unlimited access!
                       </Typography>
                       <Button 
                         variant="contained" 
                         onClick={handleShowPayment}
                         sx={{ bgcolor: '#ffc107', color: 'black', '&:hover': { bgcolor: '#ffb300' } }}
                       >
-                        Upgrade to Pro - $4.99/month
+                        Upgrade to Pro - $29/month
                       </Button>
                     </Box>
                   )}
@@ -715,7 +788,7 @@ function App() {
                     variant="contained" 
                     size="large" 
                     onClick={() => {
-                      if (!canSearch()) {
+                      if (!canSearchState) {
                         handleShowPayment();
                       } else {
                         setCurrentTab(1);
@@ -737,7 +810,7 @@ function App() {
                     }}
                   >
                     {user ? (
-                      user.isSubscribed ? 'Start Analyzing Properties' : `Analyze Properties (${MAX_FREE_SEARCHES - searchCount} left)`
+                      user.isSubscribed ? 'Start Analyzing Properties' : `Analyze Properties (${searchesRemaining} left)`
                     ) : (
                       'Start Analyzing Properties'
                     )}
@@ -771,7 +844,7 @@ function App() {
                   }
                 }}
                 onClick={() => {
-                  if (!canSearch()) {
+                  if (!canSearchState) {
                     handleShowPayment();
                   } else {
                     setCurrentTab(1);
@@ -788,7 +861,7 @@ function App() {
                       Analyze cash flow, ROI, and cap rates using real Zillow data. 
                       Get accurate mortgage, tax, and insurance calculations.
                     </Typography>
-                    {!user?.isSubscribed && user && searchCount >= MAX_FREE_SEARCHES && (
+                    {!user?.isSubscribed && user && !canSearchState && (
                       <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 1, fontWeight: 'bold' }}>
                         Upgrade to Pro for unlimited searches
                       </Typography>
@@ -959,6 +1032,17 @@ function App() {
             <CommunityChat />
           </Box>
         )}
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          open={showUpgradeModal}
+          onClose={() => setShowUpgradeModal(false)}
+          feature="Property Search"
+          currentUsage={{
+            used: 5 - searchesRemaining,
+            limit: 5
+          }}
+        />
       </Box>
     </ThemeProvider>
   );
