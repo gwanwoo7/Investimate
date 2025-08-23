@@ -676,7 +676,7 @@ export class ComprehensiveRealEstateAPIService {
     });
     
     const listings = filteredProperties.map(property => {
-      const investmentMetrics = this.calculateInvestmentMetrics(property, property.monthlyRent);
+      const investmentMetrics = this.calculateInvestmentMetrics(property, property.monthlyRent || 3000);
       return { ...property, ...investmentMetrics } as PropertyListing;
     });
 
