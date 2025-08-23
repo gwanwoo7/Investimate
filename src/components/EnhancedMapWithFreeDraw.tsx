@@ -585,7 +585,7 @@ export default function EnhancedMapWithFreeDraw({
                 max={999}
                 sx={{
                   '& .MuiBadge-badge': {
-                    fontSize: '10.5px',
+                    fontSize: '0.875rem',
                     height: '20px',
                     minWidth: '20px'
                   }
@@ -849,7 +849,7 @@ export default function EnhancedMapWithFreeDraw({
                 borderRadius: 1,
                 px: 1,
                 py: 0.5,
-                fontSize: '10.5px',
+                fontSize: '0.875rem',
                 fontWeight: 'bold',
                 color: '#2196f3'
               }}

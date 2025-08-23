@@ -162,7 +162,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
                 mb: 2, 
                 textTransform: 'none',
                 py: 1.5,
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 bgcolor: 'white',
                 color: 'text.primary',
                 borderColor: 'grey.300',
@@ -183,7 +183,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'white',
-                  fontSize: '12px',
+                  fontSize: '0.875rem',
                   fontWeight: 'bold'
                 }}>
                   G
@@ -209,7 +209,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
               sx={{ 
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -224,7 +224,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
               sx={{ 
                 mb: 3,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -239,7 +239,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
               sx={{ 
                 mb: 3,
                 py: 1.5,
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 textTransform: 'none'
               }}

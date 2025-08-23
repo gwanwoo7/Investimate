@@ -86,7 +86,7 @@ export default function AuthTestComponent() {
 
       {result && (
         <Alert severity={result.includes('✅') ? 'success' : result.includes('❌') ? 'error' : 'info'}>
-          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '12px' }}>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.875rem' }}>
             {result}
           </pre>
         </Alert>

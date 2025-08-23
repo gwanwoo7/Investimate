@@ -88,7 +88,7 @@ export default function PropertyListView({
   if (loading) {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
-        <Typography variant="body1" sx={{ fontSize: '0.9rem' }}>Loading investment properties...</Typography>
+        <Typography variant="body1" sx={{ fontSize: '0.875rem' }}>Loading investment properties...</Typography>
       </Box>
     );
   }
@@ -97,7 +97,7 @@ export default function PropertyListView({
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Home size={64} style={{ color: '#ccc', marginBottom: '16px' }} />
-        <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontSize: '0.9rem' }}>
+        <Typography variant="body1" color="text.secondary" gutterBottom sx={{ fontSize: '0.875rem' }}>
           No properties found
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -111,7 +111,7 @@ export default function PropertyListView({
     <Box>
       {/* View Mode Toggle */}
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontSize: '1rem' }}>
+        <Typography variant="h6" sx={{ fontSize: '0.875rem' }}>
           {properties.length} Properties Found
         </Typography>
         <Stack direction="row" spacing={1}>
@@ -120,7 +120,7 @@ export default function PropertyListView({
             size="small"
             onClick={() => setViewMode('cards')}
             startIcon={<Eye size={14} />}
-            sx={{ fontSize: '10.5px' }}
+            sx={{ fontSize: '0.875rem' }}
           >
             Cards
           </Button>
@@ -129,7 +129,7 @@ export default function PropertyListView({
             size="small"
             onClick={() => setViewMode('table')}
             startIcon={<BarChart3 size={14} />}
-            sx={{ fontSize: '10.5px' }}
+            sx={{ fontSize: '0.875rem' }}
           >
             Table
           </Button>
@@ -172,7 +172,7 @@ export default function PropertyListView({
                     }}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Typography variant="subtitle1" component="h2" noWrap gutterBottom sx={{ fontSize: '0.9rem' }}>
+                    <Typography variant="subtitle1" component="h2" noWrap gutterBottom sx={{ fontSize: '0.875rem' }}>
                       {property.address}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -201,7 +201,7 @@ export default function PropertyListView({
                     </Box>
 
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="h6" color="primary" gutterBottom sx={{ fontSize: '1.1rem' }}>
+                      <Typography variant="h6" color="primary" gutterBottom sx={{ fontSize: '0.875rem' }}>
                         {formatCurrency(property.purchasePrice || property.marketValue)}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
@@ -305,13 +305,13 @@ export default function PropertyListView({
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Property</TableCell>
-                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Price</TableCell>
-                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Rent</TableCell>
-                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Cash Flow</TableCell>
-                <TableCell align="right" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>COC Return</TableCell>
-                <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Rank</TableCell>
-                <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Actions</TableCell>
+                <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Property</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Price</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Rent</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Cash Flow</TableCell>
+                <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>COC Return</TableCell>
+                <TableCell align="center" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Rank</TableCell>
+                <TableCell align="center" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

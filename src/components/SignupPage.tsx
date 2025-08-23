@@ -268,7 +268,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 mb: 2, 
                 textTransform: 'none',
                 py: 1.5,
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 bgcolor: 'white',
                 color: 'text.primary',
                 borderColor: 'grey.300',
@@ -289,7 +289,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'white',
-                  fontSize: '12px',
+                  fontSize: '0.875rem',
                   fontWeight: 'bold'
                 }}>
                   G
@@ -306,7 +306,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 textTransform: 'none',
                 py: 1.5,
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 bgcolor: '#000',
                 color: 'white',
                 borderColor: '#000',
@@ -318,7 +318,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={{ fontSize: '18px' }}>🍎</Box>
+                <Box sx={{ fontSize: '0.875rem' }}>🍎</Box>
                 Continue with Apple
               </Box>
             </Button>
@@ -340,7 +340,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -355,7 +355,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -370,7 +370,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 mb: 2,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -385,7 +385,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 mb: 3,
                 '& .MuiOutlinedInput-root': {
-                  fontSize: '1rem'
+                  fontSize: '0.875rem'
                 }
               }}
               required
@@ -408,7 +408,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               sx={{ 
                 mb: 3,
                 py: 1.5,
-                fontSize: '1.1rem',
+                fontSize: '0.875rem',
                 fontWeight: 600,
                 textTransform: 'none'
               }}

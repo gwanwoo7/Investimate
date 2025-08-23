@@ -308,7 +308,7 @@ export default function PropertyCalculator({
                 },
                 px: 3,
                 py: 1,
-                fontSize: '1rem'
+                fontSize: '0.875rem'
               }}
             >
               📋 View Property List ({properties.length} found)
@@ -321,7 +321,7 @@ export default function PropertyCalculator({
             sx={{ 
               px: 3, 
               py: 1,
-              fontSize: '1rem'
+              fontSize: '0.875rem'
             }}
           >
             🔄 Reset Search

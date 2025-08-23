@@ -56,13 +56,13 @@ function SimpleApp() {
           <Container maxWidth="lg">
             <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto' }}>
               <Typography variant="h1" component="h1" gutterBottom sx={{ 
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                fontSize: '0.875rem',
                 mb: 2
               }}>
                 Investimate - QA Test
               </Typography>
               <Typography variant="h4" gutterBottom sx={{ 
-                fontSize: { xs: '1.2rem', md: '1.5rem' },
+                fontSize: '0.875rem',
                 fontWeight: 400,
                 mb: 4,
                 opacity: 0.95
@@ -78,7 +78,7 @@ function SimpleApp() {
                 sx={{ 
                   py: 2, 
                   px: 4, 
-                  fontSize: '1.1rem',
+                  fontSize: '0.875rem',
                   bgcolor: 'white',
                   color: 'primary.main',
                   fontWeight: 600,

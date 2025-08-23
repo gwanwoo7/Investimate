@@ -324,7 +324,7 @@ export default function InteractiveMap({ properties, selectedProperty, onPropert
             background: 'rgba(255, 255, 255, 0.9)',
             padding: '8px 12px',
             borderRadius: '6px',
-            fontSize: '14px',
+            fontSize: '0.875rem',
             fontWeight: 'bold',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}>
@@ -342,7 +342,7 @@ export default function InteractiveMap({ properties, selectedProperty, onPropert
         background: 'rgba(255, 255, 255, 0.9)',
         padding: '10px',
         borderRadius: '6px',
-        fontSize: '12px',
+        fontSize: '0.875rem',
         boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
       }}>
         <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Price Range</div>

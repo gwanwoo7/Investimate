@@ -76,11 +76,11 @@ export default function FindInvestmentPropertiesPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+      <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
         Find My Investment Property
       </Typography>
       
-      <Typography variant="body1" color="text.secondary" gutterBottom sx={{ mb: 2, fontSize: '0.9rem' }}>
+      <Typography variant="body1" color="text.secondary" gutterBottom sx={{ mb: 2, fontSize: '0.875rem' }}>
         Discover profitable rental properties with advanced search and interactive mapping
       </Typography>
 
@@ -97,7 +97,7 @@ export default function FindInvestmentPropertiesPage() {
       {/* Error Alert */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
             {error}
           </Typography>
         </Alert>
@@ -145,7 +145,7 @@ export default function FindInvestmentPropertiesPage() {
         {/* Property List */}
         {properties.length > 0 && (
           <>
-            <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1.5, fontSize: '1.1rem', fontWeight: 'bold' }}>
+            <Typography variant="h6" gutterBottom sx={{ mt: 2, mb: 1.5, fontSize: '0.875rem', fontWeight: 'bold' }}>
               Found {properties.length} Investment Properties
             </Typography>
             <PropertyListView
@@ -160,10 +160,10 @@ export default function FindInvestmentPropertiesPage() {
         {/* No Results State */}
         {!loading && properties.length === 0 && !error && (
           <Alert severity="info" sx={{ mt: 2 }}>
-            <Typography variant="body1" gutterBottom sx={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
+            <Typography variant="body1" gutterBottom sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
               Ready to find your next investment property?
             </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.8rem', lineHeight: 1.6 }}>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
               • Enter a city or zip code above to get started<br/>
               • Use the "Draw Area" feature to search within specific neighborhoods<br/>
               • Try searching for "Santa Clara, CA" to see our enhanced results with 55+ properties<br/>
@@ -180,7 +180,7 @@ export default function FindInvestmentPropertiesPage() {
             alignItems: 'center', 
             minHeight: 150 
           }}>
-            <Typography sx={{ fontSize: '0.9rem' }}>Searching for investment properties...</Typography>
+            <Typography sx={{ fontSize: '0.875rem' }}>Searching for investment properties...</Typography>
           </Box>
         )}
       </Box>
@@ -188,7 +188,7 @@ export default function FindInvestmentPropertiesPage() {
       {/* Search Statistics */}
       {properties.length > 0 && (
         <Alert severity="success" sx={{ mt: 2 }}>
-          <Typography variant="body2" sx={{ fontSize: '0.8rem' }}>
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
             <strong>Search Results:</strong> Found {properties.length} properties
             {searchParams?.bounds && ' within selected boundary'}
             {properties.filter(p => p.investmentScore && p.investmentScore >= 7).length > 0 && 

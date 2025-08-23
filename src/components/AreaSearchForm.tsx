@@ -124,25 +124,25 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
 
   // Custom styling for consistent 10.5px font size
   const smallTextStyle = {
-    fontSize: '10.5px',
+    fontSize: '0.875rem',
     '& .MuiInputLabel-root': {
-      fontSize: '10.5px',
+      fontSize: '0.875rem',
     },
     '& .MuiInputBase-input': {
-      fontSize: '10.5px',
+      fontSize: '0.875rem',
     },
     '& .MuiFormHelperText-root': {
-      fontSize: '10.5px',
+      fontSize: '0.875rem',
     }
   };
 
   const smallTypographyStyle = {
-    fontSize: '10.5px',
+    fontSize: '0.875rem',
     lineHeight: 1.4
   };
 
   const smallButtonStyle = {
-    fontSize: '10.5px',
+    fontSize: '0.875rem',
     padding: '6px 12px'
   };
   const [error, setError] = useState('');
@@ -254,7 +254,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
         }}>
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Typography variant="h6" gutterBottom sx={{ 
-              fontSize: '1.5rem', // Same as "Interactive Map Search" 
+              fontSize: '0.875rem', // Same as "Interactive Map Search" 
               fontWeight: 600 
             }}>
               Search Criteria
@@ -592,7 +592,7 @@ export default function AreaSearchForm({ onSearch, loading }: AreaSearchFormProp
           size="large"
           disabled={loading}
           startIcon={loading ? <CircularProgress size={20} /> : <Search />}
-          sx={{ minWidth: 250, py: 1.5, fontSize: '1.1rem' }}
+          sx={{ minWidth: 250, py: 1.5, fontSize: '0.875rem' }}
         >
           {loading ? 'Searching Properties...' : 'Find Investment Properties'}
         </Button>

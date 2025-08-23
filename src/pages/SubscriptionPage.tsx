@@ -50,7 +50,7 @@ interface SubscriptionPageProps {
 const CARD_ELEMENT_OPTIONS = {
   style: {
     base: {
-      fontSize: '16px',
+      fontSize: '0.875rem',
       color: '#424770',
       '::placeholder': {
         color: '#aab7c4',
@@ -368,7 +368,7 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
           
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, mt: 3 }}>
             <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Security color="primary" sx={{ fontSize: 48, mb: 2 }} />
+              <Security color="primary" sx={{ fontSize: 14, mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Bank-Level Security
               </Typography>
@@ -378,7 +378,7 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
             </Box>
 
             <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Speed color="primary" sx={{ fontSize: 48, mb: 2 }} />
+              <Speed color="primary" sx={{ fontSize: 14, mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Lightning Fast
               </Typography>
@@ -388,7 +388,7 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
             </Box>
 
             <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Analytics color="primary" sx={{ fontSize: 48, mb: 2 }} />
+              <Analytics color="primary" sx={{ fontSize: 14, mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Advanced Analytics
               </Typography>
@@ -398,7 +398,7 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
             </Box>
 
             <Box sx={{ flex: 1, textAlign: 'center' }}>
-              <Support color="primary" sx={{ fontSize: 48, mb: 2 }} />
+              <Support color="primary" sx={{ fontSize: 14, mb: 2 }} />
               <Typography variant="h6" gutterBottom>
                 Expert Support
               </Typography>

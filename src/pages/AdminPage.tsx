@@ -220,7 +220,7 @@ export default function AdminPage({ onBack }: AdminPageProps) {
         bgcolor: 'background.default'
       }}>
         <Paper sx={{ p: 4, maxWidth: 400, width: '100%', textAlign: 'center' }}>
-          <Lock sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+          <Lock sx={{ fontSize: 14, color: 'primary.main', mb: 2 }} />
           <Typography variant="h5" gutterBottom>
             Admin Access Required
           </Typography>

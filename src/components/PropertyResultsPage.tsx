@@ -61,7 +61,7 @@ export default function PropertyResultsPage({
             onClick={() => handlePropertySelect(property)}
           >
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ fontSize: '1rem', mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontSize: '0.875rem', mb: 1, fontWeight: 'bold' }}>
                 {property.address}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>

@@ -129,19 +129,19 @@ export default function EnhancedPropertySearchForm({
   return (
     <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 2 }}>
       <Box component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '1.1rem', fontWeight: 'bold' }}>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem', fontWeight: 'bold' }}>
           <LocationOn color="primary" />
           Find Investment Properties
         </Typography>
         
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontSize: '10.5px', lineHeight: 1.4 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontSize: '0.875rem', lineHeight: 1.4 }}>
           Search for rental properties with strong investment potential. Use the form below or draw a boundary on the map.
         </Typography>
 
         {/* Search Results Summary */}
         {foundProperties > 0 && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontSize: '10.5px' }}>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
               Found {foundProperties} properties matching your criteria
             </Typography>
           </Alert>
@@ -149,7 +149,7 @@ export default function EnhancedPropertySearchForm({
 
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontSize: '10.5px' }}>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
               {error}
             </Typography>
           </Alert>
@@ -257,7 +257,7 @@ export default function EnhancedPropertySearchForm({
               onChange={handleChange('minPrice')}
               disabled={loading}
               InputProps={{
-                startAdornment: <Typography sx={{ mr: 1, fontSize: '10.5px' }}>$</Typography>
+                startAdornment: <Typography sx={{ mr: 1, fontSize: '0.875rem' }}>$</Typography>
               }}
             />
             <TextField
@@ -268,7 +268,7 @@ export default function EnhancedPropertySearchForm({
               onChange={handleChange('maxPrice')}
               disabled={loading}
               InputProps={{
-                startAdornment: <Typography sx={{ mr: 1, fontSize: '10.5px' }}>$</Typography>
+                startAdornment: <Typography sx={{ mr: 1, fontSize: '0.875rem' }}>$</Typography>
               }}
             />
           </Box>
@@ -399,13 +399,13 @@ export default function EnhancedPropertySearchForm({
               size="large"
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : <Search />}
-              sx={{ minWidth: 200, fontSize: '10.5px' }}
+              sx={{ minWidth: 200, fontSize: '0.875rem' }}
             >
               {loading ? 'Searching...' : 'Search Properties'}
             </Button>
 
             {foundProperties > 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '10.5px' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
                 Showing {foundProperties} properties
               </Typography>
             )}
@@ -413,10 +413,10 @@ export default function EnhancedPropertySearchForm({
 
           {/* Search Tips */}
           <Paper sx={{ p: 2, bgcolor: 'info.light', color: 'info.dark' }}>
-            <Typography variant="subtitle2" gutterBottom sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>
+            <Typography variant="subtitle2" gutterBottom sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
               💡 Search Tips:
             </Typography>
-            <Typography variant="body2" sx={{ fontSize: '10.5px', lineHeight: 1.6 }}>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem', lineHeight: 1.6 }}>
               • Try broader price ranges to find more properties<br/>
               • Use the "Draw Area" feature to search within specific neighborhoods<br/>
               • For Santa Clara, CA: Enhanced search finds 55+ properties matching Zillow results<br/>

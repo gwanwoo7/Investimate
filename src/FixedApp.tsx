@@ -52,12 +52,12 @@ function FixedApp() {
             <Container maxWidth="lg">
               <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto' }}>
                 <Typography variant="h1" component="h1" gutterBottom sx={{ 
-                  fontSize: { xs: '2.5rem', md: '3.5rem' }, mb: 2
+                  fontSize: '0.875rem', mb: 2
                 }}>
                   🏠 Investimate
                 </Typography>
                 <Typography variant="h4" gutterBottom sx={{ 
-                  fontSize: { xs: '1.2rem', md: '1.5rem' }, fontWeight: 400, mb: 4, opacity: 0.95
+                  fontSize: '0.875rem', fontWeight: 400, mb: 4, opacity: 0.95
                 }}>
                   Estimate Right. Invest Smart in Your Next Rental.
                 </Typography>
@@ -72,7 +72,7 @@ function FixedApp() {
                   onClick={() => setCurrentTab(1)}
                   startIcon={<Calculator />}
                   sx={{ 
-                    py: 2, px: 4, fontSize: '1.1rem', bgcolor: 'white', color: 'primary.main',
+                    py: 2, px: 4, fontSize: '0.875rem', bgcolor: 'white', color: 'primary.main',
                     fontWeight: 600, '&:hover': { bgcolor: 'grey.50', transform: 'translateY(-2px)' }
                   }}
                 >

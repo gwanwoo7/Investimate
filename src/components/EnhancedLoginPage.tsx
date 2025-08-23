@@ -242,7 +242,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
             p: 4,
             textAlign: 'center'
           }}>
-            <LoginOutlined sx={{ fontSize: 48, mb: 2, opacity: 0.9 }} />
+            <LoginOutlined sx={{ fontSize: 14, mb: 2, opacity: 0.9 }} />
             <Typography variant="h4" component="h1" sx={{ 
               fontWeight: 'bold',
               mb: 1
@@ -362,7 +362,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
                   py: 1.8,
                   borderRadius: 3,
                   textTransform: 'none',
-                  fontSize: '1.1rem',
+                  fontSize: '0.875rem',
                   fontWeight: 'bold',
                   boxShadow: theme.shadows[8],
                   '&:hover': {
@@ -392,7 +392,7 @@ export default function LoginPage({ onLogin, onClose: _onClose, onSignup }: Logi
                 py: 1.5,
                 borderRadius: 3,
                 textTransform: 'none',
-                fontSize: '1rem',
+                fontSize: '0.875rem',
                 fontWeight: 'medium',
                 color: '#db4437',
                 borderColor: '#db4437',

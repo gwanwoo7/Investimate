@@ -45,10 +45,10 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
 
   return (
     <Box component="form" onSubmit={handleSubmit}>
-      <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem' }}>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: '0.875rem' }}>
         Search for a Property
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.8rem' }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: '0.875rem' }}>
         Enter the property address or zip code to get started with your investment analysis.
       </Typography>
 
@@ -67,7 +67,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
           placeholder="e.g., 28215 Cherry Street"
           disabled={loading}
           size="small"
-          sx={{ '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
+          sx={{ '& .MuiInputLabel-root': { fontSize: '0.875rem' } }}
         />
         
         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -79,7 +79,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             placeholder="e.g., Detroit"
             disabled={loading}
             size="small"
-            sx={{ '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
+            sx={{ '& .MuiInputLabel-root': { fontSize: '0.875rem' } }}
           />
           
           <TextField
@@ -89,7 +89,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             placeholder="MI"
             disabled={loading}
             size="small"
-            sx={{ minWidth: 100, '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
+            sx={{ minWidth: 100, '& .MuiInputLabel-root': { fontSize: '0.875rem' } }}
           />
           
           <TextField
@@ -99,7 +99,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
             placeholder="48201"
             disabled={loading}
             size="small"
-            sx={{ minWidth: 120, '& .MuiInputLabel-root': { fontSize: '0.8rem' } }}
+            sx={{ minWidth: 120, '& .MuiInputLabel-root': { fontSize: '0.875rem' } }}
           />
         </Box>
       </Stack>
@@ -111,7 +111,7 @@ export default function PropertySearchForm({ onSearch, loading }: PropertySearch
           size="medium"
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} /> : <Search size={16} />}
-          sx={{ minWidth: 140, fontSize: '0.8rem' }}
+          sx={{ minWidth: 140, fontSize: '0.875rem' }}
         >
           {loading ? 'Searching...' : 'Search Property'}
         </Button>

@@ -23,7 +23,7 @@ export default function EnvironmentDebug() {
         <Typography variant="body2">
           <strong>Supabase Auth:</strong> {supabaseUrl && supabaseAnonKey ? "✅ Configured (Recommended)" : "⚠️ Not configured"}
           {supabaseUrl && (
-            <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
+            <Box component="span" sx={{ fontSize: '0.875rem', opacity: 0.7, ml: 1 }}>
               (URL: {supabaseUrl.substring(0, 30)}...)
             </Box>
           )}
@@ -34,7 +34,7 @@ export default function EnvironmentDebug() {
         <Typography variant="body2">
           <strong>Google OAuth (Legacy):</strong> {googleClientId ? "✅ Configured" : "⚠️ Not configured"}
           {googleClientId && (
-            <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
+            <Box component="span" sx={{ fontSize: '0.875rem', opacity: 0.7, ml: 1 }}>
               (ID: {googleClientId.substring(0, 20)}...)
             </Box>
           )}
@@ -51,7 +51,7 @@ export default function EnvironmentDebug() {
         <Typography variant="body2">
           <strong>Stripe Payment:</strong> {stripeKey ? "✅ Configured" : "⚠️ Not configured"}
           {stripeKey && (
-            <Box component="span" sx={{ fontSize: '0.8em', opacity: 0.7, ml: 1 }}>
+            <Box component="span" sx={{ fontSize: '0.875rem', opacity: 0.7, ml: 1 }}>
               ({stripeKey.substring(0, 12)}...)
             </Box>
           )}

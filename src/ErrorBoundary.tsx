@@ -55,7 +55,7 @@ class ErrorBoundary extends React.Component<
                   Component Stack:
                 </Typography>
                 <Paper sx={{ p: 2, bgcolor: '#ffebee', mb: 3 }}>
-                  <Typography variant="body2" component="pre" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                  <Typography variant="body2" component="pre" sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                     {this.state.errorInfo.componentStack}
                   </Typography>
                 </Paper>

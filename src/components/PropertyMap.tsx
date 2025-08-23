@@ -160,7 +160,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
               }
             }}
           >
-            <Home sx={{ fontSize: isSelected ? 20 : 14 }} />
+            <Home sx={{ fontSize: 14 }} />
           </Avatar>
         </Tooltip>
       </Box>
@@ -311,7 +311,7 @@ const PropertyMap: React.FC<PropertyMapProps> = ({
                   },
                 }}
               >
-                <LocationOn sx={{ fontSize: 18, color: 'white' }} />
+                <LocationOn sx={{ fontSize: 14, color: 'white' }} />
               </Avatar>
             </Tooltip>
           </Box>

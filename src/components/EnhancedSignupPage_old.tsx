@@ -369,7 +369,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 py: 1.5,
                 borderRadius: 2,
                 textTransform: 'none',
-                fontSize: '1rem'
+                fontSize: '0.875rem'
               }}
             >
               {loading ? <CircularProgress size={24} /> : 'Create Account'}

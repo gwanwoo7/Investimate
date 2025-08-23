@@ -117,7 +117,7 @@ export default function APITestComponent() {
           </Typography>
           <Typography variant="body2" component="pre" sx={{ 
             whiteSpace: 'pre-wrap',
-            fontSize: '0.85rem',
+            fontSize: '0.875rem',
             maxHeight: '300px',
             overflow: 'auto'
           }}>

@@ -35,17 +35,91 @@ const theme = createTheme({
   typography: {
     h1: {
       fontWeight: 700,
+      fontSize: '3.5rem', // Large logo/hero title
+      letterSpacing: '-0.02em',
+      lineHeight: 1.1,
+      '@media (max-width:600px)': {
+        fontSize: '2.5rem',
+      },
     },
     h2: {
       fontWeight: 600,
+      fontSize: '2.5rem', // Section headers
+      letterSpacing: '-0.01em',
+      lineHeight: 1.2,
+      '@media (max-width:600px)': {
+        fontSize: '2rem',
+      },
     },
-    body2: {
-      fontSize: '10.5px',
+    h3: {
+      fontWeight: 600,
+      fontSize: '2rem', // Subsection headers
+      letterSpacing: '-0.01em',
+      lineHeight: 1.3,
+      '@media (max-width:600px)': {
+        fontSize: '1.5rem',
+      },
+    },
+    h4: {
+      fontWeight: 600,
+      fontSize: '1.5rem', // Card titles
+      letterSpacing: '0em',
+      lineHeight: 1.4,
+      '@media (max-width:600px)': {
+        fontSize: '1.25rem',
+      },
+    },
+    h5: {
+      fontWeight: 500,
+      fontSize: '1.25rem', // Small headings
+      letterSpacing: '0em',
       lineHeight: 1.4,
     },
+    h6: {
+      fontWeight: 500,
+      fontSize: '1.1rem', // Minor headings
+      letterSpacing: '0.01em',
+      lineHeight: 1.5,
+    },
+    body1: {
+      fontSize: '1rem', // Main body text
+      lineHeight: 1.6,
+      letterSpacing: '0.00938em',
+    },
+    body2: {
+      fontSize: '0.875rem', // Secondary body text
+      lineHeight: 1.5,
+      letterSpacing: '0.01071em',
+    },
     caption: {
-      fontSize: '10.5px',
-      lineHeight: 1.3,
+      fontSize: '0.75rem', // Captions and small text
+      lineHeight: 1.4,
+      letterSpacing: '0.03333em',
+    },
+    subtitle1: {
+      fontSize: '1rem', // Subtitle text
+      fontWeight: 400,
+      lineHeight: 1.75,
+      letterSpacing: '0.00938em',
+    },
+    subtitle2: {
+      fontSize: '0.875rem', // Smaller subtitle text
+      fontWeight: 500,
+      lineHeight: 1.57,
+      letterSpacing: '0.00714em',
+    },
+    overline: {
+      fontSize: '0.75rem',
+      fontWeight: 400,
+      lineHeight: 2.66,
+      letterSpacing: '0.08333em',
+      textTransform: 'uppercase',
+    },
+    button: {
+      fontSize: '0.875rem',
+      fontWeight: 500,
+      letterSpacing: '0.02857em',
+      textTransform: 'none',
     },
   },
   spacing: 8,
@@ -58,14 +132,14 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiInputBase-input': {
-            fontSize: '10.5px',
-            padding: '8px 12px',
+            fontSize: '0.875rem',
+            padding: '10px 14px',
           },
           '& .MuiInputLabel-root': {
-            fontSize: '10.5px',
+            fontSize: '0.875rem',
           },
           '& .MuiFormHelperText-root': {
-            fontSize: '9px',
+            fontSize: '0.75rem',
           },
         },
       },
@@ -77,8 +151,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiSelect-select': {
-            fontSize: '10.5px',
-            padding: '8px 12px',
+            fontSize: '0.875rem',
+            padding: '10px 14px',
           },
         },
       },
@@ -94,35 +168,52 @@ const theme = createTheme({
         root: {
           textTransform: 'none',
           borderRadius: '8px',
-          fontSize: '10.5px',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          letterSpacing: '0.02857em',
         },
         sizeSmall: {
-          fontSize: '10.5px',
-          padding: '4px 12px',
+          fontSize: '0.75rem',
+          padding: '6px 16px',
+          fontWeight: 500,
         },
         sizeMedium: {
-          fontSize: '11px',
-          padding: '6px 16px',
+          fontSize: '0.875rem',
+          padding: '8px 22px',
+          fontWeight: 500,
+        },
+        sizeLarge: {
+          fontSize: '1rem',
+          padding: '12px 28px',
+          fontWeight: 600,
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          fontSize: '10.5px',
-          height: '24px',
+          fontSize: '0.75rem',
+          height: '28px',
+          fontWeight: 500,
         },
         sizeSmall: {
-          fontSize: '9px',
-          height: '20px',
+          fontSize: '0.75rem',
+          height: '24px',
+          fontWeight: 500,
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         root: {
-          fontSize: '10.5px',
-          padding: '6px 12px',
+          fontSize: '0.875rem',
+          padding: '12px 16px',
+          borderBottom: '1px solid rgba(224, 224, 224, 1)',
+        },
+        head: {
+          fontWeight: 600,
+          fontSize: '0.875rem',
+          color: 'rgba(0, 0, 0, 0.87)',
         },
       },
     },
@@ -130,6 +221,28 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundImage: 'none',
+          boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)',
+        },
+        elevation1: {
+          boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+          transition: 'all 0.3s ease-in-out',
+        },
+      },
+    },
+    MuiCardContent: {
+      styleOverrides: {
+        root: {
+          padding: '24px',
+          '&:last-child': {
+            paddingBottom: '24px',
+          },
         },
       },
     },
@@ -523,13 +636,11 @@ function App() {
               <Container maxWidth="lg">
                 <Box sx={{ textAlign: 'center', maxWidth: '800px', mx: 'auto' }}>
                   <Typography variant="h1" component="h1" gutterBottom sx={{ 
-                    fontSize: { xs: '2.5rem', md: '3.5rem' },
-                    mb: 2
+                    mb: 3
                   }}>
                     Investimate
                   </Typography>
                   <Typography variant="h4" gutterBottom sx={{ 
-                    fontSize: { xs: '1.2rem', md: '1.5rem' },
                     fontWeight: 400,
                     mb: 4,
                     opacity: 0.95
@@ -582,9 +693,8 @@ function App() {
                     }}
                     startIcon={<Calculator />}
                     sx={{ 
-                      py: 2, 
-                      px: 4, 
-                      fontSize: '1.1rem',
+                      py: 2.5, 
+                      px: 5, 
                       bgcolor: 'white',
                       color: 'primary.main',
                       fontWeight: 600,
@@ -675,7 +785,7 @@ function App() {
                 }}>
                   <CardContent>
                     <Box sx={{ mb: 3 }}>
-                      <Calculator size={56} color="#1976d2" />
+                      <Calculator size={64} color="#1976d2" />
                     </Box>
                     <Typography variant="h5" gutterBottom fontWeight="bold">
                       Smart Calculator
@@ -704,7 +814,7 @@ function App() {
                 }}>
                   <CardContent>
                     <Box sx={{ mb: 3 }}>
-                      <TrendingUp size={56} color="#999" />
+                      <TrendingUp size={64} color="#999" />
                     </Box>
                     <Typography variant="h5" gutterBottom fontWeight="bold">
                       Market Insights
@@ -729,7 +839,7 @@ function App() {
                 onClick={() => setCurrentTab(2)}>
                   <CardContent>
                     <Box sx={{ mb: 3 }}>
-                      <Users size={56} color="#1976d2" />
+                      <Users size={64} color="#1976d2" />
                     </Box>
                     <Typography variant="h5" gutterBottom fontWeight="bold">
                       Investor Community
@@ -770,7 +880,6 @@ function App() {
                       onClick={handleShowAbout}
                       sx={{ 
                         textTransform: 'none',
-                        fontSize: '1rem',
                         '&:hover': { color: 'primary.light' }
                       }}
                     >
@@ -781,7 +890,6 @@ function App() {
                       onClick={handleShowContact}
                       sx={{ 
                         textTransform: 'none',
-                        fontSize: '1rem',
                         '&:hover': { color: 'primary.light' }
                       }}
                     >
@@ -791,7 +899,6 @@ function App() {
                       color="inherit" 
                       sx={{ 
                         textTransform: 'none',
-                        fontSize: '1rem',
                         '&:hover': { color: 'primary.light' }
                       }}
                       onClick={handleShowSubscription}
@@ -818,7 +925,6 @@ function App() {
                       onClick={handleShowAdmin}
                       sx={{ 
                         textTransform: 'none',
-                        fontSize: '0.875rem',
                         opacity: 0.7,
                         '&:hover': { 
                           color: 'primary.light',

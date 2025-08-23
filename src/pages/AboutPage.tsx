@@ -29,14 +29,14 @@ export default function AboutPage({ onBack }: AboutPageProps) {
             The Story Behind Investimate
           </Typography>
           
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+          <Typography variant="body1" paragraph sx={{ fontSize: '0.875rem', lineHeight: 1.7 }}>
             For years, our founder was immersed in the world of academia — chasing research, 
             publishing papers, and mentoring students. Financial freedom was never top of mind; 
             after all, he believed he could "always make money later" and was content living 
             on a modest stipend.
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+          <Typography variant="body1" paragraph sx={{ fontSize: '0.875rem', lineHeight: 1.7 }}>
             But life has a way of shifting perspectives. When he transitioned from academia 
             back into industry, he realized that true freedom — the ability to do what you love, 
             spend more time with family, and live life on your own terms — depends on more than 
@@ -44,7 +44,7 @@ export default function AboutPage({ onBack }: AboutPageProps) {
             passive income.
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+          <Typography variant="body1" paragraph sx={{ fontSize: '0.875rem', lineHeight: 1.7 }}>
             That realization sparked a bold move: purchasing his first rental property. The journey 
             wasn't easy — it involved reviewing countless listings, calculating potential returns, 
             and weighing risks. To make smarter, faster decisions, he formalized capital gain and 
@@ -52,7 +52,7 @@ export default function AboutPage({ onBack }: AboutPageProps) {
             web-based tool that could identify high-performing investment properties with precision.
           </Typography>
 
-          <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+          <Typography variant="body1" paragraph sx={{ fontSize: '0.875rem', lineHeight: 1.7 }}>
             That tool became <strong>Investimate</strong> — a platform designed to help everyday people, 
             from first-time investors to seasoned landlords, find rental properties with strong returns.
           </Typography>
@@ -71,7 +71,7 @@ export default function AboutPage({ onBack }: AboutPageProps) {
           <Typography variant="h5" gutterBottom color="primary" sx={{ mt: 4, textAlign: 'center' }}>
             Our Mission
           </Typography>
-          <Typography variant="body1" sx={{ fontSize: '1.2rem', fontWeight: 500, textAlign: 'center' }}>
+          <Typography variant="body1" sx={{ fontSize: '0.875rem', fontWeight: 500, textAlign: 'center' }}>
             Empower you to achieve financial freedom through smart property investments.
           </Typography>
         </Paper>

@@ -254,10 +254,10 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Home size={20} />
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0, fontSize: '0.9rem' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 0, fontSize: '0.875rem' }}>
               Comprehensive Investment Analysis
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '10.5px' }}>
+            <Typography variant="body2" sx={{ opacity: 0.9, fontSize: '0.875rem' }}>
               {property.address}
             </Typography>
           </Box>
@@ -270,7 +270,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
           <CardContent sx={{ p: 1.5 }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
               <Box sx={{ flex: '1 1 300px' }}>
-                <Typography variant="h6" sx={{ mb: 1, fontSize: '0.9rem' }}>
+                <Typography variant="h6" sx={{ mb: 1, fontSize: '0.875rem' }}>
                   {property.address}
                 </Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1 }}>
@@ -279,37 +279,37 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                     label={`${property.city}, ${property.state} ${property.zipCode}`}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: '10.5px' }}
+                    sx={{ fontSize: '0.875rem' }}
                   />
                   <Chip 
                     label={`${property.bedrooms} bed, ${property.bathrooms} bath`}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: '10.5px' }}
+                    sx={{ fontSize: '0.875rem' }}
                   />
                   <Chip 
                     label={`${property.squareFootage?.toLocaleString()} sq ft`}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: '10.5px' }}
+                    sx={{ fontSize: '0.875rem' }}
                   />
                   <Chip 
                     label={`Built ${property.yearBuilt}`}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: '10.5px' }}
+                    sx={{ fontSize: '0.875rem' }}
                   />
                 </Stack>
               </Box>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.3rem' }}>
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '0.875rem' }}>
                   ${property.purchasePrice?.toLocaleString() || property.marketValue.toLocaleString()}
                 </Typography>
                 <Chip 
                   icon={rating.icon}
                   label={rating.label}
                   color={rating.color as any}
-                  sx={{ mt: 1, fontWeight: 'bold', fontSize: '10.5px' }}
+                  sx={{ mt: 1, fontWeight: 'bold', fontSize: '0.875rem' }}
                 />
               </Box>
             </Box>
@@ -321,10 +321,10 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
           <Card sx={{ flex: '1 1 150px' }}>
             <CardContent sx={{ p: 1, textAlign: 'center' }}>
               <TrendingUp size={16} color="#1976d2" />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '10.5px' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                 Cash-on-Cash ROI
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                 {financials.cashOnCashReturn.toFixed(1)}%
               </Typography>
             </CardContent>
@@ -332,10 +332,10 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
           <Card sx={{ flex: '1 1 150px' }}>
             <CardContent sx={{ p: 1, textAlign: 'center' }}>
               <PieChart size={16} color="#2e7d32" />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '10.5px' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                 Cap Rate
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                 {financials.capRate.toFixed(1)}%
               </Typography>
             </CardContent>
@@ -343,12 +343,12 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
           <Card sx={{ flex: '1 1 150px' }}>
             <CardContent sx={{ p: 1, textAlign: 'center' }}>
               <DollarSign size={16} color="#ed6c02" />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '10.5px' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                 Monthly Cash Flow
               </Typography>
               <Typography variant="h6" sx={{ 
                 fontWeight: 'bold', 
-                fontSize: '0.85rem',
+                fontSize: '0.875rem',
                 color: financials.monthlyCashFlow >= 0 ? 'success.main' : 'error.main'
               }}>
                 ${financials.monthlyCashFlow.toFixed(0)}
@@ -358,10 +358,10 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
           <Card sx={{ flex: '1 1 150px' }}>
             <CardContent sx={{ p: 1, textAlign: 'center' }}>
               <Target size={16} color="#9c27b0" />
-              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '10.5px' }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                 Investment Score
               </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.85rem' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                 {property.investmentScore.toFixed(1)}/10
               </Typography>
             </CardContent>
@@ -371,7 +371,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
         {/* Monthly Breakdown */}
         <Card sx={{ mb: 1.5 }}>
           <CardContent sx={{ p: 1.5 }}>
-            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '10.5px' }}>
+            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem' }}>
               <Calculator size={16} />
               Monthly Cash Flow Analysis
             </Typography>
@@ -380,20 +380,20 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>Income</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>Amount</TableCell>
+                      <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Income</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Gross Rent</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Gross Rent</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyRent.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow sx={{ bgcolor: 'success.light', '& td': { fontWeight: 'bold' } }}>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Total Income</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Total Income</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyRent.toFixed(0)}
                       </TableCell>
                     </TableRow>
@@ -405,68 +405,68 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>Expenses</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>Amount</TableCell>
+                      <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Expenses</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Property Management (10%)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Property Management (10%)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.propertyManagement.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Property Taxes (1.5% annually)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Property Taxes (1.5% annually)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.propertyTaxes.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Insurance (actual)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Insurance (actual)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.insurance.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Owner-Paid Utilities</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Owner-Paid Utilities</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         $0
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Vacancy Reserve (3.5%)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Vacancy Reserve (3.5%)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.vacancyReserve.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Maintenance + CapEx (8%)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Maintenance + CapEx (8%)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.maintenanceCapEx.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow sx={{ bgcolor: 'warning.light', '& td': { fontWeight: 'bold' } }}>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Total Operating Expenses</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Total Operating Expenses</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyExpenses.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow sx={{ bgcolor: 'info.light', '& td': { fontWeight: 'bold' } }}>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Monthly NOI</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Monthly NOI</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyNOI.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Mortgage P&I (7.63%, 30yr)</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Mortgage P&I (7.63%, 30yr)</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyMortgage.toFixed(0)}
                       </TableCell>
                     </TableRow>
                     <TableRow sx={{ bgcolor: 'error.light', '& td': { fontWeight: 'bold' } }}>
-                      <TableCell sx={{ fontSize: '10.5px' }}>Net Monthly Cash Flow</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem' }}>Net Monthly Cash Flow</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${financials.monthlyCashFlow.toFixed(0)}
                       </TableCell>
                     </TableRow>
@@ -485,7 +485,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
               <Typography variant="h6" sx={{ 
                 textAlign: 'center',
                 fontWeight: 'bold',
-                fontSize: '0.85rem'
+                fontSize: '0.875rem'
               }}>
                 Net Monthly Cash Flow: ${financials.monthlyCashFlow.toFixed(0)}
               </Typography>
@@ -496,7 +496,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
         {/* 5-Year Projections */}
         <Card sx={{ mb: 1.5 }}>
           <CardContent sx={{ p: 1.5 }}>
-            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '10.5px' }}>
+            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem' }}>
               <BarChart3 size={16} />
               5-Year Return Projections (3% Rent Growth, 3% Appreciation)
             </Typography>
@@ -504,47 +504,47 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'primary.light' }}>
-                    <TableCell sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Year</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Market Rent</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Cash Flow</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Debt Paydown</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Tax Savings</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Appreciation</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Property Value</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Total Return</TableCell>
-                    <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold', color: 'white' }}>Total ROI</TableCell>
+                    <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Year</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Market Rent</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Cash Flow</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Debt Paydown</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Tax Savings</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Appreciation</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Property Value</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Total Return</TableCell>
+                    <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'white' }}>Total ROI</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {projections.map((year) => (
                     <TableRow key={year.year}>
-                      <TableCell sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>{year.year}</TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>{year.year}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${year.currentRent.toFixed(0)}/mo
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px', color: year.cashFlow > 0 ? 'success.main' : 'error.main' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem', color: year.cashFlow > 0 ? 'success.main' : 'error.main' }}>
                         ${year.cashFlow.toFixed(0)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${year.debtPaydown.toFixed(0)}
-                        <Typography component="div" sx={{ fontSize: '0.5rem', color: 'text.secondary' }}>
+                        <Typography component="div" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
                           ({year.roiOnPaydown.toFixed(1)}%)
                         </Typography>
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${year.taxSavings.toFixed(0)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${year.appreciation.toFixed(0)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem' }}>
                         ${year.currentValue.toLocaleString()}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: '10.5px', fontWeight: 'bold' }}>
+                      <TableCell align="right" sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
                         ${year.totalReturn.toFixed(0)}
                       </TableCell>
                       <TableCell align="right" sx={{ 
-                        fontSize: '10.5px', 
+                        fontSize: '0.875rem', 
                         fontWeight: 'bold',
                         color: year.totalReturnPercent >= 20 ? 'success.main' : year.totalReturnPercent >= 15 ? 'warning.main' : 'text.primary'
                       }}>
@@ -561,27 +561,27 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
         {/* Investment Summary */}
         <Card>
           <CardContent sx={{ p: 1.5 }}>
-            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '10.5px' }}>
+            <Typography variant="h6" sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem' }}>
               <CheckCircle size={16} />
               Investment Summary & Recommendation
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
               <Box sx={{ flex: '1 1 200px' }}>
                 <Box sx={{ mb: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '10.5px' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                     Total Cash Required
                   </Typography>
-                  <Typography variant="h6" sx={{ color: 'primary.main', fontSize: '0.85rem' }}>
+                  <Typography variant="h6" sx={{ color: 'primary.main', fontSize: '0.875rem' }}>
                     ${financials.totalCashNeeded.toLocaleString()}
                   </Typography>
                 </Box>
                 
                 {/* Cash Investment Breakdown */}
                 <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1, mb: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '10.5px', mb: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.875rem', mb: 1 }}>
                     Cash Investment Breakdown:
                   </Typography>
-                  <Box sx={{ fontSize: '0.55rem', lineHeight: 1.4 }}>
+                  <Box sx={{ fontSize: '0.875rem', lineHeight: 1.4 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <span>Down Payment (25%)</span>
                       <span>${(financials.totalCashNeeded - financials.closingCosts - financials.rehabCosts).toLocaleString()}</span>
@@ -598,16 +598,16 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                 </Box>
 
                 <Box sx={{ mb: 1.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '10.5px' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                     Debt Coverage Ratio
                   </Typography>
                   <Typography variant="h6" sx={{ 
                     color: financials.debtCoverageRatio >= 1.25 ? 'success.main' : 'error.main',
-                    fontSize: '0.85rem'
+                    fontSize: '0.875rem'
                   }}>
                     {financials.debtCoverageRatio.toFixed(2)}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: '0.55rem' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                     {financials.debtCoverageRatio >= 1.25 ? 
                       'Qualifies for commercial loan (≥1.25 required)' : 
                       'May not qualify for commercial loan (1.25 required)'}
@@ -623,17 +623,17 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                   }
                   sx={{ mb: 1.5 }}
                 >
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '10.5px' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
                     Investment Rating: {rating.label}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: '10.5px' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                     Score: {property.investmentScore.toFixed(1)}/10 - Based on cash flow, ROI, and market analysis
                   </Typography>
                 </Alert>
                 
                 {/* Enhanced Progress Bars for Key Metrics */}
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontSize: '10.5px' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                     Cash-on-Cash Return: {financials.cashOnCashReturn.toFixed(1)}%
                     <span style={{ color: financials.cashOnCashReturn >= 15 ? '#2e7d32' : financials.cashOnCashReturn >= 12 ? '#ed6c02' : '#d32f2f' }}>
                       {' '}({financials.cashOnCashReturn >= 15 ? 'Excellent' : financials.cashOnCashReturn >= 12 ? 'Good' : financials.cashOnCashReturn >= 8 ? 'Fair' : 'Poor'})
@@ -646,7 +646,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                   />
                 </Box>
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontSize: '10.5px' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                     Cap Rate: {financials.capRate.toFixed(1)}%
                     <span style={{ color: financials.capRate >= 10 ? '#2e7d32' : financials.capRate >= 8 ? '#ed6c02' : '#d32f2f' }}>
                       {' '}({financials.capRate >= 10 ? 'Excellent' : financials.capRate >= 8 ? 'Good' : financials.capRate >= 6 ? 'Fair' : 'Poor'})
@@ -659,7 +659,7 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
                   />
                 </Box>
                 <Box sx={{ mb: 1 }}>
-                  <Typography variant="caption" sx={{ fontSize: '10.5px' }}>
+                  <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                     Monthly Cash Flow: ${financials.monthlyCashFlow.toFixed(0)}
                     <span style={{ color: financials.monthlyCashFlow >= 300 ? '#2e7d32' : financials.monthlyCashFlow >= 100 ? '#ed6c02' : '#d32f2f' }}>
                       {' '}({financials.monthlyCashFlow >= 300 ? 'Excellent' : financials.monthlyCashFlow >= 100 ? 'Good' : financials.monthlyCashFlow >= 0 ? 'Break-even' : 'Negative'})
@@ -678,14 +678,14 @@ const DetailedPropertyAnalysis: React.FC<DetailedPropertyAnalysisProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 1.5 }}>
-        <Button onClick={onClose} variant="outlined" sx={{ fontSize: '10.5px' }}>
+        <Button onClick={onClose} variant="outlined" sx={{ fontSize: '0.875rem' }}>
           Close Analysis
         </Button>
         <Button 
           variant="contained" 
           onClick={() => window.open(`https://maps.google.com/?q=${encodeURIComponent(property.address)}`, '_blank')}
           startIcon={<MapPin size={12} />}
-          sx={{ fontSize: '10.5px' }}
+          sx={{ fontSize: '0.875rem' }}
         >
           View on Map
         </Button>
