@@ -97,7 +97,9 @@ export class RealEstateAPIService {
     console.log('🔍 Searching Zillow properties only...');
     
     if (!this.RAPID_API_KEY || this.RAPID_API_KEY === 'your-rapid-api-key-here') {
-      console.log('⚠️ No API key configured. Using mock data for demonstration...');
+      console.log('⚠️ No API key configured. Using enhanced demo data with realistic property photos...');
+      console.log('💡 To see real Zillow photos, configure VITE_RAPID_API_KEY in your .env file');
+      console.log('📸 Current demo mode shows professional real estate stock photos for each property');
       return this.getMockProperties(params);
     }
 
@@ -668,7 +670,7 @@ export class RealEstateAPIService {
 
   // Mock data for demonstration when no API key is configured
   private static getMockProperties(params: AreaSearchParams): PropertyListing[] {
-    console.log('🎭 Generating mock properties for demonstration...');
+    console.log('🎭 Generating enhanced mock properties with realistic photos for demonstration...');
     
     const mockProperties: PropertyData[] = [
       {
@@ -701,9 +703,11 @@ export class RealEstateAPIService {
         },
         interestRate: 0.065,
         images: [
-          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop&auto=format&q=80'
+          'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop&auto=format&q=80', // Beautiful house exterior
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&auto=format&q=80', // Spacious living room
+          'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&h=600&fit=crop&auto=format&q=80', // Modern kitchen
+          'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop&auto=format&q=80', // Cozy bedroom
+          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&auto=format&q=80'  // Elegant bathroom
         ]
       },
       {
@@ -736,9 +740,11 @@ export class RealEstateAPIService {
         },
         interestRate: 0.065,
         images: [
-          'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&auto=format&q=80'
+          'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&h=600&fit=crop&auto=format&q=80', // Charming cottage exterior
+          'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop&auto=format&q=80', // Bright living space
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop&auto=format&q=80', // Cozy kitchen
+          'https://images.unsplash.com/photo-1631889993959-41b4bd7c3ced?w=800&h=600&fit=crop&auto=format&q=80', // Comfortable bedroom
+          'https://images.unsplash.com/photo-1620626011761-996317b8d101?w=800&h=600&fit=crop&auto=format&q=80'  // Clean bathroom
         ]
       },
       {
@@ -771,9 +777,85 @@ export class RealEstateAPIService {
         },
         interestRate: 0.065,
         images: [
-          'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&h=600&fit=crop&auto=format&q=80',
-          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&auto=format&q=80'
+          'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&h=600&fit=crop&auto=format&q=80', // Modern house exterior
+          'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&h=600&fit=crop&auto=format&q=80', // Open floor plan
+          'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&auto=format&q=80', // Gourmet kitchen
+          'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=600&fit=crop&auto=format&q=80', // Master bedroom
+          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&h=600&fit=crop&auto=format&q=80', // Luxury bathroom
+          'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=800&h=600&fit=crop&auto=format&q=80'  // Backyard/patio
+        ]
+      },
+      {
+        id: 'mock-4',
+        address: '321 Elm Drive',
+        city: params.city || 'Birmingham',
+        state: params.state || 'AL',
+        zipCode: '35209',
+        purchasePrice: 85000,
+        marketValue: 85000,
+        bedrooms: 2,
+        bathrooms: 1,
+        squareFootage: 1000,
+        yearBuilt: 1978,
+        propertyType: 'single-family',
+        monthlyRent: 875,
+        source: 'Demo Data',
+        latitude: 33.5156,
+        longitude: -86.8054,
+        monthlyHoaFee: 0,
+        annualPropertyTaxes: 1275,
+        monthlyPropertyTaxes: 106,
+        annualInsurance: 510,
+        monthlyInsurance: 42,
+        mortgagePayment: {
+          principal: 247,
+          interest: 283,
+          total: 530,
+          interestRate: 0.065
+        },
+        interestRate: 0.065,
+        images: [
+          'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop&auto=format&q=80', // Classic brick exterior
+          'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=800&h=600&fit=crop&auto=format&q=80', // Traditional living room
+          'https://images.unsplash.com/photo-1556909200-f33d5697d4b2?w=800&h=600&fit=crop&auto=format&q=80', // Vintage kitchen
+          'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800&h=600&fit=crop&auto=format&q=80'  // Simple bedroom
+        ]
+      },
+      {
+        id: 'mock-5',
+        address: '654 Maple Court',
+        city: params.city || 'Birmingham',
+        state: params.state || 'AL',
+        zipCode: '35211',
+        purchasePrice: 175000,
+        marketValue: 175000,
+        bedrooms: 3,
+        bathrooms: 2,
+        squareFootage: 1600,
+        yearBuilt: 2010,
+        propertyType: 'single-family',
+        monthlyRent: 1375,
+        source: 'Demo Data',
+        latitude: 33.5276,
+        longitude: -86.8194,
+        monthlyHoaFee: 0,
+        annualPropertyTaxes: 2625,
+        monthlyPropertyTaxes: 218,
+        annualInsurance: 1050,
+        monthlyInsurance: 87,
+        mortgagePayment: {
+          principal: 509,
+          interest: 582,
+          total: 1091,
+          interestRate: 0.065
+        },
+        interestRate: 0.065,
+        images: [
+          'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop&auto=format&q=80', // Contemporary house exterior
+          'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&h=600&fit=crop&auto=format&q=80', // Modern living area
+          'https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=800&h=600&fit=crop&auto=format&q=80', // Updated kitchen
+          'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop&auto=format&q=80', // Stylish bedroom
+          'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&h=600&fit=crop&auto=format&q=80'  // Modern bathroom
         ]
       }
     ];
