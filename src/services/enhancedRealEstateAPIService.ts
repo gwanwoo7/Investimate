@@ -1,13 +1,31 @@
 import axios from 'axios';
 import type { AreaSearchParams, PropertyListing, PropertyData, RentEstimate } from '../types/property';
+import { ApifyZillowAPIService } from './apifyZillowAPIService';
 
-// Enhanced Real Estate API Service with Boundary Search Support
+// Enhanced Real Estate API Service with Apify Integration
 export class EnhancedRealEstateAPIService {
   private static readonly RAPID_API_KEY = import.meta.env.VITE_RAPID_API_KEY;
+  private static readonly APIFY_API_TOKEN = import.meta.env.VITE_APIFY_API_TOKEN;
 
-  // Main search method that components call
+  // Main search method - prioritizes Apify for comprehensive data
   static async searchProperties(params: AreaSearchParams): Promise<PropertyListing[]> {
     console.log('🔍 Enhanced search method called with params:', params);
+    
+    // Try Apify first for the most comprehensive data
+    if (this.APIFY_API_TOKEN && this.APIFY_API_TOKEN !== 'your_apify_token_here') {
+      console.log('🚀 Using Apify Zillow Scraper for enhanced data extraction...');
+      try {
+        const apifyResults = await ApifyZillowAPIService.searchProperties(params);
+        if (apifyResults.length > 0) {
+          console.log(`✅ Apify returned ${apifyResults.length} properties with comprehensive data`);
+          return apifyResults;
+        }
+      } catch (error) {
+        console.log('⚠️ Apify failed, falling back to RapidAPI...', error);
+      }
+    }
+    
+    // Fallback to RapidAPI if Apify is not available
     return this.searchPropertiesFromMultipleSources(params);
   }
 
@@ -32,10 +50,24 @@ export class EnhancedRealEstateAPIService {
         limit: 100 // Request more properties for boundary searches
       };
       
+      // Try Apify first for boundary searches too
+      if (this.APIFY_API_TOKEN && this.APIFY_API_TOKEN !== 'your_apify_token_here') {
+        console.log('🚀 Using Apify for boundary search...');
+        try {
+          const apifyResults = await ApifyZillowAPIService.searchProperties(enhancedParams);
+          if (apifyResults.length > 0) {
+            console.log(`✅ Apify boundary search returned ${apifyResults.length} properties`);
+            return apifyResults;
+          }
+        } catch (error) {
+          console.log('⚠️ Apify boundary search failed, falling back...', error);
+        }
+      }
+      
       return this.searchPropertiesFromMultipleSources(enhancedParams);
     }
     
-    return this.searchPropertiesFromMultipleSources(params);
+    return this.searchProperties(params);
   }
 
   // Search from multiple sources to get more comprehensive results

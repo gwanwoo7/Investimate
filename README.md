@@ -19,6 +19,14 @@ A comprehensive React TypeScript application for analyzing rental property inves
 - **Market Data**: Real estate API integration for property values
 - **Expense Tracking**: Operating costs, taxes, insurance, and maintenance
 
+### 🏘️ Property Data Integration
+- **Apify Zillow Scraper**: Premium data extraction with up to 20 photos per property
+- **Comprehensive Property Details**: Square footage, lot size, year built, renovations
+- **Market Analytics**: Price history, days on market, listing history
+- **Neighborhood Insights**: School ratings, walk scores, crime ratings
+- **Virtual Tours**: 3D tour links and walkthrough videos
+- **RapidAPI Fallback**: Backup data source for reliability
+- **Real-time Updates**: Fresh property data and market trends
 ### 🗺️ Interactive Property Maps
 - **Google Maps Integration**: Professional mapping with Google Maps JavaScript API
 - **Boundary Drawing**: Interactive polygon drawing for custom search areas
@@ -110,6 +118,39 @@ To enable Google and Apple authentication:
 
 4. **Detailed Setup Guide**
    - See [OAUTH_SETUP_GUIDE.md](./OAUTH_SETUP_GUIDE.md) for complete instructions
+
+## 🏘️ Property Data APIs
+
+The application supports multiple data sources for comprehensive property information:
+
+### 🚀 Apify Zillow Scraper (Recommended)
+**Premium data extraction with enhanced property details**
+
+- **Features**: Up to 20 photos per property, virtual tours, price history
+- **Data Quality**: Comprehensive neighborhood insights and market analytics
+- **Setup**: See [APIFY_SETUP_GUIDE.md](./APIFY_SETUP_GUIDE.md) for detailed instructions
+
+```bash
+# Add to .env
+VITE_APIFY_API_TOKEN=your_apify_token_here
+```
+
+### 📡 RapidAPI Zillow (Fallback)
+**Reliable backup data source**
+
+- **Features**: Basic property data with primary photos
+- **Setup**: Get API key from [RapidAPI Zillow](https://rapidapi.com/s.mahmoud97/api/zillow-com1)
+
+```bash
+# Add to .env
+VITE_RAPID_API_KEY=your_rapidapi_key_here
+```
+
+### 🔄 Auto-Fallback System
+The application automatically:
+1. **Tries Apify first** (if token configured)
+2. **Falls back to RapidAPI** if Apify fails
+3. **Uses demo data** if both APIs unavailable
 
 > **Note**: OAuth is optional. The app includes a demo login for testing without OAuth setup.
 
