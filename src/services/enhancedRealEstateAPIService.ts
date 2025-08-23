@@ -41,6 +41,11 @@ export class EnhancedRealEstateAPIService {
   // Search from multiple sources to get more comprehensive results
   private static async searchPropertiesFromMultipleSources(params: AreaSearchParams): Promise<PropertyListing[]> {
     console.log('🔍 Searching multiple sources for comprehensive results...');
+    console.log('🔑 Enhanced API Key check:', { 
+      hasKey: !!this.RAPID_API_KEY, 
+      keyLength: this.RAPID_API_KEY?.length, 
+      keyPrefix: this.RAPID_API_KEY?.substring(0, 10) + '...'
+    });
     
     if (!this.RAPID_API_KEY || this.RAPID_API_KEY === 'your-rapid-api-key-here') {
       console.log('⚠️ No API key configured. Using enhanced mock data...');
@@ -50,10 +55,10 @@ export class EnhancedRealEstateAPIService {
     try {
       // Search multiple property types and sources in parallel
       const searchPromises = [
-        this.fetchFromZillowEnhanced(params, 'Houses'),
-        this.fetchFromZillowEnhanced(params, 'Townhouses'),
-        this.fetchFromZillowEnhanced(params, 'Condos'),
-        this.fetchFromZillowEnhanced(params, 'MultiFamily')
+        this.fetchFromZillowEnhanced(params, 'Single Family'),
+        this.fetchFromZillowEnhanced(params, 'Townhouse'),
+        this.fetchFromZillowEnhanced(params, 'Condo'),
+        this.fetchFromZillowEnhanced(params, 'Multi Family')
       ];
 
       const results = await Promise.allSettled(searchPromises);
@@ -115,16 +120,10 @@ export class EnhancedRealEstateAPIService {
       params: {
         location: location,
         status_type: 'ForSale',
-        home_type: homeType,
+        propertyType: homeType,
         minPrice: (params.minPrice || 50000).toString(),
-        maxPrice: (params.maxPrice || 20000000).toString(), // Match Zillow's 20M max
-        minBeds: (params.minBedrooms || 2).toString(),
-        sortSelection: 'priorityscore', // Get best matches first
-        daysOnZillow: '90', // Properties listed in last 90 days
-        isNewConstruction: 'false',
-        isComingSoon: 'false',
-        isAuction: 'false',
-        isForeclosure: 'false'
+        maxPrice: (params.maxPrice || 20000000).toString(),
+        page: '1'
       },
       headers: {
         'X-RapidAPI-Key': this.RAPID_API_KEY,

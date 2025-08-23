@@ -9,6 +9,7 @@ import PaymentPage from './components/PaymentPage';
 import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
+import './debug-env'; // Import debug logging
 import AuthCallback from './components/AuthCallback';
 import OAuthDebug from './components/OAuthDebug';
 import GeographicSearchTest from './components/GeographicSearchTest';
