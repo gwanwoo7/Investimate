@@ -73,10 +73,10 @@ export class PropertyPhotoService {
     try {
       console.log('📸 Parsing Zillow photo response structure:', Object.keys(data));
       
-      // Check various photo fields in the response
+      // Check various photo fields in the response (updated for actual Zillow API structure)
       const photoFields = [
         'photos',
-        'images',
+        'images', 
         'media',
         'gallery',
         'photoGallery',
@@ -84,6 +84,7 @@ export class PropertyPhotoService {
         'propertyPhotos'
       ];
       
+      // First, try to get photos from the main response
       for (const field of photoFields) {
         if (data[field] && Array.isArray(data[field])) {
           console.log(`🖼️ Found ${field} with ${data[field].length} items`);
@@ -97,16 +98,47 @@ export class PropertyPhotoService {
         }
       }
       
-      // Check nested structures
+      // Check nested structures (common in Zillow property detail responses)
       if (data.property?.photos || data.listing?.photos) {
         const propertyPhotos = data.property?.photos || data.listing?.photos;
         if (Array.isArray(propertyPhotos)) {
+          console.log(`🖼️ Found nested property photos: ${propertyPhotos.length} items`);
           propertyPhotos.forEach((item: any, index: number) => {
             const photo = this.parsePhotoItem(item, index);
             if (photo && !photos.some(p => p.url === photo.url)) {
               photos.push(photo);
             }
           });
+        }
+      }
+      
+      // Check hdpData (Zillow's high-definition photo data)
+      if (data.hdpData?.homeInfo?.photos) {
+        console.log(`🖼️ Found HDP photos: ${data.hdpData.homeInfo.photos.length} items`);
+        data.hdpData.homeInfo.photos.forEach((item: any, index: number) => {
+          const photo = this.parsePhotoItem(item, index);
+          if (photo && !photos.some(p => p.url === photo.url)) {
+            photos.push(photo);
+          }
+        });
+      }
+      
+      // Check for photo carousel data
+      if (data.carousel && Array.isArray(data.carousel)) {
+        console.log(`🖼️ Found carousel photos: ${data.carousel.length} items`);
+        data.carousel.forEach((item: any, index: number) => {
+          const photo = this.parsePhotoItem(item, index);
+          if (photo && !photos.some(p => p.url === photo.url)) {
+            photos.push(photo);
+          }
+        });
+      }
+      
+      // Check for imgSrc (common in Zillow listings)
+      if (data.imgSrc && typeof data.imgSrc === 'string') {
+        const photo = this.parsePhotoItem(data.imgSrc, 0);
+        if (photo && !photos.some(p => p.url === photo.url)) {
+          photos.push(photo);
         }
       }
       
@@ -182,7 +214,7 @@ export class PropertyPhotoService {
         url: photoUrl,
         width,
         height,
-        description: description || `Property photo ${index + 1}`,
+        description: description || this.generatePhotoDescription(photoUrl, index),
         type: this.inferPhotoType(photoUrl, description, index)
       };
       
@@ -190,6 +222,33 @@ export class PropertyPhotoService {
       console.error('❌ Error parsing photo item:', error);
       return null;
     }
+  }
+
+  /**
+   * Generate a descriptive caption for a photo based on URL patterns and index
+   */
+  private static generatePhotoDescription(url: string, index: number): string {
+    const lowerUrl = url.toLowerCase();
+    
+    // Try to infer room/area type from URL patterns
+    if (lowerUrl.includes('kitchen')) return 'Kitchen';
+    if (lowerUrl.includes('bathroom') || lowerUrl.includes('bath')) return 'Bathroom';
+    if (lowerUrl.includes('bedroom') || lowerUrl.includes('bed')) return 'Bedroom';
+    if (lowerUrl.includes('living') || lowerUrl.includes('family')) return 'Living room';
+    if (lowerUrl.includes('dining')) return 'Dining room';
+    if (lowerUrl.includes('garage')) return 'Garage';
+    if (lowerUrl.includes('pool')) return 'Swimming pool';
+    if (lowerUrl.includes('yard') || lowerUrl.includes('backyard')) return 'Backyard';
+    if (lowerUrl.includes('front')) return 'Front exterior';
+    if (lowerUrl.includes('exterior')) return 'Exterior view';
+    if (lowerUrl.includes('interior')) return 'Interior view';
+    
+    // Default descriptions based on position
+    if (index === 0) return 'Main exterior view';
+    if (index === 1) return 'Front entrance';
+    if (index === 2) return 'Living space';
+    
+    return `Property photo ${index + 1}`;
   }
 
   /**
@@ -221,22 +280,55 @@ export class PropertyPhotoService {
   }
 
   /**
-   * Validate if a string is a valid image URL
+   * Enhanced image URL validation for real estate photos
    */
   private static isValidImageUrl(url: string): boolean {
     if (!url || typeof url !== 'string') return false;
     
     try {
-      new URL(url);
+      const urlObj = new URL(url);
+      if (!urlObj.hostname) return false;
     } catch {
       return false;
     }
     
-    // Check for image extensions or known image domains
-    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i;
-    const imageDomains = ['zillow', 'zillowstatic', 'photos.zillowstatic', 'img.zillowstatic', 'unsplash', 'picsum'];
+    // Real estate image domains (enhanced list)
+    const realEstateImageDomains = [
+      'zillow',
+      'zillowstatic', 
+      'photos.zillowstatic',
+      'img.zillowstatic',
+      'p.rdcpix',
+      'ap.rdcpix',
+      'redfin',
+      'ssl.cdn-redfin',
+      'mls-images',
+      'mlslistings'
+    ];
     
-    return imageExtensions.test(url) || imageDomains.some(domain => url.includes(domain));
+    // Check for image extensions
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp)(\?|$)/i;
+    if (imageExtensions.test(url)) {
+      return true;
+    }
+    
+    // Check for real estate domains with image paths
+    const hasValidDomain = realEstateImageDomains.some(domain => 
+      url.toLowerCase().includes(domain)
+    );
+    
+    if (hasValidDomain) {
+      // Must have image indicators in the path
+      const imageIndicators = [
+        '/photos/', '/images/', '/img/', '/picture', '/photo',
+        '_photo', '-photo', 'image', 'pic'
+      ];
+      return imageIndicators.some(indicator => 
+        url.toLowerCase().includes(indicator)
+      );
+    }
+    
+    return false;
   }
 
   /**

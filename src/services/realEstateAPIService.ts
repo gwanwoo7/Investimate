@@ -202,12 +202,26 @@ export class RealEstateAPIService {
   // Transform Zillow property listings into PropertyData format
   private static transformZillowProperties(zillowData: any, params: AreaSearchParams): PropertyData[] {
     console.log('🏠 Zillow API Full Response Structure:', Object.keys(zillowData || {}));
-    console.log('🏠 Sample property data:', zillowData?.props?.[0]);
+    
+    // Log a sample property with all its fields to understand the structure
+    if (zillowData?.props?.[0]) {
+      console.log('🏠 Sample property keys:', Object.keys(zillowData.props[0]));
+      console.log('🏠 Sample property data (first 3 fields):', {
+        zpid: zillowData.props[0].zpid,
+        address: zillowData.props[0].address,
+        price: zillowData.props[0].price,
+        imgSrc: zillowData.props[0].imgSrc,
+        photos: zillowData.props[0].photos,
+        images: zillowData.props[0].images
+      });
+    }
     
     if (!zillowData || !zillowData.props || !Array.isArray(zillowData.props)) {
       console.log('No properties found in Zillow response, structure:', Object.keys(zillowData || {}));
       return [];
     }
+    
+    console.log(`📊 Processing ${zillowData.props.length} properties from Zillow API...`);
     
     return zillowData.props.slice(0, params.limit || 50).map((property: any, index: number) => {
       const price = property.price || property.unformattedPrice || 0;
@@ -223,6 +237,21 @@ export class RealEstateAPIService {
       
       // Use Zillow's rentZestimate if available, otherwise calculate using 1% rule
       const estimatedRent = property.rentZestimate || Math.round(price * 0.01 / 12);
+      
+      // Extract property images from Zillow API - Enhanced extraction with detailed logging
+      console.log(`📸 Processing images for property ${index + 1}:`, {
+        address,
+        zpid: property.zpid,
+        availableFields: Object.keys(property).filter(key => 
+          key.toLowerCase().includes('img') || 
+          key.toLowerCase().includes('photo') || 
+          key.toLowerCase().includes('image') ||
+          key.toLowerCase().includes('pic')
+        )
+      });
+      
+      const propertyImages = this.extractPropertyImages(property);
+      console.log(`📸 RESULT: Found ${propertyImages.length} images for ${address}:`, propertyImages.length > 0 ? propertyImages.slice(0, 2) : 'No images extracted');
       
       // Extract tax and insurance data from Zillow API - Enhanced extraction
       console.log(`🔍 Extracting financial data for ${address}:`, {
@@ -243,10 +272,6 @@ export class RealEstateAPIService {
         loanRate: property.loanRate
       });
 
-      // Extract property images from Zillow API
-      const propertyImages = this.extractPropertyImages(property);
-      console.log(`📸 Found ${propertyImages.length} images for ${address}`);
-      
       // Property taxes - try multiple Zillow fields
       const annualPropertyTaxes = property.propertyTaxes || 
                                   property.annualTaxes || 
@@ -780,52 +805,79 @@ export class RealEstateAPIService {
     const images: string[] = [];
     
     try {
-      // Check different possible image fields in Zillow API
+      console.log(`📸 Extracting images for property:`, {
+        zpid: property.zpid,
+        address: property.address,
+        availableFields: Object.keys(property)
+      });
+      
+      // Check different possible image fields in Zillow API (updated based on actual API structure)
       const imageFields = [
-        'photos',           // Main photos array
+        'imgSrc',          // Primary image source (most common in Zillow API)
+        'photo',           // Single photo field  
+        'photos',          // Main photos array
         'images',          // Alternative images array
-        'photo',           // Single photo field
-        'imgSrc',          // Image source field
-        'photoCount',      // Photo count with urls
         'primaryPhoto',    // Primary photo object
         'listingPhotos',   // Listing photos array
         'media',           // Media array
-        'gallery'          // Gallery array
+        'gallery',         // Gallery array
+        'photoUrls',       // Direct photo URLs array
+        'hdpData'          // High-definition photo data
       ];
       
-      console.log(`📸 Checking image fields for property:`, Object.keys(property));
+      // First, try to get the primary image (most reliable)
+      if (property.imgSrc && this.isValidImageUrl(property.imgSrc)) {
+        images.push(property.imgSrc);
+        console.log(`🖼️ Found primary image (imgSrc):`, property.imgSrc);
+      }
       
-      // Try to extract images from various fields
+      // Then try other image fields
       for (const field of imageFields) {
         if (property[field]) {
           console.log(`🖼️ Found ${field} field:`, property[field]);
           
           if (Array.isArray(property[field])) {
             // Handle array of image objects or URLs
-            property[field].forEach((item: any) => {
+            property[field].forEach((item: any, idx: number) => {
               const imageUrl = this.extractImageUrl(item);
               if (imageUrl && !images.includes(imageUrl)) {
                 images.push(imageUrl);
+                console.log(`  ✅ Extracted image ${idx + 1}:`, imageUrl);
               }
             });
-          } else if (typeof property[field] === 'object') {
+          } else if (typeof property[field] === 'object' && property[field] !== null) {
             // Handle single image object
             const imageUrl = this.extractImageUrl(property[field]);
             if (imageUrl && !images.includes(imageUrl)) {
               images.push(imageUrl);
+              console.log(`  ✅ Extracted from object:`, imageUrl);
             }
           } else if (typeof property[field] === 'string' && this.isValidImageUrl(property[field])) {
             // Handle direct URL string
             if (!images.includes(property[field])) {
               images.push(property[field]);
+              console.log(`  ✅ Direct URL:`, property[field]);
             }
           }
         }
       }
       
-      // If no images found, try nested objects
+      // Try nested structures if still no images found
       if (images.length === 0) {
-        // Check for nested image structures
+        console.log(`🔍 No images found in primary fields, checking nested structures...`);
+        
+        // Check hdpData (Zillow's high-definition photo data)
+        if (property.hdpData?.homeInfo?.photos) {
+          property.hdpData.homeInfo.photos.forEach((photo: any, idx: number) => {
+            const imageUrl = this.extractImageUrl(photo);
+            if (imageUrl && !images.includes(imageUrl)) {
+              images.push(imageUrl);
+              console.log(`  ✅ HDP photo ${idx + 1}:`, imageUrl);
+            }
+          });
+        }
+        
+        // Check media nested structures
         if (property.media?.photos) {
           property.media.photos.forEach((photo: any) => {
             const imageUrl = this.extractImageUrl(photo);
@@ -835,18 +887,25 @@ export class RealEstateAPIService {
           });
         }
         
-        // Check for photo URLs in different structures
-        if (property.photoUrls && Array.isArray(property.photoUrls)) {
-          property.photoUrls.forEach((url: string) => {
-            if (this.isValidImageUrl(url) && !images.includes(url)) {
-              images.push(url);
+        // Check for carousel images
+        if (property.carousel && Array.isArray(property.carousel)) {
+          property.carousel.forEach((item: any) => {
+            const imageUrl = this.extractImageUrl(item);
+            if (imageUrl && !images.includes(imageUrl)) {
+              images.push(imageUrl);
             }
           });
         }
       }
       
-      // Log the extraction result
-      console.log(`📸 Extracted ${images.length} images:`, images.slice(0, 3)); // Log first 3 URLs
+      // Log the final extraction result
+      if (images.length > 0) {
+        console.log(`📸 Successfully extracted ${images.length} images for ${property.address || 'property'}`);
+        console.log(`📸 Sample URLs:`, images.slice(0, 3));
+      } else {
+        console.warn(`⚠️ No images found for property:`, property.address || 'unknown');
+        console.log(`Available property fields:`, Object.keys(property));
+      }
       
       // Limit to first 10 images for performance
       return images.slice(0, 10);
@@ -864,19 +923,35 @@ export class RealEstateAPIService {
     }
     
     if (typeof item === 'object' && item !== null) {
-      // Common image URL fields
-      const urlFields = ['url', 'src', 'href', 'link', 'photoUrl', 'imageUrl', 'fullSizeUrl', 'largeUrl', 'mediumUrl'];
+      // Common image URL fields in Zillow API
+      const urlFields = [
+        'url',           // Standard URL field
+        'src',           // Source field
+        'href',          // Link field
+        'link',          // Alternative link field
+        'photoUrl',      // Photo URL field
+        'imageUrl',      // Image URL field
+        'fullSizeUrl',   // Full size image URL
+        'largeUrl',      // Large size URL
+        'mediumUrl',     // Medium size URL
+        'mixedSources',  // Zillow's mixed sources field
+        'webp',          // WebP format URL
+        'jpeg'           // JPEG format URL
+      ];
       
+      // First, try direct URL fields
       for (const field of urlFields) {
         if (item[field] && typeof item[field] === 'string' && this.isValidImageUrl(item[field])) {
           return item[field];
         }
       }
       
-      // Check nested structures
+      // Check for nested image size structures (common in Zillow API)
       if (item.sizes && Array.isArray(item.sizes)) {
         // Find the largest size image
         const largestImage = item.sizes.reduce((largest: any, current: any) => {
+          if (!current.url || !this.isValidImageUrl(current.url)) return largest;
+          
           const currentSize = (current.width || 0) * (current.height || 0);
           const largestSize = (largest?.width || 0) * (largest?.height || 0);
           return currentSize > largestSize ? current : largest;
@@ -885,6 +960,33 @@ export class RealEstateAPIService {
         if (largestImage && largestImage.url) {
           return largestImage.url;
         }
+      }
+      
+      // Check for mixedSources (Zillow's photo structure)
+      if (item.mixedSources) {
+        if (typeof item.mixedSources === 'string' && this.isValidImageUrl(item.mixedSources)) {
+          return item.mixedSources;
+        }
+        
+        if (typeof item.mixedSources === 'object') {
+          // Try different size variants
+          const sizeVariants = ['l', 'xl', 'm', 's']; // Large, extra large, medium, small
+          for (const size of sizeVariants) {
+            if (item.mixedSources[size] && this.isValidImageUrl(item.mixedSources[size])) {
+              return item.mixedSources[size];
+            }
+          }
+        }
+      }
+      
+      // Check for nested image objects
+      if (item.image && typeof item.image === 'object') {
+        return this.extractImageUrl(item.image);
+      }
+      
+      // Check for photo object with nested URL
+      if (item.photo && typeof item.photo === 'object') {
+        return this.extractImageUrl(item.photo);
       }
     }
     
@@ -897,15 +999,57 @@ export class RealEstateAPIService {
     
     // Check if it's a valid URL
     try {
-      new URL(url);
+      const urlObj = new URL(url);
+      
+      // Reject obviously invalid URLs
+      if (!urlObj.hostname) return false;
+      
     } catch {
       return false;
     }
     
-    // Check if it has image extension or is from known image domains
+    // Check if it has image extension or is from known real estate image domains
     const imageExtensions = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i;
-    const imageDomains = ['zillow', 'zillowstatic', 'photos.zillowstatic', 'img.zillowstatic'];
+    const realEstateImageDomains = [
+      'zillow',                    // Main Zillow domain
+      'zillowstatic',             // Zillow's static content domain
+      'photos.zillowstatic',      // Zillow photos subdomain
+      'img.zillowstatic',         // Zillow image subdomain  
+      'p.rdcpix',                 // Realtor.com images
+      'ap.rdcpix',                // Realtor.com additional photos
+      'redfin',                   // Redfin domain
+      'ssl.cdn-redfin',          // Redfin CDN
+      'redfin-assets',           // Redfin assets
+      'mls-images',              // MLS image servers
+      'mlslistings',             // MLS listings images
+      'listingimages'            // Generic listing images
+    ];
     
-    return imageExtensions.test(url) || imageDomains.some(domain => url.includes(domain));
+    // Check for image extensions
+    if (imageExtensions.test(url)) {
+      return true;
+    }
+    
+    // Check for known real estate image domains
+    const hasValidDomain = realEstateImageDomains.some(domain => url.toLowerCase().includes(domain));
+    
+    if (hasValidDomain) {
+      // Additional validation for real estate domains to ensure it's actually an image
+      const hasImageIndicators = [
+        '/photos/',
+        '/images/',
+        '/img/',
+        '/picture',
+        '/photo',
+        '_photo',
+        '-photo',
+        'image',
+        'pic'
+      ].some(indicator => url.toLowerCase().includes(indicator));
+      
+      return hasImageIndicators;
+    }
+    
+    return false;
   }
 }

@@ -78,11 +78,34 @@ export const getOptimizedImageUrl = (property: {
 }, width: number = 400, height: number = 300, quality: number = 80): string => {
   const baseUrl = getPropertyImageUrl(property);
   
+  // If it's a Zillow image, try to optimize it with their sizing parameters
+  if (baseUrl.includes('zillowstatic.com') || baseUrl.includes('zillow')) {
+    // Zillow images often have size parameters that can be modified
+    // Example: https://photos.zillowstatic.com/fp/abc123_def456-cc_ft_768.jpg
+    // We can try to replace size indicators
+    let optimizedUrl = baseUrl;
+    
+    // Try to replace existing size parameters in Zillow URLs
+    optimizedUrl = optimizedUrl.replace(/_\d+x\d+/g, `_${width}x${height}`);
+    optimizedUrl = optimizedUrl.replace(/_cc_ft_\d+/g, `_cc_ft_${Math.max(width, height)}`);
+    optimizedUrl = optimizedUrl.replace(/_[sml]\./, `_${width >= 400 ? 'l' : width >= 200 ? 'm' : 's'}.`);
+    
+    // If no size parameters were found, try to add them
+    if (optimizedUrl === baseUrl) {
+      // Try to insert size parameters before file extension
+      optimizedUrl = optimizedUrl.replace(/(\.[a-z]{3,4})(\?.*)?$/, `_${width}x${height}$1$2`);
+    }
+    
+    return optimizedUrl;
+  }
+  
   // If it's an Unsplash image, we can optimize it
   if (baseUrl.includes('unsplash.com')) {
     return baseUrl.replace(/w=\d+&h=\d+/, `w=${width}&h=${height}`).replace(/q=\d+/, `q=${quality}`);
   }
   
+  // For Redfin or other real estate sites, return as-is
+  // (they usually don't support URL-based optimization)
   return baseUrl;
 };
 
