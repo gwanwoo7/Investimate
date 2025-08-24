@@ -572,6 +572,7 @@ export class EnhancedRealEstateAPIService {
   // ULTRA-CONSERVATIVE CASH-ON-CASH ROI FOCUSED INVESTMENT METRICS CALCULATION
   private static calculateInvestmentMetrics(property: PropertyData, monthlyRent: number) {
     console.log(`💰 ENHANCED SERVICE: Calculating ultra-conservative investment metrics for ${property.address}`);
+    console.log(`🔍 QA DEBUG: Input values - Price: $${property.purchasePrice}, Rent: $${monthlyRent}`);
     
     // Fetch monthly mortgage (Principal & Interest) from API data
     const monthlyMortgage = property.mortgagePayment?.total || this.calculateMortgagePayment(property.purchasePrice);
@@ -623,6 +624,8 @@ export class EnhancedRealEstateAPIService {
     // Investment scoring (1-10 scale) - COC ROI FOCUSED with REASONABLE thresholds
     // Score is 80% based on Cash-on-Cash ROI with practical investment criteria
     let score = 3.0; // Reasonable base score for neutral properties
+
+    console.log(`🔍 QA DEBUG: Pre-scoring values - CoC ROI: ${cashOnCashReturn.toFixed(1)}%, Monthly Cash Flow: $${monthlyNetCashFlow.toFixed(0)}`);
 
     // --- PRIMARY: CASH-ON-CASH ROI (80% weight, practical thresholds) ---
     if (cashOnCashReturn >= 20) {
@@ -703,6 +706,7 @@ export class EnhancedRealEstateAPIService {
     console.log(`📊 Cap Rate: ${capRate.toFixed(1)}%`);
     console.log(`🏆 REASONABLE Investment Score: ${score.toFixed(1)}/10 (${rank}) - 12%+ CoC ROI = Excellent`);
     console.log(`💡 Total Cash Invested: $${totalCashInvested.toFixed(0)} (25% down + 3% closing)`);
+    console.log(`🔍 QA FINAL: ${property.address} - CoC ROI: ${cashOnCashReturn.toFixed(1)}% → Score: ${score.toFixed(1)}/10`);
     
     // Market reality warnings
     if (cashOnCashReturn > 25) {
