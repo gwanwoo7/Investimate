@@ -465,6 +465,12 @@ export default function SubscriptionPage({ onBack, onSubscriptionSuccess }: Subs
                 Cancel anytime from your account settings.
               </Typography>
             </Alert>
+
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>Test Mode:</strong> Use test card <strong>4242424242424242</strong> with any future expiry date, CVC 123, and ZIP 12345. No real money will be charged.
+              </Typography>
+            </Alert>
             
             {paymentError && (
               <Alert severity="error" sx={{ mb: 2 }}>
