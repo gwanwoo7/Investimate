@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51Ru3iJFDHpK
 
 async function getPriceId() {
   try {
-    const productId = 'prod_Sts092Vx8bnEGz';
+    const productId = 'prod_SttLdukjZSxFFc'; // Investimate Pro
     
     // Get all prices for this product
     const prices = await stripe.prices.list({
