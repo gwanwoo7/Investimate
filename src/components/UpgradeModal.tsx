@@ -32,6 +32,7 @@ import { membershipService } from '../services/SecureMembershipService';
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
+  onUpgrade: () => void; // Add callback for upgrade action
   feature?: string;
   currentUsage?: {
     used: number;
@@ -42,6 +43,7 @@ interface UpgradeModalProps {
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   open,
   onClose,
+  onUpgrade,
   feature,
   currentUsage
 }) => {
@@ -100,8 +102,8 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   };
 
   const handleUpgradeClick = () => {
-    // Redirect to your Stripe checkout or payment component
-    window.location.href = '/upgrade';
+    // Use the provided callback instead of direct navigation
+    onUpgrade();
   };
 
   const features = [

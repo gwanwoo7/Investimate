@@ -1037,6 +1037,10 @@ function App() {
         <UpgradeModal
           open={showUpgradeModal}
           onClose={() => setShowUpgradeModal(false)}
+          onUpgrade={() => {
+            setShowUpgradeModal(false);
+            handleShowSubscription();
+          }}
           feature="Property Search"
           currentUsage={{
             used: 5 - searchesRemaining,
