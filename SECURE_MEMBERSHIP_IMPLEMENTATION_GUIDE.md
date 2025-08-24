@@ -68,12 +68,12 @@ This guide shows you how to implement the enterprise-grade secure membership sys
    
    // Pro Monthly Plan
    Product: "Investimate Pro"
-   Price: $29/month
+   Price: $4.99/month
    Price ID: price_pro_monthly_xxx
    
    // Pro Yearly Plan (with discount)
    Product: "Investimate Pro"
-   Price: $290/year (17% discount)
+   Price: $49.99/year (17% discount)
    Price ID: price_pro_yearly_xxx
    ```
 

@@ -40,6 +40,7 @@ import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignUpData } from '../services/supabaseAuthService';
+import EmailVerificationModal from './EmailVerificationModal';
 import TermsOfService from './TermsOfService';
 import PrivacyPolicy from './PrivacyPolicy';
 
@@ -66,6 +67,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
   const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
 
   const db = DatabaseService.getInstance();
   const oauthService = OAuthService.getInstance();
@@ -189,7 +191,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
       if (supabaseAuth.isConfigured()) {
         console.log('🔐 Using Supabase authentication...');
         
-        const { user: supabaseUser, error } = await supabaseAuth.signUp({
+        const { user: supabaseUser, error, needsVerification } = await supabaseAuth.signUp({
           email,
           password,
           name
@@ -210,17 +212,17 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
             console.log('ℹ️ Local user creation skipped (may already exist)');
           }
 
-          if (!supabaseUser.emailVerified) {
+          if (needsVerification) {
+            // Show email verification modal
+            setShowEmailVerification(true);
+            const proMessage = finalProStatus ? ' Pro membership will be activated after verification!' : '';
+            setSuccess(`Account created successfully!${proMessage} Please check your email and click the verification link.`);
+          } else {
+            // User is already verified (shouldn't happen with email signup, but handle gracefully)
             const proMessage = finalProStatus ? ' Pro membership activated with promo code!' : '';
-            setSuccess(`Account created!${proMessage} Please check your email for verification link before signing in.`);
+            setSuccess(`Account created and verified!${proMessage} You can now sign in.`);
             setError('');
             // Don't auto-login until email is verified
-          } else {
-            const proMessage = finalProStatus ? ' Pro membership activated!' : '';
-            setSuccess(`Account created and verified successfully!${proMessage} Redirecting...`);
-            setTimeout(() => {
-              onSignup(supabaseUser.email);
-            }, 1500);
           }
         }
       } else {
@@ -793,6 +795,17 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Email Verification Modal */}
+      <EmailVerificationModal
+        open={showEmailVerification}
+        onClose={() => setShowEmailVerification(false)}
+        email={email}
+        onVerificationComplete={() => {
+          setShowEmailVerification(false);
+          onSignup(email);
+        }}
+      />
     </Box>
   );
 }

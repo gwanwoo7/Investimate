@@ -779,7 +779,7 @@ function App() {
                         onClick={handleShowPayment}
                         sx={{ bgcolor: '#ffc107', color: 'black', '&:hover': { bgcolor: '#ffb300' } }}
                       >
-                        Upgrade to Pro - $29/month
+                        Upgrade to Pro - $4.99/month
                       </Button>
                     </Box>
                   )}
@@ -1043,7 +1043,7 @@ function App() {
             limit: 5
           }}
         />
-      </Box>
+            </Box>
     </ThemeProvider>
   );
 }

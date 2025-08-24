@@ -62,9 +62,9 @@ class SupabaseAuthService {
   }
 
   /**
-   * Sign up with email and password
+   * Sign up with email and password - requires email verification
    */
-  async signUp(data: SignUpData): Promise<{ user: AuthUser | null; error: string | null }> {
+  async signUp(data: SignUpData): Promise<{ user: AuthUser | null; error: string | null; needsVerification?: boolean }> {
     if (!this.supabase) {
       return { user: null, error: 'Supabase not configured' }
     }
@@ -76,7 +76,9 @@ class SupabaseAuthService {
         options: {
           data: {
             name: data.name,
-          }
+          },
+          // Set email confirmation URL for production
+          emailRedirectTo: `${window.location.origin}/auth/verify-email`
         }
       })
 
@@ -94,7 +96,15 @@ class SupabaseAuthService {
           provider: 'email',
           createdAt: authData.user.created_at
         }
-        return { user, error: null }
+        
+        // Check if email confirmation is required
+        const needsVerification = !authData.user.email_confirmed_at && !authData.session
+        
+        return { 
+          user, 
+          error: null, 
+          needsVerification 
+        }
       }
 
       return { user: null, error: 'Failed to create user' }

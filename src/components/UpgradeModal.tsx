@@ -278,13 +278,13 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                     Pro Plan
                   </Typography>
                   <Typography variant="h4" color="primary">
-                    $29
+                    $4.99
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     per month
                   </Typography>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Or $290/year (save 17%)
+                    Or $49.99/year (save 17%)
                   </Typography>
                   {(userTier === 'pro' || userTier === 'trial') && (
                     <Chip 

@@ -154,7 +154,7 @@ Your Investimate application now has a **production-ready, enterprise-grade memb
 ### **EASY CUSTOMIZATIONS** (No Code Changes)
 - Trial duration (currently 14 days)
 - Feature limits (currently 5 searches, 3 analyses for free)
-- Pricing (currently $29/month, $290/year)
+- Pricing (currently $4.99/month, $49.99/year)
 - Feature names and descriptions
 
 ### **MEDIUM CUSTOMIZATIONS** (Minor Code Changes)

@@ -53,7 +53,7 @@ Change from $0.01 test to real pricing:
 
 ```typescript
 // In your payment component
-const priceAmount = 2999; // $29.99 for Pro subscription
+const priceAmount = 499; // $4.99 for Pro subscription
 const currency = 'usd';
 ```
 
