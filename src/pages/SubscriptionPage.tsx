@@ -18,7 +18,9 @@ import {
   DialogContent,
   TextField,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  InputAdornment,
+  alpha
 } from '@mui/material';
 import {
   Check,
@@ -28,7 +30,10 @@ import {
   Analytics,
   Support,
   CreditCard,
-  Lock
+  Lock,
+  LocalOffer,
+  CheckCircle,
+  Cancel
 } from '@mui/icons-material';
 import { loadStripe } from '@stripe/stripe-js';
 import {
@@ -38,6 +43,7 @@ import {
   useElements
 } from '@stripe/react-stripe-js';
 import NavigationBar from '../components/NavigationBar';
+import { useTheme } from '@mui/material/styles';
 
 // Initialize Stripe with Vite environment variable
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
@@ -65,9 +71,33 @@ const CARD_ELEMENT_OPTIONS = {
 function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: (error: string) => void }) {
   const stripe = useStripe();
   const elements = useElements();
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
+
+  const validatePromoCode = (code: string): boolean => {
+    // Beta test promo codes for Pro membership
+    const validPromoCodes = [
+      'BETA2025',
+      'INVESTIMATE_BETA', 
+      'PRO_BETA_TEST',
+      'EARLYACCESS2025'
+    ];
+    return validPromoCodes.includes(code.toUpperCase());
+  };
+
+  const handlePromoCodeChange = (code: string) => {
+    setPromoCode(code);
+    if (code.length > 0) {
+      const isValid = validatePromoCode(code);
+      setPromoCodeValid(isValid);
+    } else {
+      setPromoCodeValid(null);
+    }
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -79,13 +109,53 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
 
     setLoading(true);
 
-    const cardElement = elements.getElement(CardElement);
+    try {
+      // Check if valid promo code - if so, skip payment and directly upgrade
+      if (promoCodeValid === true) {
+        console.log('✅ Valid promo code detected, upgrading user directly...');
+        
+        // Update local database immediately for promo code upgrade
+        const databaseService = await import('../services/databaseService');
+        const db = databaseService.default.getInstance();
+        
+        // Get current user and update their subscription status
+        const currentUser = db.getCurrentUser();
+        if (currentUser) {
+          console.log('🔄 Updating user subscription status to Pro with promo code...');
+          const updatedUser = db.updateUserSubscription(currentUser.id, true);
+          if (updatedUser) {
+            // Update current user session immediately
+            db.setCurrentUser({ ...updatedUser, isSubscribed: true });
+            console.log('✅ User subscription updated successfully to Pro with promo code!');
+            
+            // Store promo upgrade info
+            localStorage.setItem('promo_upgrade', 'true');
+            localStorage.setItem('promo_code_used', promoCode);
+          }
+        } else {
+          // Create new user if somehow they don't exist
+          console.log('⚠️ No current user found, creating new Pro user with promo code...');
+          const newUser = await db.createUser(email, 'promo_temp_password', name, true);
+          db.setCurrentUser(newUser);
+          
+          // Store promo upgrade info
+          localStorage.setItem('promo_upgrade', 'true');
+          localStorage.setItem('promo_code_used', promoCode);
+        }
+        
+        setLoading(false);
+        onSuccess();
+        return;
+      }
 
-    if (!cardElement) {
-      onError('Card information is required.');
-      setLoading(false);
-      return;
-    }
+      // Regular payment flow if no valid promo code
+      const cardElement = elements.getElement(CardElement);
+
+      if (!cardElement) {
+        onError('Card information is required.');
+        setLoading(false);
+        return;
+      }
 
     try {
       // Create payment method
@@ -211,15 +281,72 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           required
           sx={{ mb: 2 }}
         />
+
+        {/* Promo Code Section */}
+        <Box sx={{ 
+          border: '1px dashed', 
+          borderColor: 'secondary.main', 
+          borderRadius: 2, 
+          p: 2, 
+          mb: 2,
+          bgcolor: alpha(theme.palette.secondary.main, 0.05)
+        }}>
+          <Typography variant="body2" fontWeight="bold" color="secondary.main" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LocalOffer fontSize="small" />
+            Beta Test Promo Code (Optional)
+          </Typography>
+          <TextField
+            fullWidth
+            size="small"
+            label="Enter promo code"
+            value={promoCode}
+            onChange={(e) => handlePromoCodeChange(e.target.value)}
+            disabled={loading}
+            placeholder="BETA2025"
+            InputProps={{
+              endAdornment: promoCodeValid !== null && (
+                <InputAdornment position="end">
+                  {promoCodeValid ? (
+                    <CheckCircle color="success" fontSize="small" />
+                  ) : (
+                    <Cancel color="error" fontSize="small" />
+                  )}
+                </InputAdornment>
+              ),
+            }}
+            sx={{ 
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 1,
+              }
+            }}
+          />
+          {promoCodeValid === true && (
+            <Alert severity="success" sx={{ mt: 1 }}>
+              <Typography variant="caption">
+                🎉 Valid promo code! Pro membership will be activated for free!
+              </Typography>
+            </Alert>
+          )}
+          {promoCodeValid === false && (
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              <Typography variant="caption">
+                Invalid promo code. Payment will be required.
+              </Typography>
+            </Alert>
+          )}
+        </Box>
       </Box>
 
-      <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
-        <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <CreditCard fontSize="small" />
-          Card Information
-        </Typography>
-        <CardElement options={CARD_ELEMENT_OPTIONS} />
-      </Paper>
+      {/* Card Information - only show if no valid promo code */}
+      {promoCodeValid !== true && (
+        <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+          <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CreditCard fontSize="small" />
+            Card Information {promoCodeValid === true ? '(Not Required - Using Promo Code)' : ''}
+          </Typography>
+          <CardElement options={CARD_ELEMENT_OPTIONS} />
+        </Paper>
+      )}
 
       <Button
         type="submit"
@@ -235,7 +362,9 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
             Processing...
           </Box>
         ) : (
-          '        Subscribe Now - $4.99/month'
+          promoCodeValid === true 
+            ? 'Activate Pro Membership - FREE with Promo Code!'
+            : 'Subscribe Now - $4.99/month'
         )}
       </Button>
 
