@@ -157,7 +157,6 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         return;
       }
 
-    try {
       // Create payment method
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
@@ -342,7 +341,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         <Paper sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
           <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CreditCard fontSize="small" />
-            Card Information {promoCodeValid === true ? '(Not Required - Using Promo Code)' : ''}
+            Card Information
           </Typography>
           <CardElement options={CARD_ELEMENT_OPTIONS} />
         </Paper>
