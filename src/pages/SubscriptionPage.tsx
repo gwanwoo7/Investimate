@@ -114,7 +114,7 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           paymentMethodId: paymentMethod.id,
           email,
           name,
-          priceId: 'price_1QVKJfGFYvLxqOWTEqgbDtD8', // Pro monthly price
+          priceId: 'price_1Ry4GMFRF3NKWm9LaMXes4Bf', // Pro monthly price
         }),
       });
 

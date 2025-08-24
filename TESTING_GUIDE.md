@@ -39,14 +39,18 @@
 3. Should open comprehensive modal with charts, tables, projections
 
 ### 6. Stripe Payment Integration 💳
-**Expected:** Pro upgrade flow with Stripe checkout
+**Expected:** Pro upgrade flow with Stripe checkout at $4.99/month
 **Test:**
 1. Trigger UpgradeModal (by exceeding search limit)
-2. Click "Upgrade to Pro" button
+2. Click "Upgrade to Pro - $4.99/month" button
 3. Should redirect to Stripe checkout page
 4. Use test card: 4242 4242 4242 4242
 5. Complete payment and return to app
 6. Should have Pro features unlocked
+
+**🚨 Common Error:** "No such price: 'price_1QVKJfGFYvLxqOWTEqgbDtD8'"
+**Fix:** Create product in Stripe Dashboard and update price ID in SubscriptionPage.tsx
+**See:** FIX_STRIPE_PRICE_ERROR.md for complete setup guide
 
 ### 7. Navigation 🧭
 **Expected:** Tabs should work, proper routing between pages
