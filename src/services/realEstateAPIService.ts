@@ -554,48 +554,73 @@ export class RealEstateAPIService {
     const netOperatingIncome = (monthlyRent * 12) - annualOperatingExpenses;
     const capRate = (netOperatingIncome / property.purchasePrice) * 100;
     
-    // Investment scoring (1-10 scale) - PRIMARY FOCUS ON CASH-ON-CASH ROI
-    let score = 3; // Lower base score to emphasize CoC ROI importance
-    
-    // CASH-ON-CASH ROI - Primary scoring factor (60% weight)
-    if (cashOnCashReturn > 20) score += 4;        // Exceptional: 20%+ CoC ROI
-    else if (cashOnCashReturn > 15) score += 3.5; // Excellent: 15-20% CoC ROI
-    else if (cashOnCashReturn > 12) score += 3;   // Very Good: 12-15% CoC ROI
-    else if (cashOnCashReturn > 8) score += 2;    // Good: 8-12% CoC ROI
-    else if (cashOnCashReturn > 6) score += 1;    // Fair: 6-8% CoC ROI
-    else if (cashOnCashReturn > 4) score += 0.5;  // Below Average: 4-6% CoC ROI
-    else if (cashOnCashReturn < 2) score -= 3;    // Poor: <2% CoC ROI
-    else if (cashOnCashReturn < 4) score -= 1.5;  // Below Market: 2-4% CoC ROI
-    
-    // CASH FLOW - Secondary factor (25% weight)
-    if (monthlyNetCashFlow > 500) score += 1.5;
-    else if (monthlyNetCashFlow > 300) score += 1;
-    else if (monthlyNetCashFlow > 100) score += 0.5;
-    else if (monthlyNetCashFlow < 0) score -= 2;
-    
-    // CAP RATE - Tertiary factor (15% weight) 
-    if (capRate > 10) score += 1;
-    else if (capRate > 8) score += 0.5;
-    else if (capRate < 5) score -= 0.5;
-    
-    // Adjust score based on property condition and features
-    if (property.propertyCondition === 'excellent') score += 0.5;
-    else if (property.propertyCondition === 'poor') score -= 1;
-    
-    if (property.yearBuilt && property.yearBuilt > 2000) score += 0.5;
-    else if (property.yearBuilt && property.yearBuilt < 1980) score -= 0.5;
-    
-    score = Math.max(1, Math.min(10, score)); // Clamp between 1-10
-    
+    // Investment scoring (1-10 scale) - ULTRA CONSERVATIVE, REALITY-BASED
+    let score = 1.5; // Even lower base score
+
+    // --- PRIMARY: CASH-ON-CASH ROI (60% weight, but more strict) ---
+    if (cashOnCashReturn > 30) score += 2.5; // Practically impossible, likely data error
+    else if (cashOnCashReturn > 20) score += 1.5;
+    else if (cashOnCashReturn > 15) score += 1.0;
+    else if (cashOnCashReturn > 12) score += 0.7;
+    else if (cashOnCashReturn > 10) score += 0.4;
+    else if (cashOnCashReturn > 8) score += 0.2;
+    else if (cashOnCashReturn < 4) score -= 1.5;
+    else if (cashOnCashReturn < 2) score -= 2.5;
+
+    // --- SECONDARY: CASH FLOW (20% weight, more strict) ---
+    if (monthlyNetCashFlow > 800) score += 0.7;
+    else if (monthlyNetCashFlow > 500) score += 0.4;
+    else if (monthlyNetCashFlow > 200) score += 0.2;
+    else if (monthlyNetCashFlow < 0) score -= 1.5;
+    else if (monthlyNetCashFlow < -100) score -= 2.5;
+
+    // --- TERTIARY: CAP RATE (10% weight, more strict) ---
+    if (capRate > 12) score += 0.5;
+    else if (capRate > 10) score += 0.3;
+    else if (capRate > 8) score += 0.1;
+    else if (capRate < 4) score -= 0.5;
+
+    // --- Market Reality Checks ---
+    // Penalize if price is very low and rent is high (likely distressed or data error)
+    if (property.purchasePrice < 60000 && monthlyRent > 1200) {
+      score -= 1.5;
+      console.log(`⚠️ Unrealistic rent/price combo detected: $${monthlyRent}/mo rent on $${property.purchasePrice} price - heavy penalty`);
+    }
+    // Penalize if both CoC ROI and Cap Rate are very high
+    if (cashOnCashReturn > 20 && capRate > 10) {
+      score -= 1.5;
+      console.log(`⚠️ Suspiciously high returns detected: CoC ${cashOnCashReturn.toFixed(1)}%, Cap Rate ${capRate.toFixed(1)}% - strong reality penalty`);
+    }
+    // Penalize if price is very low (distressed, likely not financeable)
+    if (property.purchasePrice < 40000) {
+      score -= 1.0;
+      console.log(`⚠️ Price below $40k - likely not financeable, strong penalty`);
+    }
+
+    // --- Property quality adjustments (very small impact) ---
+    if (property.propertyCondition === 'excellent') score += 0.1;
+    else if (property.propertyCondition === 'poor') score -= 0.3;
+
+    if (property.yearBuilt && property.yearBuilt > 2010) score += 0.1;
+    else if (property.yearBuilt && property.yearBuilt < 1970) score -= 0.2;
+
+    // --- HARD CAP: If any metric is below threshold, max score is 6 ---
+    if (cashOnCashReturn < 6 || monthlyNetCashFlow < 100 || capRate < 5) {
+      score = Math.min(score, 6);
+    }
+
+    // Clamp between 1 and 9 (Excellent should be extremely rare)
+    score = Math.max(1, Math.min(9, score));
+
     let rank: 'Excellent' | 'Good' | 'Fair' | 'Poor';
-    // Adjusted rankings to reflect CoC ROI focus
-    if (score >= 7.5) rank = 'Excellent'; // 15%+ CoC ROI typically
-    else if (score >= 6) rank = 'Good';    // 8-15% CoC ROI typically  
-    else if (score >= 4) rank = 'Fair';    // 4-8% CoC ROI typically
-    else rank = 'Poor';                    // <4% CoC ROI typically
+    // Ultra-conservative rankings
+    if (score >= 8.5) rank = 'Excellent';       // Only the best deals
+    else if (score >= 7) rank = 'Good';         // Solid, rare
+    else if (score >= 5.5) rank = 'Fair';       // Acceptable
+    else rank = 'Poor';                         // Most properties
     
-    // Enhanced logging with CoC ROI focus
-    console.log(`💰 ${property.address} - CoC ROI Focused Analysis:`);
+    // Enhanced logging with conservative CoC ROI approach
+    console.log(`💰 ${property.address} - CONSERVATIVE CoC ROI Analysis:`);
     console.log(`📊 Operating Cost Breakdown:`);
     console.log(`   - Property Management: $${propertyManagement.toFixed(0)}/mo (10% of rent)`);
     console.log(`   - Property Taxes: $${monthlyPropertyTaxes.toFixed(0)}/mo (${property.monthlyPropertyTaxes ? 'from Zillow API' : 'estimated'})`);
@@ -607,10 +632,19 @@ export class RealEstateAPIService {
     console.log(`📈 Total Operating Cost: $${totalOperatingCost.toFixed(0)}/mo`);
     console.log(`🏠 Monthly Mortgage P&I: $${monthlyMortgage.toFixed(0)}/mo (${property.mortgagePayment ? 'from Zillow API' : 'calculated'})`);
     console.log(`💵 Monthly Rent: $${monthlyRent.toFixed(0)}`);
-    console.log(`� Monthly Net Cash Flow: $${monthlyNetCashFlow.toFixed(0)} (Rent - Operating Cost - Mortgage)`);
+    console.log(`💳 Monthly Net Cash Flow: $${monthlyNetCashFlow.toFixed(0)} (Rent - Operating Cost - Mortgage)`);
     console.log(`🎯 CASH-ON-CASH ROI: ${cashOnCashReturn.toFixed(1)}% ⭐ PRIMARY RANKING FACTOR`);
-    console.log(`📊 Investment Score: ${score.toFixed(1)}/10 (${rank}) - CoC ROI Weighted`);
+    console.log(`📊 Cap Rate: ${capRate.toFixed(1)}%`);
+    console.log(`🏆 CONSERVATIVE Investment Score: ${score.toFixed(1)}/10 (${rank}) - Realistic Market Assessment`);
     console.log(`💡 Total Cash Invested: $${totalCashInvested.toFixed(0)} (25% down + 3% closing)`);
+    
+    // Market reality warnings
+    if (cashOnCashReturn > 20) {
+      console.log(`⚠️ WARNING: ${cashOnCashReturn.toFixed(1)}% CoC ROI is exceptionally high - verify rent estimates are realistic`);
+    }
+    if (monthlyNetCashFlow > 500) {
+      console.log(`⚠️ WARNING: $${monthlyNetCashFlow.toFixed(0)}/mo cash flow is very high - double-check all assumptions`);
+    }
     
     return {
       estimatedRent: monthlyRent,
@@ -776,15 +810,6 @@ export class RealEstateAPIService {
         purchasePrice: 150000,
         marketValue: 150000,
         bedrooms: 4,
-        bathrooms: 2,
-        squareFootage: 1800,
-        yearBuilt: 2005,
-        propertyType: 'single-family',
-        monthlyRent: 1450,
-        source: 'Demo Data',
-        latitude: 33.5226,
-        longitude: -86.8144,
-        monthlyHoaFee: 0,
         annualPropertyTaxes: 2250,
         monthlyPropertyTaxes: 187,
         annualInsurance: 900,
