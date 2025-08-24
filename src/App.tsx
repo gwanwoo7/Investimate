@@ -17,6 +17,7 @@ import ContactPage from './pages/ContactPage';
 import SubscriptionPage from './pages/SubscriptionPage';
 import NavigationBar from './components/NavigationBar';
 import DatabaseService from './services/databaseService';
+import { SupabaseUserService } from './services/supabaseService';
 import { membershipService } from './services/SecureMembershipService';
 import { UpgradeModal } from './components/UpgradeModal';
 import { useState, useEffect } from 'react';
@@ -262,6 +263,15 @@ const theme = createTheme({
 });
 
 function App() {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
   const [userTier, setUserTier] = useState('free');

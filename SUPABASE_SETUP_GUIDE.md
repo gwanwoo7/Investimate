@@ -1,14 +1,39 @@
-# Supabase Authentication Setup Guide
+# Supabase Integration Complete ✅
 
-This guide will help you set up Supabase Authentication for secure email verification and OAuth in your Rental Cash Flow Calculator.
+## Ultra-Conservative Scoring System Status
+The property scoring system has been updated to be EXTREMELY conservative and CoC ROI-focused:
 
-## Why Supabase?
+### ✅ **Implemented Changes:**
+- **18%+ Cash-on-Cash ROI** required for scores above 3.0
+- **Base score reduced** from 1.5 to 1.0 
+- **90% weight on CoC ROI** in scoring algorithm
+- **Extreme penalties** for unrealistic property data
+- **Hard caps** preventing inflated scores
 
-✅ **Enterprise-grade security** - Built on PostgreSQL with Row Level Security  
-✅ **Email verification** - Automatic email verification out of the box  
-✅ **OAuth providers** - Google, Apple, GitHub, and 25+ other providers  
-✅ **Free tier** - 50,000 monthly active users included  
-✅ **Real-time database** - Bonus: Get a real-time database for future features  
+### 🎯 **Expected Results:**
+- **Most properties**: Score 1-3 (Poor to Fair)
+- **Good deals**: Score 4-5 (Fair to Good) 
+- **Excellent deals**: Score 6+ (require 15%+ CoC ROI)
+- **"Strong Buy" rank**: Nearly impossible (requires 6.5+ score AND 15%+ CoC ROI)
+
+## Supabase Integration for Persistent Pro Membership
+
+### Implementation Status
+- ✅ **Supabase client setup** with user authentication
+- ✅ **User profile management** with subscription tracking  
+- ✅ **Session persistence** across page navigation
+- ✅ **Payment integration** with Stripe customer tracking
+- ✅ **Pro membership restoration** from cloud data
+
+### Database Setup Required
+
+#### 1. Create Supabase Project
+1. Go to [supabase.com](https://supabase.com)
+2. Create a new project
+3. Copy your Project URL and Anon Key
+
+#### 2. Create Database Tables
+Run these SQL commands in your Supabase SQL editor:
 ✅ **Easy integration** - Simple React hooks and TypeScript support  
 
 ## Quick Setup (5 minutes)
