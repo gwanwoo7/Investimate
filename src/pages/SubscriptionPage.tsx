@@ -118,6 +118,9 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         const databaseService = await import('../services/databaseService');
         const db = databaseService.default.getInstance();
         
+        // Also sync with Supabase if configured
+        const { membershipService } = await import('../services/SecureMembershipService');
+        
         // Get current user and update their subscription status
         const currentUser = db.getCurrentUser();
         if (currentUser) {
@@ -131,6 +134,16 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
             // Store promo upgrade info
             localStorage.setItem('promo_upgrade', 'true');
             localStorage.setItem('promo_code_used', promoCode);
+            
+            // SYNC WITH SUPABASE: Update subscription status
+            try {
+              await membershipService.updateUserProfile({
+                subscription_status: 'pro'
+              });
+              console.log('✅ Promo upgrade synced to Supabase');
+            } catch (supabaseError) {
+              console.warn('⚠️ Supabase sync failed for promo upgrade:', supabaseError);
+            }
           }
         } else {
           // Create new user if somehow they don't exist
@@ -141,6 +154,18 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           // Store promo upgrade info
           localStorage.setItem('promo_upgrade', 'true');
           localStorage.setItem('promo_code_used', promoCode);
+          
+          // SYNC WITH SUPABASE: Create user profile
+          try {
+            await membershipService.updateUserProfile({
+              email,
+              full_name: name,
+              subscription_status: 'pro'
+            });
+            console.log('✅ New promo user synced to Supabase');
+          } catch (supabaseError) {
+            console.warn('⚠️ Supabase sync failed for new promo user:', supabaseError);
+          }
         }
         
         setLoading(false);
@@ -201,6 +226,9 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
         const databaseService = await import('../services/databaseService');
         const db = databaseService.default.getInstance();
         
+        // Also sync with Supabase if configured
+        const { membershipService } = await import('../services/SecureMembershipService');
+        
         // Get current user and update their subscription status
         const currentUser = db.getCurrentUser();
         if (currentUser) {
@@ -214,6 +242,18 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
             // Store Stripe customer info for future reference
             localStorage.setItem('stripe_customer_id', data.customerId);
             localStorage.setItem('stripe_subscription_id', data.subscriptionId);
+            
+            // SYNC WITH SUPABASE: Update subscription in Supabase if available
+            try {
+              await membershipService.updateUserProfile({
+                subscription_status: 'pro',
+                stripe_customer_id: data.customerId,
+                stripe_subscription_id: data.subscriptionId
+              });
+              console.log('✅ Supabase subscription status synced');
+            } catch (supabaseError) {
+              console.warn('⚠️ Supabase sync failed, but local storage updated:', supabaseError);
+            }
           }
         } else {
           // Create new user if somehow they don't exist
@@ -224,6 +264,20 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           // Store Stripe info
           localStorage.setItem('stripe_customer_id', data.customerId);
           localStorage.setItem('stripe_subscription_id', data.subscriptionId);
+          
+          // SYNC WITH SUPABASE: Create user profile in Supabase
+          try {
+            await membershipService.updateUserProfile({
+              email,
+              full_name: name,
+              subscription_status: 'pro',
+              stripe_customer_id: data.customerId,
+              stripe_subscription_id: data.subscriptionId
+            });
+            console.log('✅ New user synced to Supabase');
+          } catch (supabaseError) {
+            console.warn('⚠️ Supabase sync failed for new user:', supabaseError);
+          }
         }
         
         onSuccess();
@@ -239,12 +293,23 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess: () => void; onError: 
           // CRITICAL FIX: Also update database after payment confirmation
           const databaseService = await import('../services/databaseService');
           const db = databaseService.default.getInstance();
+          const { membershipService } = await import('../services/SecureMembershipService');
           
           const currentUser = db.getCurrentUser();
           if (currentUser) {
             const updatedUser = db.updateUserSubscription(currentUser.id, true);
             if (updatedUser) {
               db.setCurrentUser({ ...updatedUser, isSubscribed: true });
+              
+              // SYNC WITH SUPABASE after 3D Secure
+              try {
+                await membershipService.updateUserProfile({
+                  subscription_status: 'pro'
+                });
+                console.log('✅ 3D Secure confirmation synced to Supabase');
+              } catch (supabaseError) {
+                console.warn('⚠️ Supabase sync failed after 3D Secure:', supabaseError);
+              }
             }
           }
           

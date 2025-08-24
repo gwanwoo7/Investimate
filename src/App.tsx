@@ -293,11 +293,12 @@ function App() {
   // Restore user session on app startup and check membership status
   useEffect(() => {
     console.log('🔄 App starting - checking for existing user session...');
-    checkUserMembership();
+    restoreUserSession();
   }, []);
 
-  const checkUserMembership = async () => {
+    const restoreUserSession = async () => {
     try {
+      // First check Supabase for persistent user session
       const status = await membershipService.checkSubscriptionStatus();
       setUserTier(status.tier);
       
@@ -325,19 +326,53 @@ function App() {
           setSearchesRemaining(access.remaining || 0);
         }
         
-        console.log('📊 User session restored successfully');
+        console.log('📊 User session restored successfully from Supabase');
+      } else {
+        // FALLBACK: Check if user has Stripe subscription info but lost local session
+        const stripeCustomerId = localStorage.getItem('stripe_customer_id');
+        const stripeSubscriptionId = localStorage.getItem('stripe_subscription_id');
+        
+        if (stripeCustomerId && stripeSubscriptionId) {
+          console.log('🔄 Found Stripe info without user session, attempting recovery...');
+          // Try to restore subscription status
+          if (status.isActive && status.tier === 'pro') {
+            // Create minimal user session for Pro users who lost their local data
+            const recoveredUser = {
+              email: 'recovered@user.com', // This should be fetched from Stripe/Supabase
+              isSubscribed: true,
+              name: 'Pro User',
+              id: 'recovered-' + Date.now()
+            };
+            setUser(recoveredUser);
+            console.log('✅ Pro subscription recovered from Stripe data');
+          }
+        }
       }
     } catch (error) {
       console.error('Error checking membership status:', error);
-      // Fallback to existing logic
+      // Fallback to existing localStorage logic
       const currentUser = db.getCurrentUser();
       if (currentUser) {
+        console.log('📱 Falling back to local storage user session');
         setUser({
           email: currentUser.email,
           isSubscribed: currentUser.isSubscribed || false,
           name: currentUser.name,
           id: currentUser.id
         });
+        
+        // Check if user has stripe info but local subscription is false
+        const stripeCustomerId = localStorage.getItem('stripe_customer_id');
+        const stripeSubscriptionId = localStorage.getItem('stripe_subscription_id');
+        
+        if (stripeCustomerId && stripeSubscriptionId && !currentUser.isSubscribed) {
+          console.log('🔄 Found Stripe subscription, updating local user to Pro...');
+          const updatedUser = db.updateUserSubscription(currentUser.id, true);
+          if (updatedUser) {
+            setUser({ ...updatedUser, isSubscribed: true });
+            console.log('✅ Local user upgraded to Pro based on Stripe data');
+          }
+        }
       }
     }
   };

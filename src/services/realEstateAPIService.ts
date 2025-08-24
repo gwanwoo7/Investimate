@@ -554,18 +554,29 @@ export class RealEstateAPIService {
     const netOperatingIncome = (monthlyRent * 12) - annualOperatingExpenses;
     const capRate = (netOperatingIncome / property.purchasePrice) * 100;
     
-    // Investment scoring (1-10 scale) based on your metrics
-    let score = 5; // Base score
+    // Investment scoring (1-10 scale) - PRIMARY FOCUS ON CASH-ON-CASH ROI
+    let score = 3; // Lower base score to emphasize CoC ROI importance
     
-    if (cashOnCashReturn > 12) score += 2;
-    else if (cashOnCashReturn > 8) score += 1;
-    else if (cashOnCashReturn < 4) score -= 2;
+    // CASH-ON-CASH ROI - Primary scoring factor (60% weight)
+    if (cashOnCashReturn > 20) score += 4;        // Exceptional: 20%+ CoC ROI
+    else if (cashOnCashReturn > 15) score += 3.5; // Excellent: 15-20% CoC ROI
+    else if (cashOnCashReturn > 12) score += 3;   // Very Good: 12-15% CoC ROI
+    else if (cashOnCashReturn > 8) score += 2;    // Good: 8-12% CoC ROI
+    else if (cashOnCashReturn > 6) score += 1;    // Fair: 6-8% CoC ROI
+    else if (cashOnCashReturn > 4) score += 0.5;  // Below Average: 4-6% CoC ROI
+    else if (cashOnCashReturn < 2) score -= 3;    // Poor: <2% CoC ROI
+    else if (cashOnCashReturn < 4) score -= 1.5;  // Below Market: 2-4% CoC ROI
     
-    if (capRate > 8) score += 1;
-    else if (capRate < 5) score -= 1;
+    // CASH FLOW - Secondary factor (25% weight)
+    if (monthlyNetCashFlow > 500) score += 1.5;
+    else if (monthlyNetCashFlow > 300) score += 1;
+    else if (monthlyNetCashFlow > 100) score += 0.5;
+    else if (monthlyNetCashFlow < 0) score -= 2;
     
-    if (monthlyNetCashFlow > 400) score += 1;
-    else if (monthlyNetCashFlow < 0) score -= 3;
+    // CAP RATE - Tertiary factor (15% weight) 
+    if (capRate > 10) score += 1;
+    else if (capRate > 8) score += 0.5;
+    else if (capRate < 5) score -= 0.5;
     
     // Adjust score based on property condition and features
     if (property.propertyCondition === 'excellent') score += 0.5;
@@ -577,13 +588,14 @@ export class RealEstateAPIService {
     score = Math.max(1, Math.min(10, score)); // Clamp between 1-10
     
     let rank: 'Excellent' | 'Good' | 'Fair' | 'Poor';
-    if (score >= 8) rank = 'Excellent';
-    else if (score >= 6) rank = 'Good';
-    else if (score >= 4) rank = 'Fair';
-    else rank = 'Poor';
+    // Adjusted rankings to reflect CoC ROI focus
+    if (score >= 7.5) rank = 'Excellent'; // 15%+ CoC ROI typically
+    else if (score >= 6) rank = 'Good';    // 8-15% CoC ROI typically  
+    else if (score >= 4) rank = 'Fair';    // 4-8% CoC ROI typically
+    else rank = 'Poor';                    // <4% CoC ROI typically
     
-    // Enhanced logging with your specific formula breakdown
-    console.log(`💰 ${property.address} - Using Your Formula:`);
+    // Enhanced logging with CoC ROI focus
+    console.log(`💰 ${property.address} - CoC ROI Focused Analysis:`);
     console.log(`📊 Operating Cost Breakdown:`);
     console.log(`   - Property Management: $${propertyManagement.toFixed(0)}/mo (10% of rent)`);
     console.log(`   - Property Taxes: $${monthlyPropertyTaxes.toFixed(0)}/mo (${property.monthlyPropertyTaxes ? 'from Zillow API' : 'estimated'})`);
@@ -594,10 +606,11 @@ export class RealEstateAPIService {
     if (monthlyHOA > 0) console.log(`   - HOA Fees: $${monthlyHOA.toFixed(0)}/mo (from Zillow API)`);
     console.log(`📈 Total Operating Cost: $${totalOperatingCost.toFixed(0)}/mo`);
     console.log(`🏠 Monthly Mortgage P&I: $${monthlyMortgage.toFixed(0)}/mo (${property.mortgagePayment ? 'from Zillow API' : 'calculated'})`);
-    console.log(`� Monthly Rent: $${monthlyRent.toFixed(0)}`);
-    console.log(`💵 Monthly Net Cash Flow: $${monthlyNetCashFlow.toFixed(0)} (Rent - Operating Cost - Mortgage)`);
-    console.log(`🎯 1st Year COC ROI: ${cashOnCashReturn.toFixed(1)}% (Annual Cash Flow / Total Cash Invested * 100)`);
-    console.log(`📊 Investment Score: ${score.toFixed(1)}/10 (${rank})`);
+    console.log(`💵 Monthly Rent: $${monthlyRent.toFixed(0)}`);
+    console.log(`� Monthly Net Cash Flow: $${monthlyNetCashFlow.toFixed(0)} (Rent - Operating Cost - Mortgage)`);
+    console.log(`🎯 CASH-ON-CASH ROI: ${cashOnCashReturn.toFixed(1)}% ⭐ PRIMARY RANKING FACTOR`);
+    console.log(`📊 Investment Score: ${score.toFixed(1)}/10 (${rank}) - CoC ROI Weighted`);
+    console.log(`💡 Total Cash Invested: $${totalCashInvested.toFixed(0)} (25% down + 3% closing)`);
     
     return {
       estimatedRent: monthlyRent,
