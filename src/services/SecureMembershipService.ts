@@ -10,7 +10,7 @@ export interface UserProfile {
   email: string;
   full_name?: string;
   avatar_url?: string;
-  subscription_status: 'free' | 'pro' | 'canceled' | 'expired' | 'trial';
+  subscription_status: 'free' | 'active' | 'pro' | 'canceled' | 'expired' | 'trial' | 'inactive' | 'past_due' | 'trialing';
   subscription_tier: 'free' | 'pro' | 'enterprise';
   stripe_customer_id?: string;
   stripe_subscription_id?: string;
@@ -274,23 +274,39 @@ export class SecureMembershipService {
       return trialStatus;
     }
 
-    // Check regular subscription
+    // Check regular subscription - be flexible with status values
     const now = new Date();
-    const subscriptionActive = profile.subscription_status === 'pro' || 
-                              (profile.subscription_tier === 'pro' && 
-                               (!profile.subscription_ends_at || new Date(profile.subscription_ends_at) > now));
+    
+    // Check multiple possible ways the subscription could be marked as active
+    const hasActiveStatus = profile.subscription_status === 'active' || 
+                           profile.subscription_status === 'pro';
+    
+    const hasProTier = profile.subscription_tier === 'pro' || 
+                      profile.subscription_tier === 'enterprise';
+    
+    const isNotExpired = !profile.subscription_ends_at || 
+                        new Date(profile.subscription_ends_at) > now;
+    
+    // Consider subscription active if either:
+    // 1. Status indicates active/pro AND tier is pro/enterprise AND not expired
+    // 2. Tier is pro/enterprise AND not expired (even if status is not set correctly)
+    const subscriptionActive = (hasActiveStatus && hasProTier && isNotExpired) ||
+                              (hasProTier && isNotExpired);
     
     // Determine the effective tier
     let effectiveTier: 'free' | 'trial' | 'pro' = 'free';
-    if (subscriptionActive) {
-      effectiveTier = profile.subscription_tier === 'enterprise' ? 'pro' : profile.subscription_tier as 'pro';
+    if (subscriptionActive && hasProTier) {
+      effectiveTier = 'pro';
     }
 
-    console.log('🔍 Subscription Status Check:', {
+    console.log('🔍 Subscription Status Check (Enhanced):', {
       userId: profile.id,
       profileStatus: profile.subscription_status,
       profileTier: profile.subscription_tier,
       subscriptionEndsAt: profile.subscription_ends_at,
+      hasActiveStatus,
+      hasProTier,
+      isNotExpired,
       subscriptionActive,
       effectiveTier,
       now: now.toISOString()
