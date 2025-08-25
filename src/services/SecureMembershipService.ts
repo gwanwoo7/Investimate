@@ -72,6 +72,9 @@ export class SecureMembershipService {
   private supabase: SupabaseClient;
   private currentUser: User | null = null;
   private userProfile: UserProfile | null = null;
+  private subscriptionCache: SubscriptionStatus | null = null;
+  private cacheExpiry: number = 0;
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {
     if (!supabaseUrl || !supabaseAnonKey) {
@@ -80,6 +83,13 @@ export class SecureMembershipService {
     
     this.supabase = createClient(supabaseUrl, supabaseAnonKey);
     this.initializeAuth();
+    
+    // Listen for auth state changes to clear cache
+    this.supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT' || event === 'SIGNED_IN') {
+        this.clearSubscriptionCache();
+      }
+    });
   }
 
   static getInstance(): SecureMembershipService {
@@ -134,7 +144,17 @@ export class SecureMembershipService {
       }
 
       this.userProfile = data;
-      console.log('✅ User profile loaded:', data.email);
+      
+      // Clear subscription cache when profile is refreshed
+      this.clearSubscriptionCache();
+      
+      console.log('✅ User profile loaded:', {
+        email: data.email,
+        tier: data.subscription_tier,
+        status: data.subscription_status,
+        endsAt: data.subscription_ends_at,
+        trialEndsAt: data.trial_ends_at
+      });
     } catch (error) {
       console.error('❌ Exception loading user profile:', error);
     }
@@ -183,14 +203,47 @@ export class SecureMembershipService {
   }
 
   // ====================================
+  // CACHE MANAGEMENT
+  // ====================================
+
+  private clearSubscriptionCache(): void {
+    this.subscriptionCache = null;
+    this.cacheExpiry = 0;
+    console.log('🔄 Subscription cache cleared');
+  }
+
+  private isSubscriptionCacheValid(): boolean {
+    return this.subscriptionCache !== null && Date.now() < this.cacheExpiry;
+  }
+
+  private setCachedSubscription(subscription: SubscriptionStatus): void {
+    this.subscriptionCache = subscription;
+    this.cacheExpiry = Date.now() + this.CACHE_DURATION;
+    console.log('💾 Subscription cached for 5 minutes');
+  }
+
+  // Force refresh subscription status (bypasses cache)
+  async refreshSubscriptionStatus(): Promise<SubscriptionStatus> {
+    this.clearSubscriptionCache();
+    return this.checkSubscriptionStatus();
+  }
+
+  // ====================================
   // SUBSCRIPTION STATUS MANAGEMENT
   // ====================================
 
   async checkSubscriptionStatus(): Promise<SubscriptionStatus> {
+    // Return cached result if valid
+    if (this.isSubscriptionCacheValid()) {
+      console.log('✅ Using cached subscription status');
+      return this.subscriptionCache!;
+    }
+
+    console.log('🔍 Fetching fresh subscription status...');
     const profile = await this.getUserProfile();
     
     if (!profile) {
-      return {
+      const freeStatus: SubscriptionStatus = {
         tier: 'free',
         status: 'free',
         isActive: false,
@@ -199,6 +252,8 @@ export class SecureMembershipService {
         trialEnd: null,
         trialDaysLeft: 0
       };
+      this.setCachedSubscription(freeStatus);
+      return freeStatus;
     }
 
     // Check if trial is active
@@ -206,7 +261,7 @@ export class SecureMembershipService {
     
     if (isInTrial) {
       const trialDaysRemaining = this.calculateTrialDaysRemaining(profile);
-      return {
+      const trialStatus: SubscriptionStatus = {
         tier: 'trial',
         status: 'trial',
         isActive: true,
@@ -215,24 +270,44 @@ export class SecureMembershipService {
         trialEnd: profile.trial_ends_at || null,
         trialDaysLeft: trialDaysRemaining
       };
+      this.setCachedSubscription(trialStatus);
+      return trialStatus;
     }
 
     // Check regular subscription
-    const isActive = profile.subscription_status === 'pro' && 
-                    (!profile.subscription_ends_at || new Date(profile.subscription_ends_at) > new Date());
+    const now = new Date();
+    const subscriptionActive = profile.subscription_status === 'pro' || 
+                              (profile.subscription_tier === 'pro' && 
+                               (!profile.subscription_ends_at || new Date(profile.subscription_ends_at) > now));
+    
+    // Determine the effective tier
+    let effectiveTier: 'free' | 'trial' | 'pro' = 'free';
+    if (subscriptionActive) {
+      effectiveTier = profile.subscription_tier === 'enterprise' ? 'pro' : profile.subscription_tier as 'pro';
+    }
 
-    // Map enterprise to pro for the interface
-    const tier = isActive ? (profile.subscription_tier === 'enterprise' ? 'pro' : profile.subscription_tier) : 'free';
+    console.log('🔍 Subscription Status Check:', {
+      userId: profile.id,
+      profileStatus: profile.subscription_status,
+      profileTier: profile.subscription_tier,
+      subscriptionEndsAt: profile.subscription_ends_at,
+      subscriptionActive,
+      effectiveTier,
+      now: now.toISOString()
+    });
 
-    return {
-      tier: tier as 'free' | 'trial' | 'pro',
+    const subscriptionStatus: SubscriptionStatus = {
+      tier: effectiveTier,
       status: profile.subscription_status,
-      isActive,
+      isActive: subscriptionActive,
       currentPeriodEnd: profile.subscription_ends_at || null,
-      cancelAtPeriodEnd: false, // This would come from Stripe data
+      cancelAtPeriodEnd: false, // This would come from Stripe subscription data
       trialEnd: profile.trial_ends_at || null,
       trialDaysLeft: 0
     };
+
+    this.setCachedSubscription(subscriptionStatus);
+    return subscriptionStatus;
   }
 
   private async isUserInTrial(): Promise<boolean> {

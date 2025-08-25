@@ -76,9 +76,26 @@ export function useSubscription() {
       setError(null);
       const status = await membershipService.checkSubscriptionStatus();
       setSubscription(status);
+      console.log('🔄 Subscription status checked:', status);
     } catch (err) {
       console.error('Error checking subscription:', err);
       setError('Failed to check subscription status');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const forceRefreshSubscription = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔄 Force refreshing subscription status...');
+      const status = await membershipService.refreshSubscriptionStatus();
+      setSubscription(status);
+      console.log('✅ Subscription status force refreshed:', status);
+    } catch (err) {
+      console.error('Error force refreshing subscription:', err);
+      setError('Failed to refresh subscription status');
     } finally {
       setLoading(false);
     }
@@ -111,6 +128,7 @@ export function useSubscription() {
     loading,
     error,
     refreshSubscription: checkSubscription,
+    forceRefreshSubscription, // New method for force refresh
     manageSubscription,
     upgradeToPro,
     isActive: subscription?.isActive || false,
