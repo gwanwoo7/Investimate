@@ -67,7 +67,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
       if (status.tier === 'trial') {
         setTrialStatus({
           isActive: true,
-          daysRemaining: status.trialRemaining
+          daysRemaining: status.trialDaysLeft
         });
       }
     } catch (err) {

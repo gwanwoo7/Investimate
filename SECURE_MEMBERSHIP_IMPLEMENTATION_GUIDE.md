@@ -226,7 +226,7 @@ This guide shows you how to implement the enterprise-grade secure membership sys
        
        if (status.tier === 'trial') {
          setTrialInfo({
-           daysRemaining: status.trialRemaining,
+           daysRemaining: status.trialDaysLeft,
            isActive: true
          });
        }
