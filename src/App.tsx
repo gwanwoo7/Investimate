@@ -20,7 +20,7 @@ import DatabaseService from './services/databaseService';
 import { SupabaseUserService } from './services/supabaseService';
 import { membershipService } from './services/SecureMembershipService';
 import { UpgradeModal } from './components/UpgradeModal';
-import QuickDebugTool from './components/debug/QuickDebugTool'; // Add this line
+import AuthDebugTool from './components/debug/AuthDebugTool'; // Changed to AuthDebugTool
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -763,8 +763,8 @@ function AppContent() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       
-      {/* DEBUG TOOL - REMOVE IN PRODUCTION */}
-      <QuickDebugTool />
+      {/* AUTH DEBUG TOOL - REMOVE IN PRODUCTION */}
+      <AuthDebugTool />
       
       {/* Navigation */}
       {renderNavigation()}
