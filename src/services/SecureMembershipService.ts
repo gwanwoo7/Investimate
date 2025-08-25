@@ -1,10 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 
-// Types for our membership system
-export interface UserSubscription {
+// Environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Enhanced type definitions
+export interface UserProfile {
   id: string;
   email: string;
   full_name?: string;
+  avatar_url?: string;
   subscription_status: 'free' | 'pro' | 'canceled' | 'expired' | 'trial';
   subscription_tier: 'free' | 'pro' | 'enterprise';
   stripe_customer_id?: string;
@@ -14,187 +19,356 @@ export interface UserSubscription {
   trial_used: boolean;
   subscription_starts_at?: string;
   subscription_ends_at?: string;
+  billing_cycle: 'monthly' | 'yearly';
+  last_payment_at?: string;
+  next_billing_date?: string;
   monthly_searches_used: number;
   monthly_analyses_used: number;
   last_usage_reset: string;
+  onboarding_completed: boolean;
+  marketing_consent: boolean;
+  terms_accepted_at?: string;
+  privacy_accepted_at?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface FeatureLimit {
-  subscription_tier: string;
-  feature_name: string;
-  monthly_limit: number;
-  daily_limit?: number;
+export interface FeatureAccess {
+  allowed: boolean;
+  remaining: number | null; // null means unlimited
+  limit: number | null;
+  resetDate?: string;
+  requiresUpgrade: boolean;
+  message?: string;
 }
 
-export interface UsageRecord {
-  user_id: string;
-  feature_name: string;
-  usage_count: number;
-  period_start: string;
-  period_end: string;
-  last_used: string;
+interface UsageStats {
+  totalSearches: number;
+  totalAnalyses: number;
+  monthlySearches: number;
+  monthlyAnalyses: number;
+  lastActivity: string | null;
+  user?: UserProfile; // Fixed: changed from UserSubscription to UserProfile
 }
 
-class SecureMembershipService {
-  private supabase;
+export interface SubscriptionStatus {
+  isActive: boolean;
+  tier: 'free' | 'trial' | 'pro';
+  status: string;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  trialEnd: string | null;
+  trialDaysLeft: number; // Added this property
+}
 
-  constructor() {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
+/**
+ * 🔒 SECURE MEMBERSHIP SERVICE
+ * 
+ * Unified service for all membership, subscription, and feature access management
+ * Connects React app to Supabase backend with proper security and usage tracking
+ */
+export class SecureMembershipService {
+  private static instance: SecureMembershipService;
+  private supabase: SupabaseClient;
+  private currentUser: User | null = null;
+  private userProfile: UserProfile | null = null;
+
+  private constructor() {
     if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase environment variables');
+      throw new Error('Supabase configuration missing. Check your .env file.');
     }
-
+    
     this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    this.initializeAuth();
+  }
+
+  static getInstance(): SecureMembershipService {
+    if (!SecureMembershipService.instance) {
+      SecureMembershipService.instance = new SecureMembershipService();
+    }
+    return SecureMembershipService.instance;
   }
 
   // ====================================
-  // USER MANAGEMENT
+  // AUTHENTICATION & USER MANAGEMENT
   // ====================================
 
-  async getCurrentUser(): Promise<UserSubscription | null> {
+  private async initializeAuth(): Promise<void> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
-      
-      if (authError || !user) {
-        return null;
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (session?.user) {
+        this.currentUser = session.user;
+        await this.loadUserProfile();
       }
 
+      // Listen for auth changes
+      this.supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log('🔐 Auth state changed:', event);
+        
+        if (session?.user) {
+          this.currentUser = session.user;
+          await this.loadUserProfile();
+        } else {
+          this.currentUser = null;
+          this.userProfile = null;
+        }
+      });
+    } catch (error) {
+      console.error('❌ Auth initialization error:', error);
+    }
+  }
+
+  private async loadUserProfile(): Promise<void> {
+    if (!this.currentUser) return;
+
+    try {
       const { data, error } = await this.supabase
         .from('users')
         .select('*')
-        .eq('id', user.id)
+        .eq('id', this.currentUser.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user subscription:', error);
-        return null;
+        console.error('❌ Error loading user profile:', error);
+        return;
       }
 
-      return data;
+      this.userProfile = data;
+      console.log('✅ User profile loaded:', data.email);
     } catch (error) {
-      console.error('Error in getCurrentUser:', error);
-      return null;
+      console.error('❌ Exception loading user profile:', error);
     }
   }
 
-  async updateUserProfile(updates: Partial<UserSubscription>): Promise<boolean> {
+  async getCurrentUser(): Promise<UserProfile | null> {
+    if (!this.userProfile && this.currentUser) {
+      await this.loadUserProfile();
+    }
+    return this.userProfile;
+  }
+
+  async getUserProfile(): Promise<UserProfile | null> {
+    if (!this.userProfile && this.currentUser) {
+      await this.loadUserProfile();
+    }
+    return this.userProfile;
+  }
+
+  async refreshUserProfile(): Promise<UserProfile | null> {
+    await this.loadUserProfile();
+    return this.userProfile;
+  }
+
+  async updateUserProfile(updates: Partial<UserProfile>): Promise<boolean> {
     try {
-      const { data: { user }, error: authError } = await this.supabase.auth.getUser();
-      
-      if (authError || !user) {
-        return false;
-      }
+      if (!this.currentUser) return false;
 
       const { error } = await this.supabase
         .from('users')
         .update(updates)
-        .eq('id', user.id);
+        .eq('id', this.currentUser.id);
 
       if (error) {
-        console.error('Error updating user profile:', error);
+        console.error('❌ Error updating user profile:', error);
         return false;
       }
 
+      // Refresh local profile
+      await this.loadUserProfile();
       return true;
     } catch (error) {
-      console.error('Error in updateUserProfile:', error);
+      console.error('❌ Exception updating user profile:', error);
       return false;
     }
   }
 
   // ====================================
-  // SUBSCRIPTION MANAGEMENT
+  // SUBSCRIPTION STATUS MANAGEMENT
   // ====================================
 
-  async checkSubscriptionStatus(): Promise<{
-    isActive: boolean;
-    tier: string;
-    status: string;
-    trialRemaining?: number;
-    subscriptionEnds?: string;
-  }> {
-    try {
-      const user = await this.getCurrentUser();
-      
-      if (!user) {
-        return { isActive: false, tier: 'free', status: 'free' };
-      }
-
-      const now = new Date();
-      
-      // Check if trial is active
-      if (user.trial_ends_at && new Date(user.trial_ends_at) > now) {
-        const trialEnd = new Date(user.trial_ends_at);
-        const trialRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        
-        return {
-          isActive: true,
-          tier: 'trial',
-          status: 'trial',
-          trialRemaining
-        };
-      }
-
-      // Check if subscription is active
-      if (user.subscription_ends_at && new Date(user.subscription_ends_at) > now) {
-        return {
-          isActive: true,
-          tier: user.subscription_tier,
-          status: user.subscription_status,
-          subscriptionEnds: user.subscription_ends_at
-        };
-      }
-
-      // Default to free
-      return { isActive: false, tier: 'free', status: 'free' };
-    } catch (error) {
-      console.error('Error checking subscription status:', error);
-      return { isActive: false, tier: 'free', status: 'free' };
+  async checkSubscriptionStatus(): Promise<SubscriptionStatus> {
+    const profile = await this.getUserProfile();
+    
+    if (!profile) {
+      return {
+        tier: 'free',
+        status: 'free',
+        isActive: false,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        trialEnd: null,
+        trialDaysLeft: 0
+      };
     }
+
+    // Check if trial is active
+    const isInTrial = await this.isUserInTrial();
+    
+    if (isInTrial) {
+      const trialDaysRemaining = this.calculateTrialDaysRemaining(profile);
+      return {
+        tier: 'trial',
+        status: 'trial',
+        isActive: true,
+        currentPeriodEnd: profile.trial_ends_at || null,
+        cancelAtPeriodEnd: false,
+        trialEnd: profile.trial_ends_at || null,
+        trialDaysLeft: trialDaysRemaining
+      };
+    }
+
+    // Check regular subscription
+    const isActive = profile.subscription_status === 'pro' && 
+                    (!profile.subscription_ends_at || new Date(profile.subscription_ends_at) > new Date());
+
+    // Map enterprise to pro for the interface
+    const tier = isActive ? (profile.subscription_tier === 'enterprise' ? 'pro' : profile.subscription_tier) : 'free';
+
+    return {
+      tier: tier as 'free' | 'trial' | 'pro',
+      status: profile.subscription_status,
+      isActive,
+      currentPeriodEnd: profile.subscription_ends_at || null,
+      cancelAtPeriodEnd: false, // This would come from Stripe data
+      trialEnd: profile.trial_ends_at || null,
+      trialDaysLeft: 0
+    };
+  }
+
+  private async isUserInTrial(): Promise<boolean> {
+    const profile = await this.getUserProfile();
+    if (!profile) return false;
+
+    return !!(
+      profile.trial_ends_at &&
+      new Date(profile.trial_ends_at) > new Date() &&
+      !profile.trial_used
+    );
+  }
+
+  private calculateTrialDaysRemaining(profile: UserProfile): number {
+    if (!profile.trial_ends_at) return 0;
+    
+    const endDate = new Date(profile.trial_ends_at);
+    const now = new Date();
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return Math.max(0, diffDays);
   }
 
   // ====================================
   // FEATURE ACCESS CONTROL
   // ====================================
 
-  async canAccessFeature(featureName: string): Promise<{
-    allowed: boolean;
-    remaining?: number;
-    limit?: number;
-    tier: string;
-  }> {
+  async canAccessFeature(featureName: string): Promise<FeatureAccess> {
     try {
-      const user = await this.getCurrentUser();
+      const profile = await this.getUserProfile();
       
-      if (!user) {
-        return { allowed: false, tier: 'free' };
+      if (!profile) {
+        return {
+          allowed: false,
+          remaining: null,
+          limit: null,
+          requiresUpgrade: true,
+          message: 'Please sign in to access this feature'
+        };
       }
 
-      // Get user's effective tier (trial acts as pro)
-      const subscriptionStatus = await this.checkSubscriptionStatus();
-      const effectiveTier = subscriptionStatus.isActive ? 
-        (subscriptionStatus.tier === 'trial' ? 'pro' : subscriptionStatus.tier) : 
-        'free';
+      // Call the database function to check access
+      const { data, error } = await this.supabase
+        .rpc('can_access_feature', {
+          p_user_id: profile.id,
+          p_feature_name: featureName
+        });
 
-      // Get feature limit for this tier
+      if (error) {
+        console.error('❌ Error checking feature access:', error);
+        return {
+          allowed: false,
+          remaining: null,
+          limit: null,
+          requiresUpgrade: true,
+          message: 'Error checking access. Please try again.'
+        };
+      }
+
+      if (data === true) {
+        return {
+          allowed: true,
+          remaining: null,
+          limit: null,
+          requiresUpgrade: false
+        };
+      }
+
+      // Get usage details for better UX
+      const usageInfo = await this.getFeatureUsage(featureName);
+      const limit = usageInfo?.limit || 0;
+      const used = usageInfo?.used || 0;
+      const remaining = limit === -1 ? null : Math.max(0, limit - used);
+
+      return {
+        allowed: false,
+        remaining,
+        limit: limit === -1 ? null : limit,
+        requiresUpgrade: true,
+        message: this.getUpgradeMessage(featureName, remaining, limit),
+        resetDate: this.getNextResetDate()
+      };
+    } catch (error) {
+      console.error('❌ Exception checking feature access:', error);
+      return {
+        allowed: false,
+        remaining: null,
+        limit: null,
+        requiresUpgrade: true,
+        message: 'Access check failed. Please try again.'
+      };
+    }
+  }
+
+  private getUpgradeMessage(feature: string, remaining: number | null, limit: number | null): string {
+    if (remaining === 0) {
+      return `You've reached your monthly limit for ${feature}. Upgrade to Pro for unlimited access!`;
+    }
+    if (remaining && remaining > 0) {
+      return `${remaining} ${feature} searches remaining this month.`;
+    }
+    return `Upgrade to Pro for unlimited ${feature}!`;
+  }
+
+  private getNextResetDate(): string {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(1);
+    nextMonth.setHours(0, 0, 0, 0);
+    return nextMonth.toISOString();
+  }
+
+  async getFeatureUsage(featureName: string): Promise<{
+    used: number;
+    limit: number;
+    remaining: number;
+    resetDate: string;
+  } | null> {
+    try {
+      const profile = await this.getUserProfile();
+      if (!profile) return null;
+
+      // Get feature limit for current tier
+      const subscriptionStatus = await this.checkSubscriptionStatus();
+      const tier = subscriptionStatus.isActive ? subscriptionStatus.tier : 'free';
+
       const { data: featureLimit } = await this.supabase
         .from('feature_limits')
         .select('monthly_limit')
-        .eq('subscription_tier', effectiveTier)
+        .eq('subscription_tier', tier)
         .eq('feature_name', featureName)
         .eq('is_active', true)
         .single();
 
-      // If no limit found or unlimited (-1), allow access
-      if (!featureLimit || featureLimit.monthly_limit === -1) {
-        return { allowed: true, tier: effectiveTier };
-      }
-
-      // Get current month usage
+      // Get current usage
       const currentPeriodStart = new Date();
       currentPeriodStart.setDate(1);
       currentPeriodStart.setHours(0, 0, 0, 0);
@@ -202,23 +376,24 @@ class SecureMembershipService {
       const { data: usage } = await this.supabase
         .from('user_usage')
         .select('usage_count')
-        .eq('user_id', user.id)
+        .eq('user_id', profile.id)
         .eq('feature_name', featureName)
         .eq('period_start', currentPeriodStart.toISOString())
         .single();
 
-      const currentUsage = usage?.usage_count || 0;
-      const remaining = Math.max(0, featureLimit.monthly_limit - currentUsage);
+      const limit = featureLimit?.monthly_limit || 0;
+      const used = usage?.usage_count || 0;
+      const remaining = limit === -1 ? -1 : Math.max(0, limit - used);
 
       return {
-        allowed: remaining > 0,
+        used,
+        limit,
         remaining,
-        limit: featureLimit.monthly_limit,
-        tier: effectiveTier
+        resetDate: this.getNextResetDate()
       };
     } catch (error) {
-      console.error('Error checking feature access:', error);
-      return { allowed: false, tier: 'free' };
+      console.error('❌ Error getting feature usage:', error);
+      return null;
     }
   }
 
@@ -228,50 +403,52 @@ class SecureMembershipService {
     error?: string;
   }> {
     try {
-      // Check if feature can be accessed
+      // Check if feature access is allowed first
       const access = await this.canAccessFeature(featureName);
-      
       if (!access.allowed) {
         return {
           success: false,
-          error: access.remaining === 0 ? 
-            `Monthly limit of ${access.limit} reached for ${featureName}` :
-            `Access denied for ${featureName}`
+          error: access.message || 'Feature access denied',
+          remaining: access.remaining || undefined
         };
       }
 
-      const user = await this.getCurrentUser();
-      if (!user) {
+      const profile = await this.getUserProfile();
+      if (!profile) {
         return { success: false, error: 'User not authenticated' };
       }
 
-      // Call the database function to increment usage
-      const { error } = await this.supabase.rpc('increment_feature_usage', {
-        p_user_id: user.id,
-        p_feature_name: featureName,
-        p_metadata: metadata ? JSON.stringify(metadata) : null
-      });
+      // Increment usage
+      const { error } = await this.supabase
+        .rpc('increment_feature_usage', {
+          p_user_id: profile.id,
+          p_feature_name: featureName,
+          p_metadata: metadata || null
+        });
 
       if (error) {
-        console.error('Error incrementing feature usage:', error);
+        console.error('❌ Error incrementing feature usage:', error);
         return { success: false, error: 'Failed to track usage' };
       }
 
-      // Log the feature access
-      await this.logAuditEvent('feature_accessed', 'feature', featureName, {
-        success: true,
-        metadata
-      });
+      // Log audit event
+      await this.logAuditEvent(
+        `feature_used`,
+        'feature',
+        featureName,
+        { feature: featureName, metadata }
+      );
 
-      // Return updated remaining count
+      // Get updated remaining count
       const updatedAccess = await this.canAccessFeature(featureName);
       
+      console.log(`✅ Feature used: ${featureName}`);
       return {
         success: true,
-        remaining: updatedAccess.remaining
+        remaining: updatedAccess.remaining || undefined
       };
     } catch (error) {
-      console.error('Error using feature:', error);
+      console.error('❌ Exception using feature:', error);
       return { success: false, error: 'Internal error' };
     }
   }
@@ -426,12 +603,89 @@ class SecureMembershipService {
   }
 
   // ====================================
-  // SECURITY HELPERS
+  // STRIPE INTEGRATION
   // ====================================
+
+  async createCheckoutSession(tier: 'pro'): Promise<{ url: string }> {
+    try {
+      const user = await this.getCurrentUser();
+      if (!user) {
+        throw new Error('User must be authenticated');
+      }
+
+      const profile = await this.getUserProfile();
+      if (!profile) {
+        throw new Error('User profile not found');
+      }
+
+      // This would typically call your backend API
+      // For now, redirect to your subscription page
+      const baseUrl = window.location.origin;
+      const checkoutUrl = `${baseUrl}/subscription?plan=${tier}&user=${user.id}`;
+      
+      return { url: checkoutUrl };
+    } catch (error) {
+      console.error('❌ Error creating checkout session:', error);
+      throw error;
+    }
+  }
+
+  async createBillingPortalSession(): Promise<{ url: string }> {
+    try {
+      const user = await this.getCurrentUser();
+      if (!user) {
+        throw new Error('User must be authenticated');
+      }
+
+      // This would typically call your backend API
+      // For now, redirect to account management
+      const baseUrl = window.location.origin;
+      const portalUrl = `${baseUrl}/account/billing`;
+      
+      return { url: portalUrl };
+    } catch (error) {
+      console.error('❌ Error creating billing portal session:', error);
+      throw error;
+    }
+  }
+
+  // ====================================
+  // AUTH HELPERS
+  // ====================================
+
+  async signOut(): Promise<void> {
+    try {
+      await this.logAuditEvent('user_logout', 'auth', 'logout');
+      
+      const { error } = await this.supabase.auth.signOut();
+      if (error) {
+        console.error('❌ Error signing out:', error);
+        throw error;
+      }
+      
+      // Clear cached data
+      this.clearCache();
+      
+      console.log('✅ User signed out successfully');
+    } catch (error) {
+      console.error('❌ Exception during sign out:', error);
+      throw error;
+    }
+  }
+
+  getAuthStateChangeSubscription() {
+    return this.supabase.auth.onAuthStateChange.bind(this.supabase.auth);
+  }
+
+  private clearCache(): void {
+    // Clear any cached user data
+    // This could be expanded to clear other caches as needed
+    console.log('🔄 Clearing user data cache');
+  }
 
   async validateUserAccess(requiredTier?: string): Promise<{
     valid: boolean;
-    user?: UserSubscription;
+    user?: UserProfile; // Fixed: changed from UserSubscription to UserProfile
     error?: string;
   }> {
     try {
@@ -439,6 +693,11 @@ class SecureMembershipService {
       
       if (!user) {
         return { valid: false, error: 'Authentication required' };
+      }
+
+      const profile = await this.getUserProfile();
+      if (!profile) {
+        return { valid: false, error: 'User profile not found' };
       }
 
       if (requiredTier) {
@@ -501,4 +760,4 @@ class SecureMembershipService {
 }
 
 // Export singleton instance
-export const membershipService = new SecureMembershipService();
+export const membershipService = SecureMembershipService.getInstance();
