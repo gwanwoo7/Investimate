@@ -217,12 +217,34 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
             setShowEmailVerification(true);
             const proMessage = finalProStatus ? ' Pro membership will be activated after verification!' : '';
             setSuccess(`Account created successfully!${proMessage} Please check your email and click the verification link.`);
+            
+            // Add helpful debugging info
+            console.log('📧 Email verification required. Check:');
+            console.log('1. Email inbox (including spam folder)');
+            console.log('2. Supabase Dashboard → Authentication → Settings → Enable email confirmations');
+            console.log('3. Email Templates in Supabase Dashboard');
+            
+            // Optional: Add resend functionality immediately visible
+            setTimeout(() => {
+              setSuccess(`${success} 
+              
+              📧 Not seeing the email? 
+              • Check your spam/junk folder
+              • The email may take a few minutes to arrive
+              • Use the "Resend Email" button in the modal if needed
+              
+              ⚠️ If emails consistently fail, there may be a Supabase configuration issue.`);
+            }, 3000);
+            
           } else {
             // User is already verified (shouldn't happen with email signup, but handle gracefully)
             const proMessage = finalProStatus ? ' Pro membership activated with promo code!' : '';
             setSuccess(`Account created and verified!${proMessage} You can now sign in.`);
             setError('');
-            // Don't auto-login until email is verified
+            // Auto-login if user is already verified
+            setTimeout(() => {
+              onSignup(supabaseUser.email);
+            }, 1500);
           }
         }
       } else {
@@ -369,11 +391,25 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               </Alert>
             )}
 
-            {success && (
+              {success && (
               <Alert 
                 severity="success" 
                 sx={{ mb: 3, borderRadius: 2 }}
                 icon={<CheckCircle />}
+                action={
+                  process.env.NODE_ENV === 'development' && (
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={async () => {
+                        console.log('🔧 Running email debug...');
+                        await supabaseAuth.debugEmailSettings();
+                      }}
+                    >
+                      Debug Email
+                    </Button>
+                  )
+                }
               >
                 {success}
               </Alert>

@@ -70,6 +70,8 @@ class SupabaseAuthService {
     }
 
     try {
+      console.log('🔐 Attempting Supabase signup for:', data.email)
+      
       const { data: authData, error } = await this.supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -83,10 +85,15 @@ class SupabaseAuthService {
       })
 
       if (error) {
+        console.error('❌ Supabase signup error:', error)
         return { user: null, error: error.message }
       }
 
       if (authData.user) {
+        console.log('✅ Supabase user created:', authData.user.email)
+        console.log('📧 Email confirmed at:', authData.user.email_confirmed_at)
+        console.log('🎫 Session exists:', !!authData.session)
+        
         const user: AuthUser = {
           id: authData.user.id,
           email: authData.user.email!,
@@ -99,6 +106,8 @@ class SupabaseAuthService {
         
         // Check if email confirmation is required
         const needsVerification = !authData.user.email_confirmed_at && !authData.session
+        
+        console.log('🔍 Needs verification:', needsVerification)
         
         return { 
           user, 
@@ -366,6 +375,86 @@ class SupabaseAuthService {
         callback(null)
       }
     })
+  }
+
+  /**
+   * Debug email configuration and delivery
+   */
+  async debugEmailSettings(): Promise<void> {
+    if (!this.supabase) {
+      console.error('❌ Supabase not configured')
+      return
+    }
+
+    console.log('🔍 Debugging Supabase email configuration...')
+    
+    try {
+      // Get current session
+      const { data: sessionData } = await this.supabase.auth.getSession()
+      console.log('📱 Current session:', sessionData.session ? 'Active' : 'None')
+      
+      // Get current user
+      const { data: userData } = await this.supabase.auth.getUser()
+      console.log('👤 Current user:', userData.user ? userData.user.email : 'None')
+      
+      // Check auth settings (client-side info)
+      console.log('⚙️ Supabase URL:', supabaseUrl)
+      console.log('🔑 Anon key configured:', supabaseAnonKey ? 'Yes' : 'No')
+      console.log('🌐 Current origin:', window.location.origin)
+      console.log('📧 Email redirect URL:', `${window.location.origin}/auth/verify-email`)
+      
+      console.log('📋 Email debugging complete. Check Supabase dashboard for auth settings.')
+      
+    } catch (error) {
+      console.error('❌ Debug error:', error)
+    }
+  }
+
+  /**
+   * Test email sending capability
+   */
+  async testEmailSending(testEmail: string): Promise<{ success: boolean; message: string }> {
+    if (!this.supabase) {
+      return { success: false, message: 'Supabase not configured' }
+    }
+
+    try {
+      console.log('📧 Testing email sending to:', testEmail)
+      
+      const { data, error } = await this.supabase.auth.signUp({
+        email: testEmail,
+        password: 'tempTestPassword123!',
+        options: {
+          data: { name: 'Test User' }
+        }
+      })
+
+      if (error) {
+        return { success: false, message: `Email test failed: ${error.message}` }
+      }
+
+      if (data.user) {
+        console.log('✅ Test signup successful, user created:', data.user.id)
+        console.log('📧 Email confirmed at:', data.user.email_confirmed_at)
+        
+        // Clean up test user (optional)
+        console.log('ℹ️ Test user created. You may want to delete this from Supabase dashboard.')
+        
+        return { 
+          success: true, 
+          message: data.user.email_confirmed_at 
+            ? 'Email sent and user auto-confirmed (email verification disabled)'
+            : 'Email sent successfully (check inbox and spam folder)'
+        }
+      }
+
+      return { success: false, message: 'Unknown error during email test' }
+    } catch (error) {
+      return { 
+        success: false, 
+        message: `Email test error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      }
+    }
   }
 }
 
