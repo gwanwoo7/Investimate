@@ -456,6 +456,65 @@ class SupabaseAuthService {
       }
     }
   }
+
+  /**
+   * Test SMTP configuration with Google Workspace
+   */
+  async testGoogleWorkspaceSMTP(): Promise<{ success: boolean; message: string; details?: any }> {
+    if (!this.supabase) {
+      return { success: false, message: 'Supabase not configured' }
+    }
+
+    console.log('🔧 Testing Google Workspace SMTP configuration...')
+    
+    try {
+      // Test with a temporary email to see if SMTP is working
+      const testEmail = `test-${Date.now()}@gmail.com`
+      const { data, error } = await this.supabase.auth.signUp({
+        email: testEmail,
+        password: 'TempPassword123!',
+        options: {
+          data: { name: 'SMTP Test User' }
+        }
+      })
+
+      if (error) {
+        console.error('❌ SMTP Test failed:', error)
+        return { 
+          success: false, 
+          message: `SMTP test failed: ${error.message}`,
+          details: error
+        }
+      }
+
+      if (data.user) {
+        console.log('✅ SMTP test successful!')
+        console.log('📧 User created:', data.user.email)
+        console.log('🔐 Email confirmed:', !!data.user.email_confirmed_at)
+        console.log('🎫 Session created:', !!data.session)
+        
+        return {
+          success: true,
+          message: 'Google Workspace SMTP is working! Email sent successfully.',
+          details: {
+            userCreated: true,
+            emailConfirmed: !!data.user.email_confirmed_at,
+            sessionCreated: !!data.session,
+            userId: data.user.id
+          }
+        }
+      }
+
+      return { success: false, message: 'Unexpected error during SMTP test' }
+    } catch (error) {
+      console.error('❌ SMTP test error:', error)
+      return {
+        success: false,
+        message: `SMTP test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        details: error
+      }
+    }
+  }
 }
 
 export default SupabaseAuthService

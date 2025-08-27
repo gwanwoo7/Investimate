@@ -396,18 +396,37 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                 severity="success" 
                 sx={{ mb: 3, borderRadius: 2 }}
                 icon={<CheckCircle />}
-                action={
+                  action={
                   process.env.NODE_ENV === 'development' && (
-                    <Button 
-                      color="inherit" 
-                      size="small"
-                      onClick={async () => {
-                        console.log('🔧 Running email debug...');
-                        await supabaseAuth.debugEmailSettings();
-                      }}
-                    >
-                      Debug Email
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button 
+                        color="inherit" 
+                        size="small"
+                        onClick={async () => {
+                          console.log('🔧 Running email debug...');
+                          await supabaseAuth.debugEmailSettings();
+                        }}
+                      >
+                        Debug Email
+                      </Button>
+                      <Button 
+                        color="inherit" 
+                        size="small"
+                        onClick={async () => {
+                          console.log('📧 Testing Google Workspace SMTP...');
+                          const result = await supabaseAuth.testGoogleWorkspaceSMTP();
+                          if (result.success) {
+                            console.log('✅ SMTP Test Success:', result.message);
+                            setSuccess(`${success}\n\n✅ SMTP Test: ${result.message}`);
+                          } else {
+                            console.error('❌ SMTP Test Failed:', result.message);
+                            setError(`SMTP Test Failed: ${result.message}`);
+                          }
+                        }}
+                      >
+                        Test SMTP
+                      </Button>
+                    </Box>
                   )
                 }
               >
