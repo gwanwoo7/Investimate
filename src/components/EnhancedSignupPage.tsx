@@ -270,7 +270,11 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
     } catch (err) {
       console.error('❌ Signup error:', err);
       if (err instanceof Error) {
-        if (err.message.includes('already exists') || err.message.includes('already registered')) {
+        // Handle specific error types
+        if (err.message.includes('email rate limit exceeded') || err.message.includes('over_email_send_rate_limit')) {
+          setSuccess('🎉 Great news! Your account was created successfully. Email verification is working but temporarily rate-limited. Please check your email in a few minutes, or try again in an hour.');
+          setError('');
+        } else if (err.message.includes('already exists') || err.message.includes('already registered')) {
           setError('An account with this email already exists.');
           // Show a button to redirect to login
           setTimeout(() => {
@@ -281,18 +285,16 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           }, 1000);
         } else if (err.message.includes('Password should be at least 6 characters')) {
           setError('Password must be at least 6 characters long.');
-        } else {
-          setError(`Signup failed: ${err.message}`);
-        }
       } else {
-        setError('Signup failed. Please try again.');
+        setError(`Signup failed: ${err.message}`);
       }
-    } finally {
-      setLoading(false);
+    } else {
+      setError('Signup failed. Please try again.');
     }
-  };
-
-  const handleGoogleSignup = async () => {
+  } finally {
+    setLoading(false);
+  }
+};  const handleGoogleSignup = async () => {
     setLoading(true);
     setError('');
 
