@@ -30,7 +30,7 @@ class ResendEmailService {
   private readonly supportEmail = 'support@myinvestimate.com';
 
   private constructor() {
-    this.initialize();
+    // Don't initialize immediately, let it be lazy-loaded
   }
 
   static getInstance(): ResendEmailService {
@@ -41,10 +41,12 @@ class ResendEmailService {
   }
 
   private initialize() {
+    if (this.initialized) return; // Already initialized
+    
     const apiKey = import.meta.env.VITE_RESEND_API_KEY;
     
     if (!apiKey) {
-      console.warn('Resend API key not configured. Please set VITE_RESEND_API_KEY environment variable.');
+      console.warn('❌ Resend API key not configured. Please set VITE_RESEND_API_KEY environment variable.');
       return;
     }
 
@@ -58,6 +60,7 @@ class ResendEmailService {
   }
 
   isConfigured(): boolean {
+    this.initialize(); // Ensure initialization happens when checked
     return this.initialized && this.resend !== null;
   }
 
@@ -65,6 +68,8 @@ class ResendEmailService {
    * Send a generic email
    */
   async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    this.initialize(); // Ensure initialization
+    
     if (!this.resend) {
       return { success: false, error: 'Resend not configured. Please check your API key.' };
     }

@@ -368,28 +368,44 @@ const ComprehensiveQADiagnostic: React.FC = () => {
         return;
       }
 
-      console.log('🧪 Testing email system with Resend...');
+      console.log('🧪 Testing email system configuration...');
       
-      // Test 1: Send test email via Resend
-      const emailResult = await emailService.testEmailDelivery(testEmail);
+      // Test 1: Check Resend configuration (no API call)
+      const configTest = {
+        apiKeyExists: !!import.meta.env.VITE_RESEND_API_KEY,
+        apiKeyFormat: import.meta.env.VITE_RESEND_API_KEY?.startsWith('re_'),
+        serviceInitialized: emailService.isConfigured()
+      };
       
-      if (emailResult.success) {
+      if (configTest.apiKeyExists && configTest.apiKeyFormat && configTest.serviceInitialized) {
         setEmailTestResult({
           status: 'success',
-          message: '✅ Email system working! Test email sent successfully via Resend.',
+          message: '✅ Email system configuration valid! Resend service is properly configured.',
           details: {
             service: 'Resend',
-            messageId: emailResult.messageId,
+            configurationStatus: 'Valid',
             testEmail,
             timestamp: new Date().toISOString(),
-            note: 'Check your email inbox (and spam folder) for the test message'
+            apiKeyFormat: 'Valid (starts with re_)',
+            note: 'Configuration is correct. To test actual email delivery, use the contact form which sends emails server-side.',
+            warning: 'Direct API testing from browser is blocked by CORS. Use contact form for end-to-end testing.'
           }
         });
       } else {
+        const issues = [];
+        if (!configTest.apiKeyExists) issues.push('API key missing');
+        if (!configTest.apiKeyFormat) issues.push('API key format invalid (should start with re_)');
+        if (!configTest.serviceInitialized) issues.push('Service not initialized');
+        
         setEmailTestResult({
           status: 'error',
-          message: `❌ Email test failed: ${emailResult.error}`,
-          details: emailResult
+          message: `❌ Email configuration issues: ${issues.join(', ')}`,
+          details: {
+            apiKeyExists: configTest.apiKeyExists,
+            apiKeyFormat: configTest.apiKeyFormat,
+            serviceInitialized: configTest.serviceInitialized,
+            issues
+          }
         });
       }
 
@@ -490,12 +506,17 @@ const ComprehensiveQADiagnostic: React.FC = () => {
         <CardContent>
           <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <EmailIcon />
-            Email Verification Test
+            Email Configuration Test
+          </Typography>
+          
+          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+            Tests Resend API configuration and validates environment variables. 
+            For actual email delivery testing, use the contact form which handles server-side email sending.
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
             <TextField
-              label="Test Email Address"
+              label="Test Email Address (for validation)"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               placeholder="test@example.com"
@@ -507,7 +528,7 @@ const ComprehensiveQADiagnostic: React.FC = () => {
               disabled={emailTestLoading || !testEmail}
               startIcon={emailTestLoading ? <CircularProgress size={20} /> : <EmailIcon />}
             >
-              {emailTestLoading ? 'Testing...' : 'Test Email'}
+              {emailTestLoading ? 'Testing...' : 'Test Config'}
             </Button>
           </Box>
 
