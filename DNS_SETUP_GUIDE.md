@@ -60,9 +60,11 @@ nslookup -type=TXT _dmarc.myinvestimate.com
 
 ## Current Status
 ✅ MX record: `smtp.google.com` (correctly configured)  
-❌ SPF record: Missing  
-❌ DKIM record: Missing  
-❌ DMARC record: Missing  
+✅ SPF record: `v=spf1 include:_spf.google.com ~all` (ADDED!)  
+✅ DKIM record: Google DKIM configured (ADDED!)  
+✅ DMARC record: `v=DMARC1; p=quarantine` (ADDED!)  
+
+**🎉 All DNS records are now properly configured!**  
 
 ## Testing Email Delivery
 
