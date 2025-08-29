@@ -18,6 +18,7 @@ import {
   Subject
 } from '@mui/icons-material';
 import NavigationBar from '../components/NavigationBar';
+import ResendEmailService from '../services/resendEmailService';
 
 interface ContactPageProps {
   onBack: () => void;
@@ -50,56 +51,55 @@ export default function ContactPage({ onBack }: ContactPageProps) {
     setLoading(true);
 
     try {
-      // Enhanced email functionality with myinvestimate.com
-      const subject = encodeURIComponent(`[Investimate Contact] ${formData.subject}`);
-      const body = encodeURIComponent(
-        `Contact Form Submission from Investimate.com\n\n` +
-        `Name: ${formData.name}\n` +
-        `Email: ${formData.email}\n` +
-        `Subject: ${formData.subject}\n\n` +
-        `Message:\n${formData.message}\n\n` +
-        `---\n` +
-        `Sent from: ${window.location.origin}\n` +
-        `Date: ${new Date().toLocaleString()}`
-      );
+      // Use Resend service to send email
+      const emailService = ResendEmailService.getInstance();
       
-      // Primary method: Use mailto with myinvestimate.com
-      const mailtoLink = `mailto:support@myinvestimate.com?subject=${subject}&body=${body}`;
-      
-      // Test if mailto is supported
-      const testLink = document.createElement('a');
-      testLink.href = mailtoLink;
-      testLink.click();
-      
-      setSnackbar({
-        open: true,
-        message: 'Email client opened successfully! Please send the message to complete your inquiry.',
-        severity: 'success'
-      });
-      
-      // Log for debugging
-      console.log('📧 Contact form submitted:', {
+      if (!emailService.isConfigured()) {
+        throw new Error('Email service not configured. Please check Resend API key.');
+      }
+
+      console.log('📧 Sending contact form via Resend...');
+      const result = await emailService.sendContactFormEmail({
         name: formData.name,
         email: formData.email,
         subject: formData.subject,
-        timestamp: new Date().toISOString()
+        message: formData.message
       });
-      
-      // Reset form after successful submission
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
+
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: `✅ Message sent successfully! We'll respond within 24 hours. (Message ID: ${result.messageId})`,
+          severity: 'success'
         });
-      }, 3000);
+        
+        // Log for debugging
+        console.log('📧 Contact form sent successfully:', {
+          messageId: result.messageId,
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Reset form after successful submission
+        setTimeout(() => {
+          setFormData({
+            name: '',
+            email: '',
+            subject: '',
+            message: ''
+          });
+        }, 2000);
+      } else {
+        throw new Error(result.error || 'Failed to send email');
+      }
       
     } catch (error) {
-      console.error('Email submission error:', error);
+      console.error('❌ Contact form submission error:', error);
       setSnackbar({
         open: true,
-        message: 'Unable to open email client. Please send your message manually to support@myinvestimate.com or try copying the details below.',
+        message: `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again or contact us directly at support@myinvestimate.com`,
         severity: 'error'
       });
     } finally {
@@ -108,22 +108,43 @@ export default function ContactPage({ onBack }: ContactPageProps) {
   };
 
   // Test email functionality
-  const testEmailSetup = () => {
-    const testSubject = encodeURIComponent('[Test] Email Setup Verification');
-    const testBody = encodeURIComponent(
-      'This is a test email to verify the email setup for myinvestimate.com\n\n' +
-      'If you receive this, the email configuration is working correctly.\n\n' +
-      `Sent at: ${new Date().toLocaleString()}`
-    );
-    
-    const mailtoLink = `mailto:support@myinvestimate.com?subject=${testSubject}&body=${testBody}`;
-    window.location.href = mailtoLink;
-    
-    setSnackbar({
-      open: true,
-      message: 'Test email opened! Check if your email client launched correctly.',
-      severity: 'info'
-    });
+  const testEmailSetup = async () => {
+    try {
+      const emailService = ResendEmailService.getInstance();
+      
+      if (!emailService.isConfigured()) {
+        setSnackbar({
+          open: true,
+          message: '❌ Email service not configured. Please check Resend API key.',
+          severity: 'error'
+        });
+        return;
+      }
+
+      console.log('🧪 Testing Resend email delivery...');
+      const result = await emailService.testEmailDelivery('support@myinvestimate.com');
+
+      if (result.success) {
+        setSnackbar({
+          open: true,
+          message: `✅ Test email sent successfully via Resend! Message ID: ${result.messageId}`,
+          severity: 'success'
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: `❌ Test email failed: ${result.error}`,
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('❌ Test email error:', error);
+      setSnackbar({
+        open: true,
+        message: `❌ Test email error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        severity: 'error'
+      });
+    }
   };
 
   const isFormValid = formData.name && formData.email && formData.subject && formData.message;
@@ -283,37 +304,38 @@ export default function ContactPage({ onBack }: ContactPageProps) {
               </Typography>
             </Paper>
 
-            {/* FAQ and Email Instructions */}
-            <Paper sx={{ p: 3, mt: 3, bgcolor: 'warning.light' }}>
-              <Typography variant="h6" gutterBottom color="warning.dark">
-                Email Setup Status
+            {/* Email Setup Status */}
+            <Paper sx={{ p: 3, mt: 3, bgcolor: 'success.light' }}>
+              <Typography variant="h6" gutterBottom color="success.dark">
+                ✅ Resend Email Integration
               </Typography>
-              <Typography variant="body2" color="warning.dark" sx={{ mb: 2 }}>
-                <strong>Current Configuration:</strong>
+              <Typography variant="body2" color="success.dark" sx={{ mb: 2 }}>
+                <strong>Email Service:</strong> Resend API
               </Typography>
-              <Typography variant="body2" color="warning.dark" component="div">
-                • Primary: support@myinvestimate.com<br/>
-                • Secondary: hello@myinvestimate.com<br/>
-                • Protocol: mailto (opens your email client)
+              <Typography variant="body2" color="success.dark" component="div">
+                • From: noreply@myinvestimate.com<br/>
+                • To: support@myinvestimate.com<br/>
+                • Status: Direct delivery (no email client required)<br/>
+                • Features: HTML emails, automatic delivery tracking
               </Typography>
-              <Typography variant="caption" color="warning.dark" sx={{ mt: 1, display: 'block' }}>
-                Note: Requires domain email setup to receive messages
+              <Typography variant="caption" color="success.dark" sx={{ mt: 1, display: 'block' }}>
+                Messages are sent directly to our support inbox
               </Typography>
             </Paper>
 
             {/* Debug Information */}
             <Paper sx={{ p: 3, mt: 3, bgcolor: 'info.light' }}>
               <Typography variant="h6" gutterBottom color="info.dark">
-                Testing Information
+                Email Service Status
               </Typography>
               <Typography variant="body2" color="info.dark" sx={{ mb: 2 }}>
-                Use the "Test Email Setup" button above to verify your email client integration.
+                <strong>Service:</strong> Resend Email API<br/>
+                <strong>Status:</strong> {ResendEmailService.getInstance().isConfigured() ? '✅ Configured' : '❌ Not Configured'}<br/>
+                <strong>From:</strong> noreply@myinvestimate.com<br/>
+                <strong>To:</strong> support@myinvestimate.com
               </Typography>
               <Typography variant="body2" color="info.dark">
-                <strong>Supported Email Clients:</strong><br/>
-                • Apple Mail, Outlook, Gmail, Thunderbird<br/>
-                • Default system email applications<br/>
-                • Web-based email clients (with proper configuration)
+                Use the "Test Email Setup" button to verify email delivery via Resend.
               </Typography>
             </Paper>
           </Box>

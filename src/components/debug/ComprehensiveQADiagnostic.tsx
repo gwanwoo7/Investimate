@@ -31,6 +31,7 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import { membershipService } from '../../services/SecureMembershipService';
 import DatabaseService from '../../services/databaseService';
+import ResendEmailService from '../../services/resendEmailService';
 
 interface DiagnosticResult {
   status: 'success' | 'error' | 'warning' | 'info';
@@ -41,7 +42,7 @@ interface DiagnosticResult {
 interface QAResults {
   supabaseConnection: DiagnosticResult;
   emailConfiguration: DiagnosticResult;
-  smtpSettings: DiagnosticResult;
+  resendEmailService: DiagnosticResult;
   membershipService: DiagnosticResult;
   userSession: DiagnosticResult;
   proMembershipPersistence: DiagnosticResult;
@@ -65,7 +66,7 @@ const ComprehensiveQADiagnostic: React.FC = () => {
     const diagnosticResults: QAResults = {
       supabaseConnection: await testSupabaseConnection(),
       emailConfiguration: await testEmailConfiguration(),
-      smtpSettings: await testSMTPSettings(),
+      resendEmailService: await testResendEmailService(),
       membershipService: await testMembershipService(),
       userSession: await testUserSession(),
       proMembershipPersistence: await testProMembershipPersistence(),
@@ -148,28 +149,37 @@ const ComprehensiveQADiagnostic: React.FC = () => {
     }
   };
 
-  const testSMTPSettings = async (): Promise<DiagnosticResult> => {
+  const testResendEmailService = async (): Promise<DiagnosticResult> => {
     try {
-      // Can't test SMTP settings directly from client-side
-      // But we can check if the configuration looks correct
-      const domain = 'myinvestimate.com';
-      const expectedSender = `noreply@${domain}`;
+      const emailService = ResendEmailService.getInstance();
       
+      if (!emailService.isConfigured()) {
+        return {
+          status: 'error',
+          message: 'Resend Email Service not configured',
+          details: {
+            apiKey: !!import.meta.env.VITE_RESEND_API_KEY,
+            note: 'Please check VITE_RESEND_API_KEY environment variable'
+          }
+        };
+      }
+
+      // Test email service without actually sending an email
       return {
-        status: 'warning',
-        message: 'SMTP settings cannot be verified from client-side',
+        status: 'success',
+        message: 'Resend Email Service configured successfully',
         details: {
-          expectedHost: 'smtp.gmail.com',
-          expectedPort: '587',
-          expectedSender: expectedSender,
-          expectedDomain: domain,
-          note: 'Manual verification required in Supabase Dashboard → Authentication → Settings'
+          configured: true,
+          service: 'Resend',
+          defaultFrom: 'noreply@myinvestimate.com',
+          supportEmail: 'support@myinvestimate.com',
+          features: ['HTML emails', 'delivery tracking', 'templates']
         }
       };
     } catch (error) {
       return {
         status: 'error',
-        message: `SMTP test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Resend Email Service test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         details: error
       };
     }
@@ -309,6 +319,7 @@ const ComprehensiveQADiagnostic: React.FC = () => {
     const requiredVars = {
       VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
       VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      VITE_RESEND_API_KEY: import.meta.env.VITE_RESEND_API_KEY,
       VITE_GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       VITE_GOOGLE_MAPS_API_KEY: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
       VITE_STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -326,7 +337,8 @@ const ComprehensiveQADiagnostic: React.FC = () => {
           ...acc,
           [key]: !!value
         }), {}),
-        missing
+        missing,
+        note: 'VITE_RESEND_API_KEY is required for email functionality'
       }
     };
   };
@@ -344,54 +356,75 @@ const ComprehensiveQADiagnostic: React.FC = () => {
     setEmailTestResult(null);
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      // Test both Supabase signup and Resend email delivery
+      const emailService = ResendEmailService.getInstance();
+      
+      if (!emailService.isConfigured()) {
+        setEmailTestResult({
+          status: 'error',
+          message: 'Resend Email Service not configured. Please check VITE_RESEND_API_KEY environment variable.',
+          details: { configurationRequired: 'VITE_RESEND_API_KEY' }
+        });
+        return;
+      }
 
-      const { data, error } = await supabase.auth.signUp({
-        email: testEmail,
-        password: 'TestPassword123!',
-        options: {
-          data: { name: 'QA Test User' }
-        }
-      });
-
-      if (error) {
-        if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
-          setEmailTestResult({
-            status: 'success',
-            message: '✅ SMTP is working! Rate limit error proves emails are being sent successfully.',
-            details: {
-              note: 'Rate limit errors indicate that email sending is working correctly',
-              solution: 'Wait 1 hour for rate limit to reset, then test with 1 email only',
-              error: error.message
-            }
-          });
-        } else if (error.message.includes('already registered') || error.message.includes('already exists')) {
-          setEmailTestResult({
-            status: 'warning',
-            message: 'Email already registered. Try a different email or this confirms registration is working.',
-            details: error
-          });
-        } else {
-          setEmailTestResult({
-            status: 'error',
-            message: `Email test failed: ${error.message}`,
-            details: error
-          });
-        }
-      } else if (data.user) {
+      console.log('🧪 Testing email system with Resend...');
+      
+      // Test 1: Send test email via Resend
+      const emailResult = await emailService.testEmailDelivery(testEmail);
+      
+      if (emailResult.success) {
         setEmailTestResult({
           status: 'success',
-          message: '✅ Email verification system is working! Check your email for verification link.',
+          message: '✅ Email system working! Test email sent successfully via Resend.',
           details: {
-            userCreated: true,
-            needsVerification: !data.user.email_confirmed_at,
-            hasSession: !!data.session,
-            userId: data.user.id
+            service: 'Resend',
+            messageId: emailResult.messageId,
+            testEmail,
+            timestamp: new Date().toISOString(),
+            note: 'Check your email inbox (and spam folder) for the test message'
           }
         });
+      } else {
+        setEmailTestResult({
+          status: 'error',
+          message: `❌ Email test failed: ${emailResult.error}`,
+          details: emailResult
+        });
       }
+
+      // Test 2: Also test Supabase signup (optional)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (supabaseUrl && supabaseAnonKey) {
+        const supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email: testEmail,
+            password: 'TestPassword123!',
+            options: {
+              data: { name: 'QA Test User' }
+            }
+          });
+
+          if (error) {
+            if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
+              console.log('ℹ️ Supabase rate limit reached (expected after testing)');
+            } else if (error.message.includes('already registered') || error.message.includes('already exists')) {
+              console.log('ℹ️ Test email already registered in Supabase');
+            } else {
+              console.warn('⚠️ Supabase signup error:', error.message);
+            }
+          } else if (data.user) {
+            console.log('✅ Supabase user creation also working');
+          }
+        } catch (supabaseError) {
+          console.log('ℹ️ Supabase test skipped due to error:', supabaseError);
+        }
+      }
+
     } catch (error) {
       setEmailTestResult({
         status: 'error',
@@ -551,8 +584,8 @@ const ComprehensiveQADiagnostic: React.FC = () => {
                 <EmailIcon color="primary" />
               </ListItemIcon>
               <ListItemText
-                primary="Email Verification Not Working"
-                secondary="Rate limit errors usually mean SMTP is working correctly. Wait 1 hour between tests."
+                primary="Email Service via Resend"
+                secondary="Test emails are sent directly via Resend API. Check inbox and spam folder for delivery."
               />
             </ListItem>
             
@@ -571,8 +604,8 @@ const ComprehensiveQADiagnostic: React.FC = () => {
                 <WarningIcon color="warning" />
               </ListItemIcon>
               <ListItemText
-                primary="Supabase Configuration"
-                secondary="Verify environment variables and email confirmations are enabled in Supabase Dashboard."
+                primary="Environment Configuration"
+                secondary="Verify VITE_RESEND_API_KEY and other environment variables are properly configured."
               />
             </ListItem>
           </List>

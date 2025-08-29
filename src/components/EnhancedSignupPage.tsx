@@ -40,6 +40,7 @@ import NavigationBar from './NavigationBar';
 import DatabaseService from '../services/databaseService';
 import OAuthService, { type OAuthUser } from '../services/oauthService';
 import SupabaseAuthService, { type SignUpData } from '../services/supabaseAuthService';
+import ResendEmailService from '../services/resendEmailService';
 import EmailVerificationModal from './EmailVerificationModal';
 import TermsOfService from './TermsOfService';
 import PrivacyPolicy from './PrivacyPolicy';
@@ -203,6 +204,22 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
 
         if (supabaseUser) {
           console.log('✅ Supabase user created successfully:', supabaseUser.email);
+          
+          // Send welcome email via Resend (optional, independent of Supabase verification)
+          try {
+            const emailService = ResendEmailService.getInstance();
+            if (emailService.isConfigured()) {
+              console.log('📧 Sending welcome email via Resend...');
+              const welcomeResult = await emailService.sendWelcomeEmail(supabaseUser.email, supabaseUser.name);
+              if (welcomeResult.success) {
+                console.log('✅ Welcome email sent via Resend');
+              } else {
+                console.log('⚠️ Welcome email failed (non-critical):', welcomeResult.error);
+              }
+            }
+          } catch (emailError) {
+            console.log('ℹ️ Welcome email skipped (non-critical):', emailError);
+          }
           
           // Also create in local database for compatibility with promo code handling
           const finalProStatus = wantsPro || (promoCodeValid === true);
@@ -415,8 +432,8 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                         color="inherit" 
                         size="small"
                         onClick={async () => {
-                          console.log('📧 Testing Google Workspace SMTP...');
-                          const result = await supabaseAuth.testGoogleWorkspaceSMTP();
+                          console.log('📧 Testing Resend SMTP...');
+                          const result = await supabaseAuth.testResendSMTP();
                           if (result.success) {
                             console.log('✅ SMTP Test Success:', result.message);
                             setSuccess(`${success}\n\n✅ SMTP Test: ${result.message}`);
@@ -426,7 +443,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
                           }
                         }}
                       >
-                        Test SMTP
+                        Test Resend
                       </Button>
                     </Box>
                   )
