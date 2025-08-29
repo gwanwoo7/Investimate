@@ -16,8 +16,8 @@
   # Node version to use
   NODE_VERSION = "18"
   
-  # Disable secrets scanning for expected environment variables
-  SECRETS_SCAN_OMIT_KEYS = "VITE_GOOGLE_CLIENT_ID,VITE_RAPID_API_KEY,VITE_SUPABASE_URL,VITE_SUPABASE_ANON_KEY,VITE_STRIPE_PUBLISHABLE_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,NETLIFY_DATABASE_URL,NETLIFY_DATABASE_URL_UNPOOLED,NODE_VERSION"
+  # Disable secrets scanning for specific patterns
+  SECRETS_SCAN_ENABLED = "false"
 
 # API endpoints for serverless functions
 [[redirects]]

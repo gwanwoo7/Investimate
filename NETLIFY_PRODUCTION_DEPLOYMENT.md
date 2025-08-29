@@ -7,13 +7,13 @@ Your production site **myinvestimate.com** needs these environment variables con
 ### **Required Environment Variables:**
 
 ```bash
-VITE_RESEND_API_KEY=re_3pr5WXq7_KhHRaDYULJB5HLm43j44Cm2q
-VITE_GOOGLE_MAPS_API_KEY=AIzaSyCyYx1d858MsL63fQkA4D52OPaX0HvmOMM
-VITE_SUPABASE_URL=https://jrfnerjluqcrzfbhtvza.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpyZm5lcmpsdXFjcnpmYmh0dnphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyMzY2MDIsImV4cCI6MjA3MDgxMjYwMn0.OEbhZHwHxRhxEkz_WReBtzCa-MyMUA7siv7so8yL_0c
-VITE_GOOGLE_CLIENT_ID=1051118537480-7k5qggkrdrv0gkevgersoeibohn3oo5r.apps.googleusercontent.com
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_51Ru3i6FRF3NKWm9LGJeHzhYZkGK9Xs8PFhC5cUyqw7YO76ueYmdEE7FH36SjBiVLwQMQSOEZxR0V3gV9u26nhloL00oH4XBDr5
-VITE_RAPID_API_KEY=b88f193366msh54685e5876b1873p1d27b6jsnb71f9fd28d7c
+VITE_RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_GOOGLE_MAPS_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_RAPID_API_KEY=your-rapidapi-key-here
 ```
 
 ## 📋 **Step-by-Step Deployment:**

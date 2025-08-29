@@ -1,6 +1,6 @@
 // Script to create the Investimate Pro product and price in Stripe
 import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51Ru3iJFDHpK9BJBPvAhwEvy5mHtDW9N3uhpH36dGl4yWLEi7BH6KHwAEqJkfCYT05jHuB4TE8I7G0AVejy5VM1PU00njnKNg6c');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 async function createInvestimateProduct() {
   try {
