@@ -24,6 +24,7 @@ import AuthDebugTool from './components/debug/AuthDebugTool';
 import SMTPDiagnosticTool from './components/debug/SMTPDiagnosticTool'; // Changed to AuthDebugTool
 import ComprehensiveQADiagnostic from './components/debug/ComprehensiveQADiagnostic';
 import EnvDebug from './components/debug/EnvDebug';
+import DatabaseEmailTestSuite from './components/DatabaseEmailTestSuite';
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -295,6 +296,7 @@ function AppContent() {
   const [showSubscription, setShowSubscription] = useState(false);
   const [showProQA, setShowProQA] = useState(false);
   const [showQADiagnostic, setShowQADiagnostic] = useState(false);
+  const [showDatabaseEmailTest, setShowDatabaseEmailTest] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResultsData, setSearchResultsData] = useState<{
     properties: any[];
@@ -606,6 +608,7 @@ function AppContent() {
     setShowSubscription(false);
     setShowProQA(false);
     setShowQADiagnostic(false);
+    setShowDatabaseEmailTest(false);
     setShowSearchResults(false);
     setCurrentTab(0);
   };
@@ -1026,6 +1029,25 @@ function AppContent() {
     );
   }
 
+  if (showDatabaseEmailTest) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <DatabaseEmailTestSuite />
+        <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 9999 }}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={handleBackToMain}
+            sx={{ minWidth: 120 }}
+          >
+            Back to App
+          </Button>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
   if (showProQA) {
     return (
       <ThemeProvider theme={theme}>
@@ -1392,6 +1414,22 @@ function AppContent() {
                       }}
                     >
                       QA Diagnostic
+                    </Button>
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={() => setShowDatabaseEmailTest(true)}
+                      sx={{ 
+                        textTransform: 'none',
+                        opacity: 0.7,
+                        mr: 1,
+                        '&:hover': { 
+                          color: 'warning.light',
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      🧪 Test Suite
                     </Button>
                     <Button 
                       color="inherit" 
