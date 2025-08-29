@@ -98,9 +98,9 @@ const SMTPDiagnosticTool: React.FC = () => {
       // Test 4: Test Email Sending (if email provided)
       if (testEmail) {
         try {
-          const testResult = await authService.testGoogleWorkspaceSMTP();
+          const testResult = await authService.testResendSMTP();
           addResult({
-            test: 'Google Workspace SMTP Test',
+            test: 'Resend SMTP Test',
             status: testResult.success ? 'success' : 'error',
             message: testResult.message,
             details: testResult.details
@@ -109,7 +109,7 @@ const SMTPDiagnosticTool: React.FC = () => {
           // Handle rate limiting specifically
           if (error?.code === 'over_email_send_rate_limit' || error?.status === 429) {
             addResult({
-              test: 'Google Workspace SMTP Test',
+              test: 'Resend SMTP Test',
               status: 'success',
               message: '🎉 SMTP is WORKING! Rate limit hit (this proves SMTP works)',
               details: {
@@ -126,7 +126,7 @@ const SMTPDiagnosticTool: React.FC = () => {
             });
           } else {
             addResult({
-              test: 'Google Workspace SMTP Test',
+              test: 'Resend SMTP Test',
               status: 'error',
               message: `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`
             });
@@ -236,14 +236,14 @@ const SMTPDiagnosticTool: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <BugReportIcon color="primary" />
           <Typography variant="h5" component="h2">
-            SMTP Email Diagnostic Tool
+            Email System Diagnostic Tool
           </Typography>
         </Box>
 
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            This tool helps diagnose why email verification isn't working. 
-            Run the comprehensive test to identify configuration issues.
+            This tool helps diagnose email system issues. Tests both Resend API integration 
+            and Supabase email verification functionality.
           </Typography>
         </Alert>
 
@@ -360,15 +360,15 @@ const SMTPDiagnosticTool: React.FC = () => {
               <ListItem>
                 <ListItemIcon><CheckCircleIcon color="primary" /></ListItemIcon>
                 <ListItemText 
-                  primary="SMTP Configuration"
-                  secondary="Host: smtp.gmail.com, Port: 587, Username: your-email@myinvestimate.com, Password: App Password"
+                  primary="Resend API Configuration"
+                  secondary="Verify VITE_RESEND_API_KEY is set in environment variables"
                 />
               </ListItem>
               <ListItem>
                 <ListItemIcon><CheckCircleIcon color="primary" /></ListItemIcon>
                 <ListItemText 
-                  primary="Google App Password"
-                  secondary="Use 16-character App Password, not your regular Google password"
+                  primary="Supabase SMTP Settings"
+                  secondary="Host: smtp.resend.com, Port: 587, Username: resend, Password: [Resend API Key]"
                 />
               </ListItem>
               <ListItem>
