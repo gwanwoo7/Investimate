@@ -22,6 +22,7 @@ import { membershipService } from './services/SecureMembershipService';
 import { UpgradeModal } from './components/UpgradeModal';
 import AuthDebugTool from './components/debug/AuthDebugTool';
 import SMTPDiagnosticTool from './components/debug/SMTPDiagnosticTool'; // Changed to AuthDebugTool
+import ComprehensiveQADiagnostic from './components/debug/ComprehensiveQADiagnostic';
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -292,6 +293,7 @@ function AppContent() {
   const [showContact, setShowContact] = useState(false);
   const [showSubscription, setShowSubscription] = useState(false);
   const [showProQA, setShowProQA] = useState(false);
+  const [showQADiagnostic, setShowQADiagnostic] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResultsData, setSearchResultsData] = useState<{
     properties: any[];
@@ -310,81 +312,167 @@ function AppContent() {
 
     const restoreUserSession = async () => {
     try {
-      // First check Supabase for persistent user session
-      const status = await membershipService.checkSubscriptionStatus();
-      setUserTier(status.tier);
+      console.log('🔄 Starting enhanced user session restoration...');
       
-      // Update user subscription status
+      // Check for existing local user first
       const currentUser = db.getCurrentUser();
+      
       if (currentUser) {
-        console.log('✅ Restoring user session for:', currentUser.email);
-        const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
+        console.log('✅ Found local user:', currentUser.email);
         
-        setUser({
-          email: currentUser.email,
-          isSubscribed,
-          name: currentUser.name,
-          id: currentUser.id
-        });
-        
-        // Reset search count for Pro/Trial members
-        if (isSubscribed) {
-          setSearchCount(0);
-          localStorage.removeItem('investimate_search_count');
-          console.log('✅ Pro/Trial member detected, search count cleared');
-        } else if (status.tier === 'free') {
-          // Get remaining searches for free users
-          const access = await membershipService.canAccessFeature('property_search');
-          setSearchesRemaining(access.remaining || 0);
+        // Check Supabase membership status
+        try {
+          const status = await membershipService.checkSubscriptionStatus();
+          setUserTier(status.tier);
+          
+          const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
+          
+          // Update user subscription status based on Supabase
+          setUser({
+            email: currentUser.email,
+            isSubscribed,
+            name: currentUser.name,
+            id: currentUser.id
+          });
+          
+          // Sync local database with Supabase status
+          if (isSubscribed !== currentUser.isSubscribed) {
+            const updatedUser = db.updateUserSubscription(currentUser.id, isSubscribed);
+            console.log('🔄 Synced local database with Supabase status:', isSubscribed);
+          }
+          
+          // Reset search count for Pro/Trial members
+          if (isSubscribed) {
+            setSearchCount(0);
+            localStorage.removeItem('investimate_search_count');
+            console.log('✅ Pro/Trial member detected, search count cleared');
+          } else {
+            // Restore search count for free users
+            const savedCount = localStorage.getItem('investimate_search_count');
+            if (savedCount) {
+              setSearchCount(parseInt(savedCount, 10));
+            }
+            
+            // Get remaining searches from Supabase
+            try {
+              const access = await membershipService.canAccessFeature('property_search');
+              setSearchesRemaining(access.remaining || 0);
+            } catch (accessError) {
+              console.log('Using fallback search logic for free user');
+              setSearchesRemaining(Math.max(0, 5 - searchCount));
+            }
+          }
+          
+          console.log('📊 User session restored successfully - Status:', {
+            email: currentUser.email,
+            isSubscribed,
+            tier: status.tier,
+            searchCount: isSubscribed ? 0 : searchCount
+          });
+          
+        } catch (membershipError) {
+          console.warn('⚠️ Could not check Supabase membership, using local data:', membershipError);
+          
+          // Fallback to local data with Stripe verification
+          const isLocallySubscribed = currentUser.isSubscribed || false;
+          
+          // Check if user has Stripe info but local subscription is false
+          const stripeCustomerId = localStorage.getItem('stripe_customer_id');
+          const stripeSubscriptionId = localStorage.getItem('stripe_subscription_id');
+          
+          let finalSubscriptionStatus = isLocallySubscribed;
+          
+          if (stripeCustomerId && stripeSubscriptionId && !isLocallySubscribed) {
+            console.log('🔄 Found Stripe subscription, upgrading local user to Pro...');
+            const updatedUser = db.updateUserSubscription(currentUser.id, true);
+            if (updatedUser) {
+              finalSubscriptionStatus = true;
+              console.log('✅ Local user upgraded to Pro based on Stripe data');
+            }
+          }
+          
+          setUser({
+            email: currentUser.email,
+            isSubscribed: finalSubscriptionStatus,
+            name: currentUser.name,
+            id: currentUser.id
+          });
+          
+          // Handle search count based on final subscription status
+          if (finalSubscriptionStatus) {
+            setSearchCount(0);
+            localStorage.removeItem('investimate_search_count');
+            console.log('✅ Pro member (from Stripe), search count cleared');
+          } else {
+            const savedCount = localStorage.getItem('investimate_search_count');
+            if (savedCount) {
+              setSearchCount(parseInt(savedCount, 10));
+            }
+            setSearchesRemaining(Math.max(0, 5 - searchCount));
+          }
         }
         
-        console.log('📊 User session restored successfully from Supabase');
       } else {
-        // FALLBACK: Check if user has Stripe subscription info but lost local session
+        // No local user found, check for orphaned Stripe data
         const stripeCustomerId = localStorage.getItem('stripe_customer_id');
         const stripeSubscriptionId = localStorage.getItem('stripe_subscription_id');
         
         if (stripeCustomerId && stripeSubscriptionId) {
-          console.log('🔄 Found Stripe info without user session, attempting recovery...');
-          // Try to restore subscription status
-          if (status.isActive && status.tier === 'pro') {
-            // Create minimal user session for Pro users who lost their local data
-            const recoveredUser = {
-              email: 'recovered@user.com', // This should be fetched from Stripe/Supabase
-              isSubscribed: true,
-              name: 'Pro User',
-              id: 'recovered-' + Date.now()
-            };
-            setUser(recoveredUser);
-            console.log('✅ Pro subscription recovered from Stripe data');
+          console.log('🔄 Found orphaned Stripe data, checking Supabase...');
+          
+          try {
+            const status = await membershipService.checkSubscriptionStatus();
+            
+            if (status.isActive && status.tier === 'pro') {
+              // Try to get user from Supabase
+              const supabaseUser = await membershipService.getCurrentUser();
+              
+              if (supabaseUser) {
+                console.log('✅ Recovered Pro user from Supabase:', supabaseUser.email);
+                
+                // Create/restore local user record
+                const recoveredUser = {
+                  email: supabaseUser.email,
+                  isSubscribed: true,
+                  name: supabaseUser.full_name || supabaseUser.email.split('@')[0],
+                  id: supabaseUser.id
+                };
+                
+                // Save to local database
+                db.setCurrentUser(recoveredUser);
+                setUser(recoveredUser);
+                
+                // Clear search count for recovered Pro user
+                setSearchCount(0);
+                localStorage.removeItem('investimate_search_count');
+                
+                console.log('✅ Pro subscription recovered and synced');
+              }
+            }
+          } catch (recoveryError) {
+            console.warn('Could not recover user from Supabase:', recoveryError);
+            // Clean up orphaned Stripe data
+            localStorage.removeItem('stripe_customer_id');
+            localStorage.removeItem('stripe_subscription_id');
           }
         }
+        
+        console.log('ℹ️ No user session found, starting fresh');
       }
+      
     } catch (error) {
-      console.error('Error checking membership status:', error);
-      // Fallback to existing localStorage logic
+      console.error('❌ Error in session restoration:', error);
+      
+      // Last resort fallback
       const currentUser = db.getCurrentUser();
       if (currentUser) {
-        console.log('📱 Falling back to local storage user session');
+        console.log('🔄 Using emergency fallback session restoration');
         setUser({
           email: currentUser.email,
           isSubscribed: currentUser.isSubscribed || false,
           name: currentUser.name,
           id: currentUser.id
         });
-        
-        // Check if user has stripe info but local subscription is false
-        const stripeCustomerId = localStorage.getItem('stripe_customer_id');
-        const stripeSubscriptionId = localStorage.getItem('stripe_subscription_id');
-        
-        if (stripeCustomerId && stripeSubscriptionId && !currentUser.isSubscribed) {
-          console.log('🔄 Found Stripe subscription, updating local user to Pro...');
-          const updatedUser = db.updateUserSubscription(currentUser.id, true);
-          if (updatedUser) {
-            setUser({ ...updatedUser, isSubscribed: true });
-            console.log('✅ Local user upgraded to Pro based on Stripe data');
-          }
-        }
       }
     }
   };
@@ -450,6 +538,7 @@ function AppContent() {
     setShowContact(false);
     setShowSubscription(false);
     setShowProQA(false);
+    setShowQADiagnostic(false);
     setShowSearchResults(false);
     setCurrentTab(0);
   };
@@ -465,46 +554,176 @@ function AppContent() {
     setCurrentTab(0);
   };
 
-  const handleLogin = (email: string) => {
+  const handleLogin = async (email: string) => {
+    console.log('🔐 Processing login for:', email);
+    
     const currentUser = db.getCurrentUser();
     if (currentUser) {
-      setUser({
-        email: currentUser.email,
-        isSubscribed: currentUser.isSubscribed || false,
-        name: currentUser.name,
-        id: currentUser.id
-      });
+      // Check Supabase membership status for accurate subscription info
+      try {
+        const status = await membershipService.checkSubscriptionStatus();
+        const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
+        
+        // Update local user if Supabase status differs
+        if (isSubscribed !== currentUser.isSubscribed) {
+          const updatedUser = db.updateUserSubscription(currentUser.id, isSubscribed);
+          console.log('🔄 Synced subscription status on login:', isSubscribed);
+        }
+        
+        setUser({
+          email: currentUser.email,
+          isSubscribed,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+        
+        // Handle search count based on subscription
+        if (isSubscribed) {
+          setSearchCount(0);
+          localStorage.removeItem('investimate_search_count');
+          console.log('✅ Pro member logged in, search count cleared');
+        } else {
+          // Restore search count for free users
+          const savedCount = localStorage.getItem('investimate_search_count');
+          if (savedCount) {
+            setSearchCount(parseInt(savedCount, 10));
+          }
+        }
+        
+        setUserTier(status.tier);
+        
+      } catch (membershipError) {
+        console.warn('⚠️ Could not check membership on login, using local data');
+        
+        // Fallback to local data
+        setUser({
+          email: currentUser.email,
+          isSubscribed: currentUser.isSubscribed || false,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+        
+        if (currentUser.isSubscribed) {
+          setSearchCount(0);
+          localStorage.removeItem('investimate_search_count');
+        }
+      }
     } else {
+      // Create basic user object if no current user found
       setUser({ email, isSubscribed: false });
     }
+    
     setShowLogin(false);
+    console.log('✅ Login completed');
   };
 
-  const handleSignup = (email: string) => {
+  const handleSignup = async (email: string) => {
+    console.log('📝 Processing signup for:', email);
+    
     const currentUser = db.getCurrentUser();
     if (currentUser) {
-      setUser({
-        email: currentUser.email,
-        isSubscribed: currentUser.isSubscribed || false,
-        name: currentUser.name,
-        id: currentUser.id
-      });
+      // Check if user was created with Pro status (promo code, etc.)
+      try {
+        const status = await membershipService.checkSubscriptionStatus();
+        const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
+        
+        setUser({
+          email: currentUser.email,
+          isSubscribed,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+        
+        // Handle search count for new users
+        if (isSubscribed) {
+          setSearchCount(0);
+          localStorage.removeItem('investimate_search_count');
+          console.log('✅ New Pro member signed up, search count cleared');
+        } else {
+          // Start fresh for new free users
+          setSearchCount(0);
+          localStorage.setItem('investimate_search_count', '0');
+        }
+        
+        setUserTier(status.tier);
+        
+      } catch (membershipError) {
+        console.warn('⚠️ Could not check membership on signup, using local data');
+        
+        setUser({
+          email: currentUser.email,
+          isSubscribed: currentUser.isSubscribed || false,
+          name: currentUser.name,
+          id: currentUser.id
+        });
+        
+        if (currentUser.isSubscribed) {
+          setSearchCount(0);
+          localStorage.removeItem('investimate_search_count');
+        } else {
+          setSearchCount(0);
+          localStorage.setItem('investimate_search_count', '0');
+        }
+      }
     } else {
+      // Create basic user object if no current user found
       setUser({ email, isSubscribed: false });
+      setSearchCount(0);
+      localStorage.setItem('investimate_search_count', '0');
     }
+    
     setShowSignup(false);
+    console.log('✅ Signup completed');
   };
 
-  const handleSubscription = () => {
+  const handleSubscription = async () => {
+    console.log('💳 Processing subscription upgrade...');
+    
     if (user) {
-      setUser({ ...user, isSubscribed: true });
-      
-      // Reset search count for new Pro members
-      setSearchCount(0);
-      localStorage.removeItem('investimate_search_count');
-      console.log('✅ Pro membership activated, search count reset');
-      
-      setShowPayment(false);
+      try {
+        // Update local user state immediately
+        const updatedUser = { ...user, isSubscribed: true };
+        setUser(updatedUser);
+        
+        // Update local database
+        if (user.id) {
+          const dbUser = db.updateUserSubscription(user.id, true);
+          console.log('✅ Local database updated with Pro status');
+        }
+        
+        // Sync with Supabase
+        try {
+          await membershipService.updateUserProfile({
+            subscription_status: 'active',
+            subscription_tier: 'pro',
+            subscription_ends_at: null // or set future date for recurring billing
+          });
+          console.log('✅ Supabase profile updated with Pro status');
+          
+          // Refresh subscription status to ensure cache is updated
+          const refreshedStatus = await membershipService.refreshSubscriptionStatus();
+          setUserTier(refreshedStatus.tier);
+          
+        } catch (supabaseError) {
+          console.warn('⚠️ Supabase sync failed after subscription:', supabaseError);
+          // Continue with local update - will sync later
+        }
+        
+        // Reset search count for new Pro members
+        setSearchCount(0);
+        localStorage.removeItem('investimate_search_count');
+        console.log('✅ Pro membership activated, search count reset');
+        
+        setShowPayment(false);
+        setShowSubscription(false);
+        
+        console.log('🎉 Subscription upgrade completed successfully');
+        
+      } catch (error) {
+        console.error('❌ Error processing subscription:', error);
+        // Revert user state if there was an error
+        setUser({ ...user, isSubscribed: false });
+      }
     }
   };
 
@@ -682,6 +901,25 @@ function AppContent() {
     );
   }
 
+  if (showQADiagnostic) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ComprehensiveQADiagnostic />
+        <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 9999 }}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={handleBackToMain}
+            sx={{ minWidth: 120 }}
+          >
+            Back to App
+          </Button>
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
   if (showProQA) {
     return (
       <ThemeProvider theme={theme}>
@@ -763,10 +1001,6 @@ function AppContent() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      
-      {/* DEBUG TOOLS - REMOVE IN PRODUCTION */}
-      <SMTPDiagnosticTool />
-      <AuthDebugTool />
       
       {/* Navigation */}
       {renderNavigation()}
@@ -1037,6 +1271,22 @@ function AppContent() {
                     >
                       © 2025 Investimate. All rights reserved.
                     </Typography>
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={() => setShowQADiagnostic(true)}
+                      sx={{ 
+                        textTransform: 'none',
+                        opacity: 0.7,
+                        mr: 1,
+                        '&:hover': { 
+                          color: 'success.light',
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      QA Diagnostic
+                    </Button>
                     <Button 
                       color="inherit" 
                       size="small"
