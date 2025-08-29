@@ -23,6 +23,7 @@ import { UpgradeModal } from './components/UpgradeModal';
 import AuthDebugTool from './components/debug/AuthDebugTool';
 import SMTPDiagnosticTool from './components/debug/SMTPDiagnosticTool'; // Changed to AuthDebugTool
 import ComprehensiveQADiagnostic from './components/debug/ComprehensiveQADiagnostic';
+import EnvDebug from './components/debug/EnvDebug';
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -907,6 +908,7 @@ function AppContent() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        <EnvDebug />
         <ComprehensiveQADiagnostic />
         <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 9999 }}>
           <Button 
