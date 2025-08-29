@@ -205,7 +205,7 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
         if (supabaseUser) {
           console.log('✅ Supabase user created successfully:', supabaseUser.email);
           
-          // Send welcome email via Resend (optional, independent of Supabase verification)
+          // Send welcome email AND verification email via Resend
           try {
             const emailService = ResendEmailService.getInstance();
             if (emailService.isConfigured()) {
@@ -216,9 +216,28 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               } else {
                 console.log('⚠️ Welcome email failed (non-critical):', welcomeResult.error);
               }
+
+              // CRITICAL FIX: Send verification email via Resend since Supabase SMTP not configured
+              if (needsVerification) {
+                console.log('📧 Sending verification email via Resend...');
+                const verificationUrl = `${window.location.origin}/auth/verify-email?token=${supabaseUser.id}&email=${encodeURIComponent(email)}`;
+                const verificationResult = await emailService.sendEmailVerification({
+                  email: email,
+                  verificationUrl: verificationUrl,
+                  userName: name
+                });
+                
+                if (verificationResult.success) {
+                  console.log('✅ Verification email sent via Resend');
+                } else {
+                  console.error('❌ Verification email failed:', verificationResult.error);
+                  throw new Error('Failed to send verification email');
+                }
+              }
             }
           } catch (emailError) {
-            console.log('ℹ️ Welcome email skipped (non-critical):', emailError);
+            console.error('❌ Email sending failed:', emailError);
+            throw new Error('Failed to send verification email. Please try again.');
           }
           
           // Also create in local database for compatibility with promo code handling

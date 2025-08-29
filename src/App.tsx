@@ -308,17 +308,81 @@ function AppContent() {
   // Restore user session on app startup and check membership status
   useEffect(() => {
     console.log('🔄 App starting - checking for existing user session...');
-    restoreUserSession();
+    const initializeApp = async () => {
+      try {
+        await restoreUserSession();
+      } catch (error) {
+        console.error('❌ Failed to restore user session:', error);
+      }
+    };
+    initializeApp();
   }, []);
+
+  // Save critical state to localStorage when user state changes
+  useEffect(() => {
+    if (user) {
+      const criticalState = {
+        user: {
+          email: user.email,
+          isSubscribed: user.isSubscribed,
+          name: user.name,
+          id: user.id
+        },
+        userTier,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('investimate_app_state', JSON.stringify(criticalState));
+      console.log('💾 Critical state saved to localStorage');
+    } else {
+      localStorage.removeItem('investimate_app_state');
+    }
+  }, [user, userTier]);
 
     const restoreUserSession = async () => {
     try {
       console.log('🔄 Starting enhanced user session restoration...');
       
-      // Check for existing local user first
+      // First, try to restore from critical state backup
+      const savedState = localStorage.getItem('investimate_app_state');
+      let quickRestoreAttempted = false;
+      
+      if (savedState) {
+        try {
+          const { user: savedUser, userTier: savedTier, timestamp } = JSON.parse(savedState);
+          const isRecent = (Date.now() - timestamp) < 24 * 60 * 60 * 1000; // 24 hours
+          
+          if (isRecent && savedUser) {
+            console.log('⚡ Quick restore from recent state backup:', savedUser.email);
+            setUser(savedUser);
+            setUserTier(savedTier || 'free');
+            
+            if (savedUser.isSubscribed) {
+              setSearchCount(0);
+              setSearchesRemaining(0);
+            }
+            
+            quickRestoreAttempted = true;
+            
+            // Still verify with Supabase in background but don't block UI
+            membershipService.checkSubscriptionStatus().then(status => {
+              if (status.isActive !== savedUser.isSubscribed || status.tier !== savedTier) {
+                console.log('🔄 State mismatch detected, refreshing...');
+                restoreUserSession(); // Re-run full restoration
+              }
+            }).catch(error => {
+              console.log('Background verification failed:', error);
+            });
+          }
+        } catch (error) {
+          console.warn('Could not parse saved state:', error);
+          localStorage.removeItem('investimate_app_state');
+        }
+      }
+      
+      // Check for existing local user (full restoration if quick restore wasn't attempted)
       const currentUser = db.getCurrentUser();
       
-      if (currentUser) {
+      if (currentUser && !quickRestoreAttempted) {
         console.log('✅ Found local user:', currentUser.email);
         
         // Check Supabase membership status
@@ -730,15 +794,25 @@ function AppContent() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     console.log('👋 Logging out user...');
+    
+    try {
+      // Sign out from Supabase first
+      await membershipService.signOut();
+      console.log('✅ Signed out from Supabase');
+    } catch (error) {
+      console.warn('⚠️ Could not sign out from Supabase:', error);
+    }
     
     // Clear user session from DatabaseService
     db.setCurrentUser(null);
     
     // Reset application state
     setUser(null);
+    setUserTier('free');
     setSearchCount(0);
+    setSearchesRemaining(5);
     setCurrentTab(0);
     
     // Clear any cached data
@@ -746,11 +820,16 @@ function AppContent() {
     setShowSignup(false);
     setShowPayment(false);
     setShowAdmin(false);
+    setShowAbout(false);
+    setShowContact(false);
+    setShowSubscription(false);
     
-    // Clear search count from localStorage
+    // Clear all localStorage data related to user session
     localStorage.removeItem('investimate_search_count');
+    localStorage.removeItem('stripe_customer_id');
+    localStorage.removeItem('stripe_subscription_id');
     
-    console.log('✅ User logged out successfully, state cleared');
+    console.log('✅ User logged out successfully, all state cleared');
   };
 
   const [canSearchState, setCanSearchState] = useState(false);
@@ -889,11 +968,34 @@ function AppContent() {
         <CssBaseline />
         <SubscriptionPage 
           onBack={handleBackToMain} 
-          onSubscriptionSuccess={() => {
+          onSubscriptionSuccess={async () => {
+            console.log('🎉 Processing subscription success...');
+            
+            // Update user state immediately
             setUser(prev => prev ? { ...prev, isSubscribed: true } : null);
+            setUserTier('pro');
+            
+            // Update local database if user exists
+            if (user?.id) {
+              const updatedUser = db.updateUserSubscription(user.id, true);
+              console.log('✅ Local database updated with Pro status');
+            }
+            
+            // Sync with Supabase
+            try {
+              await membershipService.updateUserProfile({
+                subscription_status: 'active',
+                subscription_tier: 'pro',
+                subscription_ends_at: undefined
+              });
+              console.log('✅ Supabase profile updated with Pro status');
+            } catch (error) {
+              console.warn('⚠️ Could not sync with Supabase:', error);
+            }
             
             // Reset search count for new Pro members
             setSearchCount(0);
+            setSearchesRemaining(0); // Pro members have unlimited searches
             localStorage.removeItem('investimate_search_count');
             console.log('✅ Pro membership activated, search count reset');
             
