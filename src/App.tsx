@@ -435,7 +435,9 @@ function AppContent() {
                   email: supabaseUser.email,
                   isSubscribed: true,
                   name: supabaseUser.full_name || supabaseUser.email.split('@')[0],
-                  id: supabaseUser.id
+                  id: supabaseUser.id,
+                  avatar: supabaseUser.avatar_url || '',
+                  joinDate: new Date().toISOString()
                 };
                 
                 // Save to local database
@@ -696,7 +698,7 @@ function AppContent() {
           await membershipService.updateUserProfile({
             subscription_status: 'active',
             subscription_tier: 'pro',
-            subscription_ends_at: null // or set future date for recurring billing
+            subscription_ends_at: undefined // or set future date for recurring billing
           });
           console.log('✅ Supabase profile updated with Pro status');
           
