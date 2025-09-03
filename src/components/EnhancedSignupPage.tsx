@@ -208,32 +208,45 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
           // Send welcome email AND verification email via Resend
           try {
             const emailService = ResendEmailService.getInstance();
-            if (emailService.isConfigured()) {
-              console.log('📧 Sending welcome email via Resend...');
-              const welcomeResult = await emailService.sendWelcomeEmail(supabaseUser.email, supabaseUser.name);
-              if (welcomeResult.success) {
-                console.log('✅ Welcome email sent via Resend');
-              } else {
-                console.log('⚠️ Welcome email failed (non-critical):', welcomeResult.error);
-              }
+            console.log('🔧 Email service configured:', emailService.isConfigured());
+            
+            if (!emailService.isConfigured()) {
+              console.error('❌ Email service not configured - missing VITE_RESEND_API_KEY');
+              throw new Error('Email service not configured. Please check environment variables.');
+            }
+            
+            console.log('📧 Sending welcome email via Resend...');
+            const welcomeResult = await emailService.sendWelcomeEmail(supabaseUser.email, supabaseUser.name);
+            console.log('📧 Welcome email result:', welcomeResult);
+            
+            if (welcomeResult.success) {
+              console.log('✅ Welcome email sent via Resend');
+            } else {
+              console.log('⚠️ Welcome email failed (non-critical):', welcomeResult.error);
+            }
 
-              // CRITICAL FIX: Send verification email via Resend since Supabase SMTP not configured
-              if (needsVerification) {
-                console.log('📧 Sending verification email via Resend...');
-                const verificationUrl = `${window.location.origin}/auth/verify-email?token=${supabaseUser.id}&email=${encodeURIComponent(email)}`;
-                const verificationResult = await emailService.sendEmailVerification({
-                  email: email,
-                  verificationUrl: verificationUrl,
-                  userName: name
-                });
-                
-                if (verificationResult.success) {
-                  console.log('✅ Verification email sent via Resend');
-                } else {
-                  console.error('❌ Verification email failed:', verificationResult.error);
-                  throw new Error('Failed to send verification email');
-                }
+            // CRITICAL FIX: Send verification email via Resend since Supabase SMTP not configured
+            if (needsVerification) {
+              console.log('📧 Sending verification email via Resend...');
+              const verificationUrl = `${window.location.origin}/auth/verify-email?token=${supabaseUser.id}&email=${encodeURIComponent(email)}`;
+              console.log('📧 Verification URL:', verificationUrl);
+              
+              const verificationResult = await emailService.sendEmailVerification({
+                email: email,
+                verificationUrl: verificationUrl,
+                userName: name
+              });
+              
+              console.log('📧 Verification email result:', verificationResult);
+              
+              if (verificationResult.success) {
+                console.log('✅ Verification email sent via Resend, Message ID:', verificationResult.messageId);
+              } else {
+                console.error('❌ Verification email failed:', verificationResult.error);
+                throw new Error(`Failed to send verification email: ${verificationResult.error}`);
               }
+            } else {
+              console.log('ℹ️ No verification needed, user is already confirmed');
             }
           } catch (emailError) {
             console.error('❌ Email sending failed:', emailError);

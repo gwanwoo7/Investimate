@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quick Email Test</title>
+</head>
+<body>
+    <h1>Email Service Test</h1>
+    <button onclick="testEmail()">Test Email Service</button>
+    <div id="result"></div>
+
+    <script>
+        async function testEmail() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                // Test with the actual API key
+                const response = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer re_3pr5WXq7_KhHRaDYULJB5HLm43j44Cm2q',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: 'Investimate <noreply@myinvestimate.com>',
+                        to: 'test@example.com',
+                        subject: 'Test from Browser',
+                        html: '<p>Test email from browser context</p>'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `✅ Success! Message ID: ${result.id}`;
+                } else {
+                    resultDiv.innerHTML = `❌ Failed: ${JSON.stringify(result)}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
