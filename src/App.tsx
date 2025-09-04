@@ -389,12 +389,12 @@ function AppContent() {
               setUserTier(membership.subscriptionTier);
               
               // Sync local database with persistent data
-              const localUser = db.getUserByEmail(restoredUser.email);
+              const localUser = await db.getUserByEmail(restoredUser.email);
               if (localUser) {
                 db.setCurrentUser({
                   ...localUser,
                   isSubscribed: restoredUser.isSubscribed,
-                  emailVerified: sessionUser.emailVerified
+                  emailVerified: Boolean(sessionUser.emailVerified)
                 });
                 console.log('🔄 Local database synced with persistent membership');
               }
@@ -1094,8 +1094,10 @@ function AppContent() {
             console.log('🎉 Processing subscription success...');
             
             // Update user state immediately
-            const updatedUserData = { ...user, isSubscribed: true };
-            setUser(updatedUserData);
+            if (user) {
+              const updatedUserData = { ...user, isSubscribed: true };
+              setUser(updatedUserData);
+            }
             setUserTier('pro');
             
             // Update local database if user exists
