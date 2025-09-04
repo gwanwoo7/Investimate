@@ -11,6 +11,7 @@ export interface User {
   hashedPassword?: string;
   oauthProvider?: 'google' | 'apple';
   oauthId?: string;
+  emailVerified?: boolean;
 }
 
 export interface CommunityPost {
@@ -57,8 +58,8 @@ class DatabaseService {
   }
 
   // User Management
-  async createUser(email: string, password: string, name: string, isSubscribed: boolean = false): Promise<User> {
-    console.log('📝 Creating user:', { email, name, isSubscribed });
+  async createUser(email: string, password: string, name: string, isSubscribed: boolean = false, emailVerified: boolean = false): Promise<User> {
+    console.log('📝 Creating user:', { email, name, isSubscribed, emailVerified });
     const users = this.getUsers();
     
     // Check if user already exists
@@ -74,12 +75,13 @@ class DatabaseService {
       avatar: this.generateAvatar(name),
       isSubscribed,
       joinDate: new Date().toISOString(),
-      hashedPassword: this.hashPasswordSync(password)
+      hashedPassword: this.hashPasswordSync(password),
+      emailVerified
     };
 
     users.push(user);
     localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
-    console.log('✅ User created successfully:', user.email, isSubscribed ? '(Pro Member)' : '(Free)');
+    console.log('✅ User created successfully:', user.email, isSubscribed ? '(Pro Member)' : '(Free)', emailVerified ? '(Verified)' : '(Unverified)');
     
     return user;
   }
@@ -165,6 +167,28 @@ class DatabaseService {
       const currentUser = this.getCurrentUser();
       if (currentUser && currentUser.id === userId) {
         const updatedUser = { ...currentUser, isSubscribed };
+        this.setCurrentUser(updatedUser);
+        return updatedUser;
+      }
+      
+      return users[userIndex];
+    }
+    
+    return null;
+  }
+
+  updateUserEmailVerification(userId: string, emailVerified: boolean): User | null {
+    const users = this.getUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
+    
+    if (userIndex !== -1) {
+      users[userIndex].emailVerified = emailVerified;
+      localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+      
+      // Update current user if it's the same user
+      const currentUser = this.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        const updatedUser = { ...currentUser, emailVerified };
         this.setCurrentUser(updatedUser);
         return updatedUser;
       }

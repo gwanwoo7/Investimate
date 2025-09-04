@@ -25,6 +25,7 @@ import SMTPDiagnosticTool from './components/debug/SMTPDiagnosticTool'; // Chang
 import ComprehensiveQADiagnostic from './components/debug/ComprehensiveQADiagnostic';
 import EnvDebug from './components/debug/EnvDebug';
 import DatabaseEmailTestSuite from './components/DatabaseEmailTestSuite';
+import SubscriptionPaymentQA from './components/SubscriptionPaymentQA';
 import { useState, useEffect } from 'react';
 
 const theme = createTheme({
@@ -297,6 +298,7 @@ function AppContent() {
   const [showProQA, setShowProQA] = useState(false);
   const [showQADiagnostic, setShowQADiagnostic] = useState(false);
   const [showDatabaseEmailTest, setShowDatabaseEmailTest] = useState(false);
+  const [showPaymentQA, setShowPaymentQA] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResultsData, setSearchResultsData] = useState<{
     properties: any[];
@@ -609,6 +611,7 @@ function AppContent() {
     setShowProQA(false);
     setShowQADiagnostic(false);
     setShowDatabaseEmailTest(false);
+    setShowPaymentQA(false);
     setShowSearchResults(false);
     setCurrentTab(0);
   };
@@ -1005,6 +1008,25 @@ function AppContent() {
             handleBackToMain();
           }}
         />
+      </ThemeProvider>
+    );
+  }
+
+  if (showPaymentQA) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SubscriptionPaymentQA />
+        <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 9999 }}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={handleBackToMain}
+            sx={{ minWidth: 120 }}
+          >
+            Back to App
+          </Button>
+        </Box>
       </ThemeProvider>
     );
   }
@@ -1430,6 +1452,22 @@ function AppContent() {
                       }}
                     >
                       🧪 Test Suite
+                    </Button>
+                    <Button 
+                      color="inherit" 
+                      size="small"
+                      onClick={() => setShowPaymentQA(true)}
+                      sx={{ 
+                        textTransform: 'none',
+                        opacity: 0.7,
+                        mr: 1,
+                        '&:hover': { 
+                          color: 'info.light',
+                          opacity: 1
+                        }
+                      }}
+                    >
+                      💳 Payment QA
                     </Button>
                     <Button 
                       color="inherit" 
