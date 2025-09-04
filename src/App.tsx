@@ -9,6 +9,7 @@ import PaymentPage from './components/PaymentPage';
 import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
+import EmailVerificationPage from './pages/EmailVerificationPage';
 import AuthCallback from './components/AuthCallback';
 import ProMembershipQA from './components/ProMembershipQA';
 import AdminPage from './pages/AdminPage';
@@ -278,6 +279,15 @@ function App() {
 }
 
 function AppContent() {
+  // Check for email verification route first
+  const currentPath = window.location.pathname;
+  const currentSearch = window.location.search;
+  
+  // Handle email verification route
+  if (currentPath === '/auth/verify-email' || currentPath.includes('verify-email')) {
+    return <EmailVerificationPage />;
+  }
+
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
   const [userTier, setUserTier] = useState('free');

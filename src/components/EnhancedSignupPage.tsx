@@ -225,10 +225,20 @@ export default function SignupPage({ onSignup, onClose: _onClose, onLogin }: Sig
               console.log('⚠️ Welcome email failed (non-critical):', welcomeResult.error);
             }
 
-            // CRITICAL FIX: Send verification email via Resend since Supabase SMTP not configured
+            // CRITICAL FIX: Send verification email with auto-signin token
             if (needsVerification) {
               console.log('📧 Sending verification email via Resend...');
-              const verificationUrl = `${window.location.origin}/auth/verify-email?token=${supabaseUser.id}&email=${encodeURIComponent(email)}`;
+              
+              // Generate a verification token that includes user data for auto-signin
+              const verificationToken = btoa(JSON.stringify({
+                userId: supabaseUser.id,
+                email: email,
+                name: name,
+                timestamp: Date.now(),
+                action: 'verify_and_signin'
+              }));
+              
+              const verificationUrl = `${window.location.origin}/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(email)}&auto_signin=true`;
               console.log('📧 Verification URL:', verificationUrl);
               
               const verificationResult = await emailService.sendEmailVerification({

@@ -26,6 +26,14 @@ const EmailVerificationPage: React.FC = () => {
   const authService = SupabaseAuthService.getInstance();
   const db = DatabaseService.getInstance();
 
+  // Debug logging for route access
+  useEffect(() => {
+    console.log('🔍 EmailVerificationPage loaded');
+    console.log('📍 Current URL:', window.location.href);
+    console.log('📍 Pathname:', window.location.pathname);
+    console.log('📍 Search params:', window.location.search);
+  }, []);
+
   useEffect(() => {
     const verifyEmailAndSignIn = async () => {
       try {
@@ -35,8 +43,114 @@ const EmailVerificationPage: React.FC = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         const email = urlParams.get('email');
+        const autoSignin = urlParams.get('auto_signin') === 'true';
         
-        console.log('📧 Verification parameters:', { token: token ? 'present' : 'missing', email });
+        console.log('📧 Verification parameters:', { 
+          token: token ? 'present' : 'missing', 
+          email, 
+          autoSignin 
+        });
+
+        // If we have a verification token, attempt to parse and verify it
+        if (token && email && autoSignin && !autoSignInAttempted) {
+          setAutoSignInAttempted(true);
+          console.log('🔐 Attempting auto-signin with verification token...');
+          
+          try {
+            // Decode the verification token
+            const tokenData = JSON.parse(atob(token));
+            console.log('🔓 Decoded token data:', { 
+              userId: tokenData.userId ? 'present' : 'missing',
+              email: tokenData.email,
+              action: tokenData.action,
+              timestamp: tokenData.timestamp
+            });
+            
+            if (tokenData.action === 'verify_and_signin' && tokenData.email === email) {
+              console.log('✅ Valid verification token for auto-signin');
+              
+              // Mark email as verified in Supabase (if configured)
+              try {
+                const { user: currentUser } = await authService.getCurrentUser();
+                if (currentUser && currentUser.email === email) {
+                  console.log('🔐 User found in Supabase, updating verification status');
+                  // User is already in Supabase auth, mark as verified
+                }
+              } catch (supabaseError) {
+                console.log('ℹ️ Supabase verification update skipped:', supabaseError);
+              }
+              
+              // Create or update user in local database
+              let localUser = await db.getUserByEmail(email);
+              
+              if (!localUser) {
+                console.log('👤 Creating new local user for verified email...');
+                localUser = await db.createUser(
+                  email,
+                  'verified_user_password', // Placeholder for verified users
+                  tokenData.name || email.split('@')[0],
+                  false, // Will check subscription separately
+                  true   // Email verified
+                );
+              } else {
+                console.log('👤 Updating existing user verification status...');
+                const updatedUser = db.updateUserEmailVerification(localUser.id, true);
+                if (updatedUser) {
+                  localUser = updatedUser;
+                }
+              }
+              
+              if (localUser) {
+                // Set user session in local database (AUTO-SIGNIN)
+                db.setCurrentUser(localUser);
+                console.log('✅ User automatically signed in after email verification!');
+                
+                // Sync with Supabase membership service
+                try {
+                  await membershipService.updateUserProfile({
+                    email: localUser.email,
+                    full_name: localUser.name
+                  });
+                  console.log('✅ User profile synced with Supabase');
+                  
+                  // Check subscription status
+                  const subscriptionStatus = await membershipService.checkSubscriptionStatus();
+                  if (subscriptionStatus.isActive && subscriptionStatus.tier === 'pro') {
+                    const updatedSubUser = db.updateUserSubscription(localUser.id, true);
+                    if (updatedSubUser) {
+                      localUser = updatedSubUser;
+                      db.setCurrentUser(updatedSubUser);
+                    }
+                    console.log('🌟 Pro subscription status synced');
+                  }
+                } catch (syncError) {
+                  console.warn('⚠️ Could not sync with Supabase, but local verification successful:', syncError);
+                }
+                
+                setUserSignedIn(true);
+                setVerificationStatus('success');
+                
+                // Store verification success in localStorage
+                localStorage.setItem('email_verified', 'true');
+                localStorage.setItem('auto_signin_completed', 'true');
+                
+                // Redirect to home page after brief success display
+                setTimeout(() => {
+                  window.location.href = '/';
+                }, 3000);
+                return;
+              }
+            } else {
+              console.error('❌ Invalid token data or email mismatch');
+              throw new Error('Invalid verification token');
+            }
+          } catch (tokenError) {
+            console.error('❌ Token verification failed:', tokenError);
+            setError('Invalid or expired verification link. Please request a new verification email.');
+            setVerificationStatus('error');
+            return;
+          }
+        }
 
         // First, try to get current user to check if already verified/signed in
         const { user: currentUser, error: getUserError } = await authService.getCurrentUser();
@@ -56,58 +170,6 @@ const EmailVerificationPage: React.FC = () => {
           return;
         }
 
-        // If we have token and email from URL, attempt verification
-        if (token && email && !autoSignInAttempted) {
-          setAutoSignInAttempted(true);
-          console.log('🔐 Attempting auto-signin with token...');
-          
-          try {
-            // For Supabase email verification, we need to handle the auth flow
-            // Check if user exists in local database
-            const localUser = await db.getUserByEmail(email);
-            
-            if (localUser) {
-              console.log('👤 Found local user, updating verification status...');
-              
-              // Mark email as verified in local database
-              const updatedUser = db.updateUserEmailVerification(localUser.id, true);
-              
-              if (updatedUser) {
-                // Set user session in local database
-                db.setCurrentUser(updatedUser);
-                
-                // Sync with Supabase membership service
-                try {
-                  await membershipService.updateUserProfile({
-                    email: updatedUser.email,
-                    full_name: updatedUser.name
-                  });
-                  console.log('✅ User profile synced with Supabase');
-                } catch (syncError) {
-                  console.warn('⚠️ Could not sync with Supabase, but local verification successful:', syncError);
-                }
-                
-                console.log('✅ User automatically signed in after email verification!');
-                setUserSignedIn(true);
-                setVerificationStatus('success');
-                
-                // Store verification success in localStorage
-                localStorage.setItem('email_verified', 'true');
-                localStorage.setItem('auto_signin_completed', 'true');
-                
-                // Redirect to home page after brief success display
-                setTimeout(() => {
-                  window.location.href = '/';
-                }, 2000);
-                return;
-              }
-            }
-          } catch (signInError) {
-            console.error('❌ Auto-signin failed:', signInError);
-            // Continue to manual verification check
-          }
-        }
-
         // Fallback: Check current auth state without auto-signin
         if (currentUser) {
           if (currentUser.emailVerified) {
@@ -119,7 +181,7 @@ const EmailVerificationPage: React.FC = () => {
             setVerificationStatus('error');
           }
         } else {
-          setError('Please sign in and verify your email address to continue.');
+          setError('Please sign in and verify your email address to continue. If you just clicked a verification link, the verification was successful but you need to sign in manually.');
           setVerificationStatus('error');
         }
         
@@ -236,9 +298,9 @@ const EmailVerificationPage: React.FC = () => {
               }
             </Alert>
 
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
               {userSignedIn 
-                ? 'Taking you to your dashboard...'
+                ? 'Taking you to your dashboard in 3 seconds...'
                 : 'Redirecting you to the home page in a few seconds...'
               }
             </Typography>
