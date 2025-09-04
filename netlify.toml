@@ -18,6 +18,9 @@
   
   # Disable secrets scanning for specific patterns
   SECRETS_SCAN_ENABLED = "false"
+  
+  # Resend API key for email functions
+  RESEND_API_KEY = "re_3pr5WXq7_KhHRaDYULJB5HLm43j44Cm2q"
 
 # API endpoints for serverless functions
 [[redirects]]

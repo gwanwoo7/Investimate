@@ -65,38 +65,43 @@ class ResendEmailService {
   }
 
   /**
-   * Send a generic email
+   * Send a generic email via Netlify function to avoid CORS issues
    */
   async sendEmail(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    this.initialize(); // Ensure initialization
-    
-    if (!this.resend) {
-      return { success: false, error: 'Resend not configured. Please check your API key.' };
-    }
-
     try {
-      console.log('📧 Sending email via Resend to:', options.to);
+      console.log('📧 Sending email via Netlify function to:', options.to);
       
-      const { data, error } = await this.resend.emails.send({
-        from: options.from || this.defaultFrom,
-        to: Array.isArray(options.to) ? options.to : [options.to],
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
-        replyTo: options.replyTo,
+      const functionUrl = import.meta.env.MODE === 'development' 
+        ? 'http://localhost:8888/.netlify/functions/send-email'
+        : '/.netlify/functions/send-email';
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'generic',
+          email: Array.isArray(options.to) ? options.to[0] : options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text
+        })
       });
-
-      if (error) {
-        console.error('❌ Resend email error:', error);
-        return { success: false, error: error.message || 'Failed to send email' };
+      
+      if (!response.ok) {
+        throw new Error(`Netlify function error: ${response.status}`);
       }
-
-      if (data?.id) {
-        console.log('✅ Email sent successfully. Message ID:', data.id);
-        return { success: true, messageId: data.id };
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Email sent via Netlify function. Message ID:', result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error || 'Netlify function failed');
       }
-
-      return { success: false, error: 'Unknown error sending email' };
+      
     } catch (error) {
       console.error('❌ Email sending error:', error);
       return { 
@@ -110,31 +115,93 @@ class ResendEmailService {
    * Send contact form email
    */
   async sendContactFormEmail(formData: ContactFormData): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const htmlContent = this.generateContactFormHTML(formData);
-    const textContent = this.generateContactFormText(formData);
-
-    return this.sendEmail({
-      to: this.supportEmail,
-      subject: `[Investimate Contact] ${formData.subject}`,
-      html: htmlContent,
-      text: textContent,
-      replyTo: formData.email,
-    });
+    try {
+      console.log('📧 Sending contact form email via Netlify function...');
+      
+      const functionUrl = import.meta.env.MODE === 'development' 
+        ? 'http://localhost:8888/.netlify/functions/send-email'
+        : '/.netlify/functions/send-email';
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'contact',
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          name: formData.name
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Netlify function error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Contact form email sent via Netlify function. Message ID:', result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error || 'Netlify function failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Contact form email failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send contact form email' 
+      };
+    }
   }
 
   /**
    * Send email verification email
    */
   async sendEmailVerification(data: EmailVerificationData): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const htmlContent = this.generateEmailVerificationHTML(data);
-    const textContent = this.generateEmailVerificationText(data);
-
-    return this.sendEmail({
-      to: data.email,
-      subject: 'Verify your email address - Investimate',
-      html: htmlContent,
-      text: textContent,
-    });
+    try {
+      console.log('📧 Sending verification email via Netlify function...');
+      
+      const functionUrl = import.meta.env.MODE === 'development' 
+        ? 'http://localhost:8888/.netlify/functions/send-email'
+        : '/.netlify/functions/send-email';
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'verification',
+          email: data.email,
+          verificationUrl: data.verificationUrl,
+          userName: data.userName
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Netlify function error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Verification email sent via Netlify function. Message ID:', result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error || 'Netlify function failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Verification email failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send verification email' 
+      };
+    }
   }
 
   /**
@@ -156,15 +223,45 @@ class ResendEmailService {
    * Send welcome email to new users
    */
   async sendWelcomeEmail(email: string, userName?: string): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const htmlContent = this.generateWelcomeHTML(userName);
-    const textContent = this.generateWelcomeText(userName);
-
-    return this.sendEmail({
-      to: email,
-      subject: 'Welcome to Investimate! 🏠',
-      html: htmlContent,
-      text: textContent,
-    });
+    try {
+      console.log('📧 Sending welcome email via Netlify function...');
+      
+      const functionUrl = import.meta.env.MODE === 'development' 
+        ? 'http://localhost:8888/.netlify/functions/send-email'
+        : '/.netlify/functions/send-email';
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'welcome',
+          email: email,
+          userName: userName
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Netlify function error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log('✅ Welcome email sent via Netlify function. Message ID:', result.messageId);
+        return { success: true, messageId: result.messageId };
+      } else {
+        throw new Error(result.error || 'Netlify function failed');
+      }
+      
+    } catch (error) {
+      console.error('❌ Welcome email failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send welcome email' 
+      };
+    }
   }
 
   /**
