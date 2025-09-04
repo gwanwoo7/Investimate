@@ -356,7 +356,64 @@ function AppContent() {
     try {
       console.log('🔄 Starting enhanced user session restoration...');
       
-      // First, try to restore from critical state backup
+      // First, try to restore from persistent membership database
+      try {
+        const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
+        const persistentDB = PersistentMembershipDatabase.getInstance();
+        
+        // Check for user session data in localStorage
+        const userSessionData = localStorage.getItem('user_session');
+        if (userSessionData) {
+          const sessionUser = JSON.parse(userSessionData);
+          const lastVerified = sessionUser.lastVerified || 0;
+          const isRecentSession = (Date.now() - lastVerified) < 24 * 60 * 60 * 1000; // 24 hours
+          
+          if (isRecentSession && sessionUser.id) {
+            console.log('🔄 Attempting to restore from persistent membership database...');
+            
+            // Get membership data from persistent database
+            const membership = await persistentDB.getUserMembership(sessionUser.id);
+            
+            if (membership) {
+              console.log('✅ Found persistent membership:', membership.email);
+              
+              // Set user state from persistent membership
+              const restoredUser = {
+                email: membership.email || sessionUser.email,
+                isSubscribed: membership.isActive && membership.subscriptionTier === 'pro',
+                name: sessionUser.name,
+                id: sessionUser.id
+              };
+              
+              setUser(restoredUser);
+              setUserTier(membership.subscriptionTier);
+              
+              // Sync local database with persistent data
+              const localUser = db.getUserByEmail(restoredUser.email);
+              if (localUser) {
+                db.setCurrentUser({
+                  ...localUser,
+                  isSubscribed: restoredUser.isSubscribed,
+                  emailVerified: sessionUser.emailVerified
+                });
+                console.log('🔄 Local database synced with persistent membership');
+              }
+              
+              if (restoredUser.isSubscribed) {
+                setSearchCount(0);
+                setSearchesRemaining(0);
+                console.log('🌟 Pro membership restored from persistent database');
+              }
+              
+              return; // Successfully restored, exit early
+            }
+          }
+        }
+      } catch (persistentError) {
+        console.warn('⚠️ Could not restore from persistent database:', persistentError);
+      }
+      
+      // Fallback: Try to restore from critical state backup
       const savedState = localStorage.getItem('investimate_app_state');
       let quickRestoreAttempted = false;
       
@@ -710,12 +767,49 @@ function AppContent() {
         const status = await membershipService.checkSubscriptionStatus();
         const isSubscribed = status.isActive && (status.tier === 'pro' || status.tier === 'trial');
         
-        setUser({
+        const userData = {
           email: currentUser.email,
           isSubscribed,
           name: currentUser.name,
           id: currentUser.id
-        });
+        };
+        
+        setUser(userData);
+        
+        // Store user session for persistence across page refreshes
+        localStorage.setItem('user_session', JSON.stringify({
+          id: currentUser.id,
+          email: currentUser.email,
+          name: currentUser.name,
+          isSubscribed: isSubscribed,
+          emailVerified: currentUser.emailVerified || false,
+          lastVerified: Date.now()
+        }));
+        
+        // Initialize persistent membership database
+        try {
+          const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
+          const persistentDB = PersistentMembershipDatabase.getInstance();
+          
+          await persistentDB.updateUserMembership(
+            currentUser.id,
+            {
+              subscriptionStatus: isSubscribed ? 'pro' : 'free',
+              subscriptionTier: isSubscribed ? 'pro' : 'free',
+              isActive: isSubscribed || false,
+              features: {
+                unlimitedSearches: isSubscribed || false,
+                advancedAnalytics: isSubscribed || false,
+                propertyAlerts: isSubscribed || false,
+                portfolioTracking: isSubscribed || false,
+                premiumSupport: isSubscribed || false,
+              }
+            }
+          );
+          console.log('✅ User membership initialized in persistent database');
+        } catch (persistentError) {
+          console.warn('⚠️ Could not initialize persistent database:', persistentError);
+        }
         
         // Handle search count for new users
         if (isSubscribed) {
@@ -733,12 +827,24 @@ function AppContent() {
       } catch (membershipError) {
         console.warn('⚠️ Could not check membership on signup, using local data');
         
-        setUser({
+        const userData = {
           email: currentUser.email,
           isSubscribed: currentUser.isSubscribed || false,
           name: currentUser.name,
           id: currentUser.id
-        });
+        };
+        
+        setUser(userData);
+        
+        // Store user session even in fallback case
+        localStorage.setItem('user_session', JSON.stringify({
+          id: currentUser.id,
+          email: currentUser.email,
+          name: currentUser.name,
+          isSubscribed: currentUser.isSubscribed || false,
+          emailVerified: currentUser.emailVerified || false,
+          lastVerified: Date.now()
+        }));
         
         if (currentUser.isSubscribed) {
           setSearchCount(0);
@@ -988,13 +1094,51 @@ function AppContent() {
             console.log('🎉 Processing subscription success...');
             
             // Update user state immediately
-            setUser(prev => prev ? { ...prev, isSubscribed: true } : null);
+            const updatedUserData = { ...user, isSubscribed: true };
+            setUser(updatedUserData);
             setUserTier('pro');
             
             // Update local database if user exists
             if (user?.id) {
               const updatedUser = db.updateUserSubscription(user.id, true);
               console.log('✅ Local database updated with Pro status');
+              
+              // Store updated session for persistence
+              localStorage.setItem('user_session', JSON.stringify({
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                isSubscribed: true,
+                emailVerified: updatedUser?.emailVerified || false,
+                lastVerified: Date.now()
+              }));
+            }
+            
+            // Update persistent membership database
+            try {
+              const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
+              const persistentDB = PersistentMembershipDatabase.getInstance();
+              
+              if (user?.id) {
+                await persistentDB.updateUserMembership(
+                  user.id,
+                  {
+                    subscriptionStatus: 'pro',
+                    subscriptionTier: 'pro',
+                    isActive: true,
+                    features: {
+                      unlimitedSearches: true,
+                      advancedAnalytics: true,
+                      propertyAlerts: true,
+                      portfolioTracking: true,
+                      premiumSupport: true,
+                    }
+                  }
+                );
+                console.log('✅ Persistent membership database updated with Pro status');
+              }
+            } catch (persistentError) {
+              console.warn('⚠️ Could not update persistent database:', persistentError);
             }
             
             // Sync with Supabase

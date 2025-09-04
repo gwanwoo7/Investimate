@@ -58,7 +58,14 @@ const EmailVerificationPage: React.FC = () => {
           
           try {
             // Decode the verification token
-            const tokenData = JSON.parse(atob(token));
+            let tokenData;
+            try {
+              tokenData = JSON.parse(atob(token));
+            } catch (decodeError) {
+              console.error('❌ Failed to decode verification token:', decodeError);
+              throw new Error('Invalid verification token format');
+            }
+            
             console.log('🔓 Decoded token data:', { 
               userId: tokenData.userId ? 'present' : 'missing',
               email: tokenData.email,
@@ -68,17 +75,6 @@ const EmailVerificationPage: React.FC = () => {
             
             if (tokenData.action === 'verify_and_signin' && tokenData.email === email) {
               console.log('✅ Valid verification token for auto-signin');
-              
-              // Mark email as verified in Supabase (if configured)
-              try {
-                const { user: currentUser } = await authService.getCurrentUser();
-                if (currentUser && currentUser.email === email) {
-                  console.log('🔐 User found in Supabase, updating verification status');
-                  // User is already in Supabase auth, mark as verified
-                }
-              } catch (supabaseError) {
-                console.log('ℹ️ Supabase verification update skipped:', supabaseError);
-              }
               
               // Create or update user in local database
               let localUser = await db.getUserByEmail(email);
@@ -105,6 +101,33 @@ const EmailVerificationPage: React.FC = () => {
                 db.setCurrentUser(localUser);
                 console.log('✅ User automatically signed in after email verification!');
                 
+                // Initialize persistent membership database with the verified user
+                try {
+                  const { PersistentMembershipDatabase } = await import('../services/PersistentMembershipDatabase');
+                  const persistentDB = PersistentMembershipDatabase.getInstance();
+                  
+                  // Update the verified user membership in persistent storage
+                  await persistentDB.updateUserMembership(
+                    localUser.id,
+                    {
+                      subscriptionStatus: localUser.isSubscribed ? 'pro' : 'free',
+                      subscriptionTier: localUser.isSubscribed ? 'pro' : 'free',
+                      isActive: localUser.isSubscribed || false,
+                      features: {
+                        unlimitedSearches: localUser.isSubscribed || false,
+                        advancedAnalytics: localUser.isSubscribed || false,
+                        propertyAlerts: localUser.isSubscribed || false,
+                        portfolioTracking: localUser.isSubscribed || false,
+                        premiumSupport: localUser.isSubscribed || false,
+                      }
+                    }
+                  );
+                  
+                  console.log('🔄 User synced to persistent membership database');
+                } catch (persistentError) {
+                  console.warn('⚠️ Could not sync to persistent database:', persistentError);
+                }
+                
                 // Sync with Supabase membership service
                 try {
                   await membershipService.updateUserProfile({
@@ -113,7 +136,7 @@ const EmailVerificationPage: React.FC = () => {
                   });
                   console.log('✅ User profile synced with Supabase');
                   
-                  // Check subscription status
+                  // Check subscription status and sync it
                   const subscriptionStatus = await membershipService.checkSubscriptionStatus();
                   if (subscriptionStatus.isActive && subscriptionStatus.tier === 'pro') {
                     const updatedSubUser = db.updateUserSubscription(localUser.id, true);
@@ -130,9 +153,17 @@ const EmailVerificationPage: React.FC = () => {
                 setUserSignedIn(true);
                 setVerificationStatus('success');
                 
-                // Store verification success in localStorage
+                // Store verification success in localStorage for persistence
                 localStorage.setItem('email_verified', 'true');
                 localStorage.setItem('auto_signin_completed', 'true');
+                localStorage.setItem('user_session', JSON.stringify({
+                  id: localUser.id,
+                  email: localUser.email,
+                  name: localUser.name,
+                  isSubscribed: localUser.isSubscribed,
+                  emailVerified: true,
+                  lastVerified: Date.now()
+                }));
                 
                 // Redirect to home page after brief success display
                 setTimeout(() => {
@@ -142,11 +173,14 @@ const EmailVerificationPage: React.FC = () => {
               }
             } else {
               console.error('❌ Invalid token data or email mismatch');
-              throw new Error('Invalid verification token');
+              console.error('Expected:', { action: 'verify_and_signin', email });
+              console.error('Received:', { action: tokenData.action, email: tokenData.email });
+              throw new Error('Invalid verification token - action or email mismatch');
             }
           } catch (tokenError) {
             console.error('❌ Token verification failed:', tokenError);
-            setError('Invalid or expired verification link. Please request a new verification email.');
+            const errorMessage = tokenError instanceof Error ? tokenError.message : 'Unknown verification error';
+            setError(`Verification link error: ${errorMessage}. Please try signing up again or contact support.`);
             setVerificationStatus('error');
             return;
           }
