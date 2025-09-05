@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification Test - Direct Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .big-button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 18px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .big-button:hover {
+            background: #1565c0;
+        }
+        .info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fff3e0;
+            color: #f57c00;
+            border: 1px solid #ff9800;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <h1>📧 Email Verification Direct Test</h1>
+    
+    <div class="test-section">
+        <h2>🎯 Test Scenario</h2>
+        <p>This test simulates exactly what happens when a user clicks an email verification button/link:</p>
+        <ol>
+            <li>User signs up for an account</li>
+            <li>User receives email verification email</li>
+            <li>User clicks "Verify Email Address" button in email</li>
+            <li><strong>Expected:</strong> User should be automatically signed in</li>
+            <li><strong>Current Issue:</strong> Shows "Verification Failed" message</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Simulated Email Verification Link</h2>
+        <div class="info">
+            <p><strong>Test User:</strong> testuser@example.com</p>
+            <p><strong>Scenario:</strong> Fresh signup with email verification</p>
+        </div>
+        
+        <a href="#" id="verification-link" class="big-button">
+            📧 Click to Verify Email Address
+        </a>
+        
+        <div class="warning">
+            <p><strong>⚠️ Important:</strong> This simulates the exact link that would be in a verification email.</p>
+        </div>
+        
+        <div id="link-details" class="info" style="margin-top: 20px;">
+            <p><strong>Generated Link Details:</strong></p>
+            <p class="code" id="actual-link">Generating...</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Instructions</h2>
+        <ol>
+            <li>Click the "Verify Email Address" button above</li>
+            <li>This will open the main app with verification parameters</li>
+            <li>Check if you see "Verification Failed" or if auto-signin works</li>
+            <li>If successful, check if user state persists after page refresh</li>
+        </ol>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create a realistic verification token
+            const verificationData = {
+                action: 'verify_and_signin',
+                email: 'testuser@example.com',
+                userId: 'test-' + Date.now(),
+                timestamp: Date.now(),
+                name: 'Test User'
+            };
+            
+            // Base64 encode the token like a real verification system would
+            const token = btoa(JSON.stringify(verificationData));
+            
+            // Create the verification URL with proper parameters
+            const verificationUrl = `http://localhost:5173/?token=${token}&email=testuser@example.com&auto_signin=true`;
+            
+            // Update the link
+            const linkElement = document.getElementById('verification-link');
+            linkElement.href = verificationUrl;
+            
+            // Show the actual URL for debugging
+            document.getElementById('actual-link').textContent = verificationUrl;
+            
+            // Add click handler for tracking
+            linkElement.addEventListener('click', function(e) {
+                console.log('🔗 Verification link clicked');
+                console.log('📧 Opening URL:', verificationUrl);
+                
+                // Open in new tab so we can see the result
+                window.open(verificationUrl, '_blank');
+                e.preventDefault();
+            });
+        });
+    </script>
+</body>
+</html>

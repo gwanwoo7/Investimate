@@ -2,6 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Typography, Box, Button, Card, CardContent, Container, Tab, Tabs } from '@mui/material';
 import { Calculator, Users, Home, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import PropertyCalculatorWithMap from './components/PropertyCalculatorWithMap';
 import SearchResultsPage from './components/SearchResultsPage';
 import CommunityChat from './components/CommunityChat';
@@ -27,7 +28,6 @@ import ComprehensiveQADiagnostic from './components/debug/ComprehensiveQADiagnos
 import EnvDebug from './components/debug/EnvDebug';
 import DatabaseEmailTestSuite from './components/DatabaseEmailTestSuite';
 import SubscriptionPaymentQA from './components/SubscriptionPaymentQA';
-import { useState, useEffect } from 'react';
 
 const theme = createTheme({
   palette: {
@@ -279,15 +279,6 @@ function App() {
 }
 
 function AppContent() {
-  // Check for email verification route first
-  const currentPath = window.location.pathname;
-  const currentSearch = window.location.search;
-  
-  // Handle email verification route
-  if (currentPath === '/auth/verify-email' || currentPath.includes('verify-email')) {
-    return <EmailVerificationPage />;
-  }
-
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<{ email: string; isSubscribed: boolean; name?: string; id?: string } | null>(null);
   const [userTier, setUserTier] = useState('free');
@@ -316,6 +307,18 @@ function AppContent() {
     searchQuery?: string;
     boundaryInfo?: { north: number; south: number; east: number; west: number };
   } | null>(null);
+
+  // Check for email verification route
+  const currentPath = window.location.pathname;
+  const currentSearch = window.location.search;
+  
+  // Handle email verification route - check for verification URL parameters
+  const urlParams = new URLSearchParams(currentSearch);
+  const hasVerificationToken = urlParams.get('token') && urlParams.get('email') && urlParams.get('auto_signin');
+  
+  if (currentPath === '/auth/verify-email' || currentPath.includes('verify-email') || hasVerificationToken) {
+    return <EmailVerificationPage />;
+  }
 
   const db = DatabaseService.getInstance();
 
@@ -356,39 +359,67 @@ function AppContent() {
     try {
       console.log('🔄 Starting enhanced user session restoration...');
       
-      // First, try to restore from persistent membership database
-      try {
-        const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
-        const persistentDB = PersistentMembershipDatabase.getInstance();
-        
-        // Check for user session data in localStorage
-        const userSessionData = localStorage.getItem('user_session');
-        if (userSessionData) {
+      // First priority: Check for persistent session data
+      const userSessionData = localStorage.getItem('user_session');
+      const autoSigninCompleted = localStorage.getItem('auto_signin_completed');
+      
+      if (userSessionData) {
+        try {
           const sessionUser = JSON.parse(userSessionData);
           const lastVerified = sessionUser.lastVerified || 0;
           const isRecentSession = (Date.now() - lastVerified) < 24 * 60 * 60 * 1000; // 24 hours
           
-          if (isRecentSession && sessionUser.id) {
-            console.log('🔄 Attempting to restore from persistent membership database...');
+          if (isRecentSession && sessionUser.email) {
+            console.log('🔄 Restoring user session from localStorage...', sessionUser.email);
             
-            // Get membership data from persistent database
-            const membership = await persistentDB.getUserMembership(sessionUser.id);
+            // Restore user state from session data
+            const restoredUser = {
+              email: sessionUser.email,
+              isSubscribed: Boolean(sessionUser.isSubscribed),
+              name: sessionUser.name,
+              id: sessionUser.id
+            };
             
-            if (membership) {
-              console.log('✅ Found persistent membership:', membership.email);
+            setUser(restoredUser);
+            setUserTier(sessionUser.isSubscribed ? 'pro' : 'free');
+            
+            // Try to restore from persistent membership database
+            try {
+              const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
+              const persistentDB = PersistentMembershipDatabase.getInstance();
               
-              // Set user state from persistent membership
-              const restoredUser = {
-                email: membership.email || sessionUser.email,
-                isSubscribed: membership.isActive && membership.subscriptionTier === 'pro',
-                name: sessionUser.name,
-                id: sessionUser.id
-              };
-              
-              setUser(restoredUser);
-              setUserTier(membership.subscriptionTier);
-              
-              // Sync local database with persistent data
+              if (sessionUser.id) {
+                const membership = await persistentDB.getUserMembership(sessionUser.id);
+                
+                if (membership && membership.isActive) {
+                  console.log('✅ Found persistent membership data - syncing...');
+                  
+                  const persistentUser = {
+                    email: membership.email || sessionUser.email,
+                    isSubscribed: membership.isActive && membership.subscriptionTier === 'pro',
+                    name: sessionUser.name,
+                    id: sessionUser.id
+                  };
+                  
+                  setUser(persistentUser);
+                  setUserTier(membership.subscriptionTier);
+                  
+                  // Update session data to match persistent data
+                  localStorage.setItem('user_session', JSON.stringify({
+                    ...sessionUser,
+                    isSubscribed: persistentUser.isSubscribed,
+                    lastVerified: Date.now()
+                  }));
+                  
+                  console.log('🔄 Session synced with persistent membership database');
+                }
+              }
+            } catch (persistentError) {
+              console.warn('⚠️ Could not sync with persistent database, using session data:', persistentError);
+            }
+            
+            // Sync with local database
+            try {
               const localUser = await db.getUserByEmail(restoredUser.email);
               if (localUser) {
                 db.setCurrentUser({
@@ -396,21 +427,35 @@ function AppContent() {
                   isSubscribed: restoredUser.isSubscribed,
                   emailVerified: Boolean(sessionUser.emailVerified)
                 });
-                console.log('🔄 Local database synced with persistent membership');
+                console.log('🔄 Local database synced with session data');
               }
-              
-              if (restoredUser.isSubscribed) {
-                setSearchCount(0);
-                setSearchesRemaining(0);
-                console.log('🌟 Pro membership restored from persistent database');
-              }
-              
-              return; // Successfully restored, exit early
+            } catch (localError) {
+              console.warn('⚠️ Could not sync with local database:', localError);
             }
+            
+            // Handle search count based on subscription
+            if (restoredUser.isSubscribed) {
+              setSearchCount(0);
+              setSearchesRemaining(0);
+              localStorage.removeItem('investimate_search_count');
+              console.log('✅ Pro membership session restored, search count cleared');
+            } else {
+              const savedCount = localStorage.getItem('investimate_search_count');
+              if (savedCount) {
+                setSearchCount(parseInt(savedCount, 10));
+              }
+              setSearchesRemaining(Math.max(0, 5 - parseInt(savedCount || '0', 10)));
+            }
+            
+            return; // Successfully restored, exit early
+          } else {
+            console.log('ℹ️ Session data expired or incomplete, clearing...');
+            localStorage.removeItem('user_session');
           }
+        } catch (sessionError) {
+          console.warn('⚠️ Could not parse user session data:', sessionError);
+          localStorage.removeItem('user_session');
         }
-      } catch (persistentError) {
-        console.warn('⚠️ Could not restore from persistent database:', persistentError);
       }
       
       // Fallback: Try to restore from critical state backup
@@ -422,10 +467,20 @@ function AppContent() {
           const { user: savedUser, userTier: savedTier, timestamp } = JSON.parse(savedState);
           const isRecent = (Date.now() - timestamp) < 24 * 60 * 60 * 1000; // 24 hours
           
-          if (isRecent && savedUser) {
+          if (isRecent && savedUser && savedUser.email) {
             console.log('⚡ Quick restore from recent state backup:', savedUser.email);
             setUser(savedUser);
             setUserTier(savedTier || 'free');
+            
+            // Create user session data for persistence
+            localStorage.setItem('user_session', JSON.stringify({
+              id: savedUser.id,
+              email: savedUser.email,
+              name: savedUser.name,
+              isSubscribed: savedUser.isSubscribed,
+              emailVerified: true,
+              lastVerified: Date.now()
+            }));
             
             if (savedUser.isSubscribed) {
               setSearchCount(0);
@@ -710,12 +765,49 @@ function AppContent() {
           console.log('🔄 Synced subscription status on login:', isSubscribed);
         }
         
-        setUser({
+        const userData = {
           email: currentUser.email,
           isSubscribed,
           name: currentUser.name,
           id: currentUser.id
-        });
+        };
+        
+        setUser(userData);
+        
+        // Store user session for persistence across page refreshes
+        localStorage.setItem('user_session', JSON.stringify({
+          id: currentUser.id,
+          email: currentUser.email,
+          name: currentUser.name,
+          isSubscribed: isSubscribed,
+          emailVerified: currentUser.emailVerified || false,
+          lastVerified: Date.now()
+        }));
+        
+        // Initialize persistent membership database
+        try {
+          const { PersistentMembershipDatabase } = await import('./services/PersistentMembershipDatabase');
+          const persistentDB = PersistentMembershipDatabase.getInstance();
+          
+          await persistentDB.updateUserMembership(
+            currentUser.id,
+            {
+              subscriptionStatus: isSubscribed ? 'pro' : 'free',
+              subscriptionTier: isSubscribed ? 'pro' : 'free',
+              isActive: isSubscribed || false,
+              features: {
+                unlimitedSearches: isSubscribed || false,
+                advancedAnalytics: isSubscribed || false,
+                propertyAlerts: isSubscribed || false,
+                portfolioTracking: isSubscribed || false,
+                premiumSupport: isSubscribed || false,
+              }
+            }
+          );
+          console.log('✅ User membership synced to persistent database on login');
+        } catch (persistentError) {
+          console.warn('⚠️ Could not sync to persistent database on login:', persistentError);
+        }
         
         // Handle search count based on subscription
         if (isSubscribed) {
@@ -736,12 +828,24 @@ function AppContent() {
         console.warn('⚠️ Could not check membership on login, using local data');
         
         // Fallback to local data
-        setUser({
+        const userData = {
           email: currentUser.email,
           isSubscribed: currentUser.isSubscribed || false,
           name: currentUser.name,
           id: currentUser.id
-        });
+        };
+        
+        setUser(userData);
+        
+        // Store session even in fallback case
+        localStorage.setItem('user_session', JSON.stringify({
+          id: currentUser.id,
+          email: currentUser.email,
+          name: currentUser.name,
+          isSubscribed: currentUser.isSubscribed || false,
+          emailVerified: currentUser.emailVerified || false,
+          lastVerified: Date.now()
+        }));
         
         if (currentUser.isSubscribed) {
           setSearchCount(0);
@@ -950,8 +1054,12 @@ function AppContent() {
     localStorage.removeItem('investimate_search_count');
     localStorage.removeItem('stripe_customer_id');
     localStorage.removeItem('stripe_subscription_id');
+    localStorage.removeItem('user_session');
+    localStorage.removeItem('investimate_app_state');
+    localStorage.removeItem('email_verified');
+    localStorage.removeItem('auto_signin_completed');
     
-    console.log('✅ User logged out successfully, all state cleared');
+    console.log('✅ User logged out successfully, all state and session data cleared');
   };
 
   const [canSearchState, setCanSearchState] = useState(false);

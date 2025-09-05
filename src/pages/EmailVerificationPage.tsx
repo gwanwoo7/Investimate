@@ -167,7 +167,10 @@ const EmailVerificationPage: React.FC = () => {
                 
                 // Redirect to home page after brief success display
                 setTimeout(() => {
-                  window.location.href = '/';
+                  // Instead of window.location.href, use history API to maintain React state
+                  window.history.pushState({}, '', '/');
+                  // Force a page reload to trigger session restoration in App.tsx
+                  window.location.reload();
                 }, 3000);
                 return;
               }
@@ -199,7 +202,8 @@ const EmailVerificationPage: React.FC = () => {
           
           // Redirect to home after showing success message
           setTimeout(() => {
-            window.location.href = '/';
+            window.history.pushState({}, '', '/');
+            window.location.reload();
           }, 2000);
           return;
         }
