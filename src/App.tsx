@@ -11,6 +11,8 @@ import AdminDashboard from './components/AdminDashboard';
 import EnhancedLoginPage from './components/EnhancedLoginPage';
 import EnhancedSignupPage from './components/EnhancedSignupPage';
 import EmailVerificationPage from './pages/EmailVerificationPage';
+import SimpleEmailVerificationPage from './pages/SimpleEmailVerificationPage';
+import DebugVerificationPage from './pages/DebugVerificationPage';
 import AuthCallback from './components/AuthCallback';
 import ProMembershipQA from './components/ProMembershipQA';
 import AdminPage from './pages/AdminPage';
