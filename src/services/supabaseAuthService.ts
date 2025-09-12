@@ -28,7 +28,7 @@ export interface SignInData {
 
 class SupabaseAuthService {
   private static instance: SupabaseAuthService
-  private supabase: SupabaseClient | null = null
+  public supabase: SupabaseClient | null = null
   private initialized = false
 
   private constructor() {
@@ -461,8 +461,42 @@ class SupabaseAuthService {
   }
 
   /**
-   * Test Resend SMTP configuration via Supabase
+   * Verify email with session tokens (for email verification callback)
    */
+  async verifyEmailWithTokens(accessToken: string, refreshToken: string): Promise<{ user: AuthUser | null; error: string | null }> {
+    if (!this.supabase) {
+      return { user: null, error: 'Supabase not configured' }
+    }
+
+    try {
+      const { data, error } = await this.supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken
+      })
+
+      if (error) {
+        return { user: null, error: error.message }
+      }
+
+      if (data.user) {
+        const user: AuthUser = {
+          id: data.user.id,
+          email: data.user.email!,
+          name: data.user.user_metadata?.name || data.user.email!.split('@')[0],
+          avatar: data.user.user_metadata?.avatar_url,
+          emailVerified: data.user.email_confirmed_at !== null,
+          provider: data.user.app_metadata?.provider || 'email',
+          createdAt: data.user.created_at
+        }
+        return { user, error: null }
+      }
+
+      return { user: null, error: 'No user found' }
+    } catch (error) {
+      console.error('Email verification error:', error)
+      return { user: null, error: error instanceof Error ? error.message : 'Verification failed' }
+    }
+  }
   async testResendSMTP(): Promise<{ success: boolean; message: string; details?: any }> {
     if (!this.supabase) {
       return { success: false, message: 'Supabase not configured' }

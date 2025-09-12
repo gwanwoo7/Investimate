@@ -16,7 +16,9 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Divider
+  Divider,
+  Dialog,
+  DialogContent
 } from '@mui/material';
 import {
   Search,
@@ -26,6 +28,8 @@ import {
   LocationOn
 } from '@mui/icons-material';
 import type { AreaSearchParams } from '../types/property';
+import { useSearchLimits } from '../hooks/useSearchLimits';
+import SearchLimitNotification from './common/SearchLimitNotification';
 
 interface EnhancedPropertySearchFormProps {
   onSearch: (searchData: AreaSearchParams) => void;
@@ -34,6 +38,7 @@ interface EnhancedPropertySearchFormProps {
   foundProperties: number;
   isDrawingMode?: boolean;
   onDrawingModeChange?: (isDrawing: boolean) => void;
+  onUpgrade?: () => void;
 }
 
 export default function EnhancedPropertySearchForm({ 
@@ -42,7 +47,8 @@ export default function EnhancedPropertySearchForm({
   loading, 
   foundProperties,
   isDrawingMode = false,
-  onDrawingModeChange
+  onDrawingModeChange,
+  onUpgrade
 }: EnhancedPropertySearchFormProps) {
   const [searchData, setSearchData] = useState<AreaSearchParams>({
     city: 'Santa Clara',
@@ -56,8 +62,26 @@ export default function EnhancedPropertySearchForm({
   
   const [error, setError] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showLimitDialog, setShowLimitDialog] = useState(false);
+  
+  // Search limits integration
+  const {
+    quota,
+    remainingSearches,
+    canSearch,
+    isLoading: limitsLoading,
+    error: limitsError,
+    checkCanSearch,
+    recordSearch
+  } = useSearchLimits();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Show notification if user is near or at limit
+  const shouldShowNotification = quota && (
+    (quota.membershipTier === 'free' && remainingSearches <= 1) ||
+    !canSearch
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
@@ -66,8 +90,20 @@ export default function EnhancedPropertySearchForm({
       return;
     }
     
+    // Check search limits before proceeding
+    const searchCheck = await checkCanSearch('property');
+    
+    if (!searchCheck.canSearch) {
+      setError(searchCheck.message || 'Search limit reached');
+      setShowLimitDialog(true);
+      return;
+    }
+    
     console.log('🔍 Submitting search with parameters:', searchData);
     onSearch(searchData);
+    
+    // Record the search after successful initiation
+    await recordSearch('property');
   };
 
   const handleChange = (field: keyof AreaSearchParams) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -127,33 +163,61 @@ export default function EnhancedPropertySearchForm({
   ];
 
   return (
-    <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 2 }}>
-      <Box component="form" onSubmit={handleSubmit}>
-        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem', fontWeight: 'bold' }}>
-          <LocationOn color="primary" />
-          Find Investment Properties
-        </Typography>
-        
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontSize: '0.875rem', lineHeight: 1.4 }}>
-          Search for rental properties with strong investment potential. Use the form below or draw a boundary on the map.
-        </Typography>
+    <>
+      {/* Search Limit Notification */}
+      {shouldShowNotification && (
+        <SearchLimitNotification
+          quota={quota}
+          remainingSearches={remainingSearches}
+          onUpgrade={onUpgrade}
+          variant="detailed"
+          showCloseButton={false}
+        />
+      )}
 
-        {/* Search Results Summary */}
-        {foundProperties > 0 && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-              Found {foundProperties} properties matching your criteria
-            </Typography>
-          </Alert>
-        )}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2, boxShadow: 2 }}>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '0.875rem', fontWeight: 'bold' }}>
+            <LocationOn color="primary" />
+            Find Investment Properties
+            {quota?.membershipTier === 'free' && (
+              <Chip 
+                label={`${remainingSearches} searches left`} 
+                size="small" 
+                color={remainingSearches <= 1 ? 'error' : 'warning'} 
+                variant="outlined"
+              />
+            )}
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontSize: '0.875rem', lineHeight: 1.4 }}>
+            Search for rental properties with strong investment potential. Use the form below or draw a boundary on the map.
+          </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
-              {error}
-            </Typography>
-          </Alert>
-        )}
+          {/* Search Results Summary */}
+          {foundProperties > 0 && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                Found {foundProperties} properties matching your criteria
+              </Typography>
+            </Alert>
+          )}
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                {error}
+              </Typography>
+            </Alert>
+          )}
+
+          {limitsError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                {limitsError}
+              </Typography>
+            </Alert>
+          )}
 
         <Stack spacing={3}>
           {/* Basic Search Fields */}
@@ -397,11 +461,11 @@ export default function EnhancedPropertySearchForm({
               type="submit"
               variant="contained"
               size="large"
-              disabled={loading}
+              disabled={loading || limitsLoading || !canSearch}
               startIcon={loading ? <CircularProgress size={20} /> : <Search />}
               sx={{ minWidth: 200, fontSize: '0.875rem' }}
             >
-              {loading ? 'Searching...' : 'Search Properties'}
+              {loading ? 'Searching...' : !canSearch ? 'Limit Reached' : 'Search Properties'}
             </Button>
 
             {foundProperties > 0 && (
@@ -426,5 +490,27 @@ export default function EnhancedPropertySearchForm({
         </Stack>
       </Box>
     </Paper>
+
+    {/* Search Limit Dialog */}
+    <Dialog 
+      open={showLimitDialog} 
+      onClose={() => setShowLimitDialog(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogContent>
+        <SearchLimitNotification
+          quota={quota}
+          remainingSearches={remainingSearches}
+          onUpgrade={() => {
+            setShowLimitDialog(false);
+            onUpgrade?.();
+          }}
+          onClose={() => setShowLimitDialog(false)}
+          variant="detailed"
+        />
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }

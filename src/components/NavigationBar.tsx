@@ -21,6 +21,8 @@ import {
   Calculator,
   Users
 } from 'lucide-react';
+import { useSearchLimits } from '../hooks/useSearchLimits';
+import SearchLimitNotification from './common/SearchLimitNotification';
 
 interface NavigationBarProps {
   onLogoClick?: () => void;
@@ -38,8 +40,6 @@ interface NavigationBarProps {
   onSignupClick?: () => void;
   user?: { email: string; isSubscribed: boolean } | null;
   onLogout?: () => void;
-  searchCount?: number;
-  maxSearches?: number;
   onUpgradeClick?: () => void;
 }
 
@@ -59,10 +59,11 @@ export default function NavigationBar({
   onSignupClick,
   user,
   onLogout,
-  searchCount = 0,
-  maxSearches = 5,
   onUpgradeClick
 }: NavigationBarProps) {
+  
+  // Use search limits hook
+  const { quota, remainingSearches } = useSearchLimits();
   
   const handleLogoClick = () => {
     if (onLogoClick) {
@@ -237,27 +238,18 @@ export default function NavigationBar({
                 <Typography variant="body2" color="text.secondary">
                   {user.email}
                 </Typography>
-                {!user.isSubscribed && (
-                  <>
-                    <Typography variant="caption" color="warning.main">
-                      ({maxSearches - searchCount} searches left)
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      size="small"
-                      color="warning"
-                      onClick={onUpgradeClick}
-                      sx={{ ml: 1 }}
-                    >
-                      {searchCount >= maxSearches ? 'Upgrade Now' : 'Go Pro'}
-                    </Button>
-                  </>
+                
+                {/* Search Limit Display */}
+                {quota && (
+                  <SearchLimitNotification
+                    quota={quota}
+                    remainingSearches={remainingSearches}
+                    onUpgrade={onUpgradeClick}
+                    variant="compact"
+                    showCloseButton={false}
+                  />
                 )}
-                {user.isSubscribed && (
-                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 'bold' }}>
-                    Pro Member
-                  </Typography>
-                )}
+                
                 <Button 
                   variant="outlined" 
                   size="small"
