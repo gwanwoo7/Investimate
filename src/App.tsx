@@ -1134,8 +1134,6 @@ function AppContent() {
       onSignupClick={handleShowSignup}
       user={user}
       onLogout={handleLogout}
-      searchCount={searchCount}
-      maxSearches={MAX_FREE_SEARCHES}
       onUpgradeClick={handleShowPayment}
     />
   );
